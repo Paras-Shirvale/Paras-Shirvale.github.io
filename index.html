@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Portfolio</title>
+  <!-- Add Roboto Slab font from Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.15.1/devicon.min.css">
+</head>
+
+<body>
+
+  <!-- Header -->
+<header class="top-bar" id="header">
+  <a href="index.html"><h1 class="portfolio-title">Paras Shirvale</h1></a>
+  <nav class="navbar">
+    <ul>
+      <li class="dropdown"><a href="index.html" class="dropdown-toggle">About Me</a>
+        <ul class="dropdown-content">
+          <li><a href="index.html">General Info</a></li>
+          <li><a href="Experience.html">Experience</a></li>
+          <li><a href="your-resume.pdf">Download CV</a></li>
+        </ul>
+      </li>
+      <li><a href="projects.html">Projects</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- Dark Mode Toggle -->
+<button id="dark-mode-toggle">🌙</button>
+
+<!-- Introduction -->
+<section id="Intro" class="section">
+  <div class="intro-container">
+    <div class="image-container">
+      <img src="IMG_20250105_130942.jpg" alt="Chinmay Pendse" margin-left="auto" margin-right="auto" class="profile-image">
+    </div>
+    <div class="intro-text">
+      <h1>Namste Everyone<br> I'm Paras Shirvale</h1>
+      <p class="short-description">Web-developer, Robotics enthusiast, Musician-Singer-Composer, Stage Actor</p>
+    </div>
+  </div>
+
+<!-- Buttons Section -->
+<section id="buttons" class="section">
+  <div class="button-container">
+    <!-- Resume Button -->
+    <a href="" class="btn" download>
+      <span>Download My Resume</span>
+    </a>
+    <!-- View My Work Button -->
+    <a href="Experience.html" class="btn">
+      <span>View My Work</span>
+    </a>
+  </div>
+</section>
+
+<!-- About Me-->
+<section id="about" class="section">
+  <div class="about-container">
+    <h2>About Me</h2>
+    <!-- Personal Introduction -->
+    <p>
+     Hi, I am Paras Shirvale, a BTech Pre-Final undergraduate at the Indian Institute of Technology, Gandhinagar. From a young age, I have been fascinated by technology and how it can be used to solve real-world problems.
+    So, using my curiosity to learn the latest technologies, I joint IIT Gandhinagar, where I have been able to explore my interests in software development, machine learning, and VLSI design.
+    </p>
+    <p>
+     Along with the technical skills, I have also developed a passion for writing and poetry. I believe that writing is a powerful tool by which I can express myself in front of all.
+      My major interests are in Indian culture, history and philosophy along with the human emotions of love, compassion and hunger for living. 
+    </p>
+
+<!-- Skills Overview -->
+<h3>Skills & Technologies</h3>
+  <div class="skills-container">
+    <ul class="skills-column">
+      <li><i class="devicon-html5-plain colored skill-icon"></i> <strong>HTML</strong> - Building the structure of responsive websites.</li>
+      <li><i class="devicon-css3-plain colored skill-icon"></i> <strong>CSS</strong> - Crafting visually appealing designs with animations.</li>
+      <li><i class="devicon-javascript-plain colored skill-icon"></i> <strong>JavaScript</strong> - Enhancing interactivity and building SPAs with React.</li>
+      <!-- <li><i class="devicon-nodejs-plain colored skill-icon"></i> <strong>Node.js</strong> - Building scalable back-end services.</li> -->
+    </ul>
+    <ul class="skills-column">
+      <li><i class="devicon-python-plain colored skill-icon"></i> <strong>Python</strong> - Developing ML models using TensorFlow, NumPy, and Pandas.</li>
+      <li><i class="devicon-c-plain colored skill-icon"></i> <strong>C & C++</strong> - Making algorithms for better computations</li>
+      <li><i class="devicon-docker-plain colored skill-icon"></i> <strong>Docker</strong> - Containerizing applications for seamless deployment.</li>
+      <li><i class="devicon-git-plain colored skill-icon"></i> <strong>Git</strong> - Version control for collaborative development.</li>
+      <!-- <li><i class="devicon-wordpress-plain colored skill-icon"></i> <strong>Blogging</strong> - Simplifying tech concepts for learners through writing.</li> -->
+    </ul>
+  </div>
+
+<!-- Projects -->
+<section id="projects" class="section">
+  <h2>Best Projects</h2>
+  <div class="project-grid">
+    <div class="project-box">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASsAAACoCAMAAACPKThEAAAC6FBMVEX///8vVZc4VyO+7l//AAAAAAAYSJEkT5QfTJPV2uYoUZUsU5aDlLnY3egURpCmssxEY57Ey9xieqrG91r/5uaPnsBSbaQdRpooT5htgq8XQwCz4WZpfV8yUxpzh7IjSgDT19Cxu9Li5eD/PDy8xNj/vb1ZTovpGzAaGhpGU5P/2NhycnL/jY3T09P/MTHBqKju3d3ltbXExMS2trb/o6P/+///mJiizm8AP43/tbX/q6v///P/xsbBODjAWFj/SwA4ODienp7re3v6Zmb/Vlbz////gYHHSUn/RET/+f//9NTWqWlgYGCJiYnFKSnlyMj/q9j/3qkAN1UAAFC+6/re/v/56sdcHwBDQ0NpaWl0q8H8894rKytPT097e3v/0Iz/mVf/bKQAAF//2Y4NjL6ufSkARXrg8///3qIhWpH/dnacliq91UqAw1mb3mB4AADBDg6c0OngjIz/7v//XQD/kbH/tGT/AEn/jTT/PWv/zHn/woT46rNSK0llRlbIn2A1QmJVVoSCRwDNpUiXhHNqd40nZWAuACmAyOS1m3yTn63TuZ2wztfs1rcrIC8GAEFEIh9RhKCtq456VBdBHwCAmZqASxCUbTAALE4mAAAyWGiTopNlNwOTsLavklwAACZ+u+K0hBsAADVCNSIyAD0AIVkAHXbo/OJrrdyVXQDFx4clPUqegUcmIAAeChMpfrFSCQhTHS9zRictDyPZvIdmSjlQdXfHmGgeZI6b5f9hanmNZ0gAGik+AAAAJFWchF17JgAhFwC7jzVfABqCvLN/TlVghz93qk2GfR9IhUYANChkaR+MsUVcZidzjD1TWydxYBpVnE0gUC4LJyMyZT6Idx6EpEJQQhszPx9UQQyFciGnrDGQOjqGgleOk2hejJxJUwBCTTUoY2YUUE7Bkaa1NmCqc3ORQnbAMlmcjq7/YT7/yKj/lHH/U2j/t6D/U5T/hLr/AGL/okD/EnT/1/z/iAH/pdT/ck+8N3oBAAASKklEQVR4nO2de1xT5/3HH+HEOyCQ2orGaFChQGibGKccJkkhFGJoTZdQIOFWBeS6RcQb+Y21nVYnuOm0zhvVuU67n53+usyq1d7cb1TFGz/qjWlvq9vkptO1//6+zzm5yjlJuCSE9HxeL87leZ7zhOfN9/t9nvOc5wSEOHHixIkTJ06cOHHixMmVZA5bxixOVpn+6wRss3+q7ZvV8DNINL2i8/nv5K/Sv7oUtq/NZyBSwjuuQ0te5ljZ1FCqQyQAy/557mM6pFfM+Pk6i42VrH99A8VKtRFnZf+iDP9k/wJK6Jri4Uy/MX6dEZGbGjed3IdQ08ym+ImBDVaz2YiW/VKr+dWWrb8u12m2vbh9R2kZlVOyFMxtycta1RvHd+8o1xX+RouWQMGdL+7+9eZdu/csReZde5s3G8mSN7d8uHMfWsSDxCPKYW6OV6V6YylaVK7cX65Ey35r1BzYh0y/NZIikRJYmV7aB3ZVWKpFpt9pC18EVj/SagxGVPiWFr1WqkRKpHp3H1kyWUnuOKJcBMUWWTAHql77/cG3D5FvQ9hS/XiDSW4ELsb9PF65sgQgvvWHl3WLeKC3bKz+W4sKAcna0Ur9YcM7fwRWR5Tke5iVjsoIZJmO/uV/tOTbR+Do9Q0amhXYVRnYFVK9uv73ukWljfjU/Cgr8pNybfa7TqzWBjgrsoRXjsCCjPqG0jLNAYoVlQGskHnnW1rTn/JETRIl7Jp2OLAKBUgi8zaaVcn3gxUyb94AxJrlchhPZashNv2UZvXeIRhSNJeDRf1ZnrNFiRoMu26/otWc1KJlx8tQ4XGl6c/yY+p9ZMMhRL63VGmOAB88HuCsLNKH4D6sz1gdJ5BiCoGozJpg+SFDlGTf0j5RiO80LtNXjfKSps8P9ZXmhw13YwepiWNG+UpjOVbfL1YTvK7xgcJqwqgIb2vyeHZWjN1YU5iLmzz9U8MzSsCsJslmMis8hDk9ZFY/y4eNZWGlet9g2GW0nZLjANEMILGo3MXsgeroCS+QcC/sg6PDR41l0ugpYaFM6fNnTWIsHxoRNp+5/OQJLKyyX9rQdPgD26TfMringTtEd6zODB+rseGTJjAF4/HTKXvoG6TDJzOXn8JS3hWrE8h0DQxrU+7JPGX2+6dOKm6f3rVOh1k1xZ/EGY0bc/OgpDkXn+k35q7TYlbmiT5HNfys8sTN5Tqy4Td5G7cdUu04dXLvxtO7JmJWhZvztr60D+3nbdl6eh967YO95teNZEnp7g8jDp45segDY9/KAp3VHh6PV65T7dkHfleqdPRBPGPzySTl/nJE7j+i+ggK7F9q2gyIMlVnpv2MYa7e6xpuVuCD2W8cMeFoveRHWgdWBz86BRiPKPcfQeQnk01H8dkhzYuYkeqlj48Px1yoH7BCJeXZR4HP2tIyR7v6aCnCM6U0K9WZPBmcLTsFdiVTnfnLnkPDAGvYWeVJN207RL59vLFpz1Llsjfzwg9+tEWsBFaflDaKNoVbWKESOHtKq3r1+IxN0w8ePbHkzQ3fO1aq93Ny8vOUsJfnbNEhstmwRWk+UKozR+j0zfKcfCNqOIRQw3Sl6kN5DgzETO/LdxlV/3sCNbgaVAQmK7voiSoEXmc9RKIQR0ejz0jR8D218RtWI0AcK8/lr6ziZtvF91rr+yd/ZVVB2DXba63vn/yV1eyEeVYlcHY18uSvrJLnJlk1l7Mr10p3iFfJXmt9/8Sx8lz+yip5HhfbR7L8lVXcArs4u3ItLl55Lo6V56rwU1ah4aNCRzModErYfKb0+bMmMZePYC3f/3iVZAtXSX4UryZMloWMY1RIJnN6v8uHsz13HlHyV7uanZ5gVbof2ZVfxisutnuuAbISTRs6zQh0VlGCoVJUwLMSBg2VhBwrjhXHimPlVgkZGWmJDqyi0zKiF3CsGMXPIB5VhYcvkviGVejjfRXxGEMiaNYo5vSIMKbU/vtgZtqjqDy90iesQn8w1Vt6vP/xiu8MK92lVYl8zerxHwR7SwNghTId3TDdddlYdYFCIRWLAonV+HUKhSI3N1ctl8sNPIlrAPxUG6oEN1zzeRYZ8guyBIHBasIrPLty3AVrWbSnsUrqUG2gsBo7U2FvlNQdASRL9ciqwO/k9lp97oMdf8XbqovVHqG42uIpqzBUYGuVWwKWoYMHPaDYxkrh83gVuYd3BXaf8s56gqrqnXM1HrOyxZYcsQewYOjg1qrECrmjrfqc1Y0LbbA7cB5YXQwCq7nYeuGvUy8GgZlVXbjUAgbXGoSNqYMyqMqzl6txkUs1HVfPt7SehwvAICPP1zCyEhlsAUsqYmi6s/jzXEc1kTQ/FqqKtcQqNBysqq9VR1aerTwbfPnK1MtXIre1td5oa6k8F1z1cUvrtuqqj9tbq/6vJvIGZhX5bnVle2TwjbarNZ+daqm52Np6oOazs8FV55hZITHVLKp1sVmeGBe7JLRHxyrEWVZUw8Gqsj0YNmerTrdcPd8Wicm1B1ddr/kULK2yHQ7AT1vwLhhDwQc3wJRuYp+tar1WXRUb/KmD/zqPr6heSyQqoFxH7oFxMUokjqd4y+Mxb4kV1XCwqvpj65dgWVU7W65erbaz+gziWEcbBamyveNsJJSt5F2/zmuhWV0JjrwcdPVadfCNlhvVbKxwfI/HrZJStAxZjw60kpMSWGTzSEkWHaTyrajlFlTDwSr4Jq8lEmxjGzR5qp1Vx7mp4JYUq6pr5zCOKiATXNlmZQWuWXWjOrLjehtLbMdSW8eh4iw6ehWIHcLS7PSEtEQWzaMsKpcOT7kK+0VZaqu9eZvV6PBJY51YtUR2nKvBrDreCbreYmcVfPn6dfogOPhmG952GDCwP9VgVtjqLl8Peqc6uGrnFUdWj7xrKcq1u5I0hzaQApt14YdcidHMShMpcmm8coVTrJNZYXub1YRJITPDwljGolMfObWdf8Y8oqDyaZpWhYWxv8OLO301bSdqqQQ8io+fC6YxkoqJ+clpi0WxRjmvsxo1bvqUiH6O26uuuRhVdbQ7nk2OCJ8+xtW9s0iRQ3f7cnXWcsyqoi+nn1D6Mc+Q67I78IUPjun3Pc5UV3lOmY+Hup9nEEkLaFx/W7hw4bOpMRl2xVg4YS10c8dtYyWMEgqFg7s39Is5GTYPgmCUH4tZLVz4PIPS0lLT2GdnRM6s8BvS+uZL3mIV6S09wiqL58KJxAuWg/72Qyc991xqBa1U1nG8XOHMitw6LQw142eikAIbysZgJ7DtLInOJ9aSLlmNeqKvQqeEhTIkPzF/1iSm5CdGRzCWn+DICt/kuGAlo17ASZ6X8KxVTiMs9glSOa/AiZX+prBNqxEeu7Vdekuwfrtk6wVgcGzv1ttBgrbt0q23BIJ2KrENtnCyfi9V4tjtY1DcLSuGbzYZMz1sLNM3nkDbxzOlj5nCWN5xvp2aE3DBKjOZUtJcZrHfH0K9amdWAmAVZeQrRQ1fleklZfrLgs/L9GLycFQeKW0kDwuMeqnYDAa4qdEsPEaXgDORyOyelU+e41A3OHJ2VEgWR2k2m1hZ4XGaQezA6ta0PLI5ykjejDpnzP5CuF6r+VKrEQjXX9gCuNqMphzdoiihoM2ouR4l/Fqr+UL4VZn5Er7EAx/0Bass+mY3N55VihcoPcMmBUjCIDE1RDVI7LFdJCIhXBk1AgFAEACU7FxdgwAiEoSy3dJxqstGcuslAVhS0wXBV0oo8bUx+1Ke6rIHsd0HrEZ9wHOrnKdcy+DmeuscMtjVJYjZNlZBwOqkshlHccxq9+7bX7RtD8E0tzciM8XqS2P2Bb9hNX6iZaYvll35TEbjILlrVLx8G6ubVL+GWX2tNX+B3SxfZxYK2i9s0d+MwmMvgRD4XRAIhXkqNeRACbP/2BXEK+p2Ri4Rs+tp16KJSftIQhucwiG2B1lY0QOIRgTRnNy6vbHh67Km29P2Nu+acfuYVtO+9/Y0o+oGVYK8GeRPrBCOWHJXk518SnFschnbYyW22P75jPM0M9yrte0ViWbAwADvN10SHGuE08P4pOl823bY3qJyYBf0eZMfsUIKYOVqfEUjSWYRez+InVNsHzMIrPc6lE9Sw1E6UUAfQjp9IqTLWHYCh9uioWE15u9PDnzthyTWJatkDOqFpOU22d+5xK9dumBFzfT43TqZJ2O+YUr2cJ2MON8Fq6efeQb43FnoLBi9W16PY2Vl8OEccn9YfUMQcwbOik0iiQL6yTvL79y5s/A5JlWkp7M/ArNMQPgbqzmJBNE9tKxkIkW+wTInA3b1bKqj8O2zZa5hocTNswx/Y/VP/OicybAGykqSRc8k8wwF0uXgaXPT0/ro+efpuT5Xk6L+x2oOtcwg5skhYiXOoif5cgqkOBjxE5jmkDMyMqjJ0aM00iwxW9zyM1Y/pJev/GPArETxtk+XWSbbDQqx1VrwHDLbs4mMpy3PT3n5LM9h/YvVP6zLogbMKseySEYkoe951E5eNTs9oYKFVWICbYiWWyUHXPE+e+bVL1a2BcJ9xw2esYKhOx4KyeggFat4xEAy51VksJmV5YUvmfXBolph8UXLTJ+fsfrGvjSxT3j3iBW1BktseSBa4O5ZA6us62PUuGfEz+jVfsdqTgx+/ksQePvPgbCS0PGJuod22aO5lUxMr4kwFPhy7Ud/37V8kohhSvbkXUv7miL1gE3KQRL74jffrCnq9zu8LxAZA3yHV2adf8oZlEk5SqGOdYDld3Y1h4h5YmB2lWszgqFCBRLn2GH5U7yigxbjSNTj+XZ6Vm7oWNn92j7XN9JZOa/ZHjIndFqzXeCLNds+YDVmnRQ/hsnKyipQq9WDW//oKEsMNOTHZykUAcLKS9/PIDPkFygkIpEIj0sDxQd98V0WHCuOFceKY8Wx4lhxrDhWHCuOFceKYxVQrKKGToHOyqviWHkujpXn4lh5Lo6V5+JYeS7rO7xjGDR2SlgoUzpmxVg+grm8B+8PjghR/ws75DFmzQxnTP4XkcFcPoy5/MRxj7l8L3WkyCWrsPCJzKxi+lU+oFiNZvIc7FTMGWw+yFZ+zGjqH7kHBqt+ii22uxHHimPFsWIQx8pzcaw810TGFVOuxbb+yo3mj3RWA5GMyBjuX2HEiE9k+Mu/y/B7caw8lxdZaZJQ5mCuJ7seWg74ntZDDuoD3cl7rPR3F6vuPhxEBSpiMbXX3CVW1bmHEFeLyNXFHn7f+YDkPVb1a2pVKYsHUUHhGgpQIVHH7/wOQ3fJgVwBn9U0mL+NWwEr7/wpyKI1MsyqJ7krtY5O0tR1ptWh+rQ6+ERNaje0rXN2V+pisisVmkjWp6bilAVdvT1QXjWPf5cCrV9RjGuT4Svgwuy6ztS6zHr4QZrFUFUt1AqM6sguojs9s3MxHHbizyN70irS64a2afw+X9s/SM11qByzWk3UdVmcqZBY05NCVPQQ36LCxKRO2BXhzOi6rsSHqOh+Ug9Rh1YS3XX1RC2qX1VL12GyXFyfOLcnpRctIdYkpUA9xD20luhOWvEArbwvQ2tXoR64EBUVo3qie25KMVq5ZnZR4mCselhYFeMwgvhxceBUtdCGTLS6l7x7D6F/9+K24UOSWGzCDfs3tBzK4Mv+U2ypQ5NI+ZUeX1GYWLsEGGI6cPHa+2BbxMO1FCsZ9kESs4IK4Oc/95ApsXaksbqHm6BPIYjFFKte3E5VCn4dr5hm9S1CKd9SSApXyXA+WdSrIqyRx2JXKswym3i4BACtfYDQygfULjulLysZ/qNgu3ow1NGFP8Ry7LCsdgVNgByZnRVYSSYUJe2sTJjVyvtUPjKtKlpTa6ujmGYFxZYRtUvu19pY3Ue0XSEGVqsr0oqH2Ky8KwdWWHZWQCWZ35PswEq/ojeuE8er3kzcp0E4sqqeqEvuufuw6H5y0wqIV6vsrIi6uNX3ZcuIBZ0pmFVxsiOr7oSEBd4cQAy19NDVF30LXRzdcg38pethBLQS44vO6H6IuupgxAnO9d1ipPouOgM6t3pqhLSSsHf+ZH1GInSfcEU09HomiHeFvUCwGOyqKxHqIFdGd8/tlqHO6DWZ9XXwIfiDMlcXz+1Kucfye/mlZM77TMsh/iH7DOto96WKQpB3EMmnEvl8xyoRNi9LBu33DoP2TCrere4dgib4u1QwnHCvtQ9cZBYR0SlrRlTAGqDIOE/u6/RxLquI86gSTpw4ceLEiRMnTpw4ceLEiROnAer/AfnvemrukPhSAAAAAElFTkSuQmCC" alt="Project 1">
+      <h3>Optimisations in Digital-IMC</h3>
+      <p>Researching and implementing Digital In-Memory Computing (IMC) to reduce the energy bottleneck between the
+        processor and memory in Von-Neumann and Harvard architectures</p>
+      <a href="https://drive.google.com/file/u/2/d/1YOnKZwhkXUCMTiHgPozF5hJHNy9_M3v8/view?usp=sharing" target="_blank">View Project</a>
+    </div>
+    <div class="project-box">
+      <img src="data:image/jpeg;base64,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" alt="Project 2">
+      <h3>Active Noise Cancellation on FPGA</h3>
+      <p>Implemented filtering algorithms on FPGA using LMS algorithm for real-time noise suppression</p>
+      <a href="https://github.com/Pav1tr/ES-204-Active-Noise-Cancellation-Project" target="_blank">View Project</a>
+    </div>
+    <div class="project-box">
+      <img src="port.jpg" alt="Project 3">
+      <h3>Personal Portfolio Site</h3>
+      <p>A responsive portfolio site showcasing web development projects with smooth animations. Built with HTML, CSS, and JavaScript, featuring dynamic project showcases.</p>
+      <a href="https://chinmayp995.github.io" target="_blank">View Project</a>
+    </div>
+  </div>
+</section>
+
+<!-- Skills -->
+<section id="skills-expertise" class="section">
+  <div class="skills-certifications-container">
+    <!-- Left Column: Skills -->
+    <div class="skills-column">
+      <h2>Skills</h2>
+      <div class="skill">
+        <div class="skill-name">HTML, CSS, JavaScript</div>
+        <div class="skill-bar">
+          <div class="skill-level" style="width: 90%;">90%</div>
+        </div>
+      </div>
+      <div class="skill">
+        <div class="skill-name">Machine learning</div>
+        <div class="skill-bar">
+          <div class="skill-level" style="width: 80%;">80%</div>
+        </div>
+      </div>
+      <div class="skill">
+        <div class="skill-name">Digital VLSI design</div>
+        <div class="skill-bar">
+          <div class="skill-level" style="width: 80%;">80%</div>
+        </div>
+      </div>
+      <div class="skill">
+        <div class="skill-name">Finance</div>
+        <div class="skill-bar">
+          <div class="skill-level" style="width: 75%;">75%</div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Right Column: Certifications -->
+    <div class="certifications-column">
+      <h2>Certifications & Courses</h2>
+      <ul class="certification-list">
+        <li>
+          <strong>Btech EEE with Minors in CSE</strong> - IITGN
+        </li>
+        <li>
+          <strong>Data Structures and Algorithms</strong> - IITGN
+        </li>
+        <li>
+          <strong>Frontend Development Bootcamp</strong> - FreeCodeCamp
+        </li>
+        <li>
+          <strong>Machine Learning Specialization</strong> - Stanford University
+        </li>
+        <li>
+          <strong>Complete Python BootCamp</strong> - Udemy
+        </li>
+        <li>
+          <strong>Pre-MBA Statistics</strong> - IIM Ahmedabad
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="testimonials" class="section">
+  <h2>Favorite Quotes</h2>
+  <div class="testimonials-container">
+    <!-- Testimonial 1 -->
+    <div class="testimonial-card">
+      <p class="testimonial-quote">“If you don’t fight for what you want, then don’t cry for what you lost.
+        Likewise,
+        Nothing depends on luck, everything depends on work,
+        Because Even Luck has to work.”</p>
+      <p class="testimonial-author">- Lord Shree Krishna, Shrimad Bhagwat Geeta</p>
+    </div>
+    <!-- Testimonial 2 -->
+    <div class="testimonial-card">
+      <p class="testimonial-quote">"Don't let the noise of others' opinions drown out your own inner voice"</p>
+      <p class="testimonial-author">- Steve Jobs, CEO Apple Inc.</p>
+    </div>
+    <!-- Testimonial 3 -->
+    <div class="testimonial-card">
+      <p class="testimonial-quote">"The one who loves his mother language and culture, can love any other language and culture."</p>
+      <p class="testimonial-author">- P.L. Deshpande</p>
+    </div>
+    <!-- Social Proof Links -->
+    <div class="social-proof">
+      <p>Check more recommendations on:</p>
+      <a href="https://www.linkedin.com/in/chinmay-pendse96" target="_blank" class="social-link">
+        <i class="devicon-linkedin-plain colored"></i> LinkedIn
+      </a>
+    </div>
+  </div>
+</section>
+  
+<!-- Blogs and Photos -->
+<section id="buttons" class="section">
+  <div class="button-container">
+    <a href="blogs_photos.html" class="btn">
+      <span>Click here to check out my Blogs and Photographs</span>
+    </a>
+  </div>
+</section>
+
+<!-- Contact info -->
+<section id="contact" class="section contact-section">
+  <h2>Contact Me</h2>
+  <div class="contact-links">
+    <!-- GitHub -->
+    <a href="https://github.com/chinmayp995" target="_blank" class="contact-link">
+      <i class="devicon-github-original contact-icon"></i> GitHub
+    </a>
+    <!-- LinkedIn -->
+    <a href="https://www.linkedin.com/in/chinmay-pendse96" target="_blank" class="contact-link">
+      <i class="devicon-linkedin-plain contact-icon"></i> LinkedIn
+    </a>
+    
+    <!-- Instagram -->
+    <a href="https://www.instagram.com/pendse_bhau" target="_blank" class="contact-link">
+      <i class="devicon-instagram-plain contact-icon"></i> Instagram
+    </a>
+  </div>
+  <!-- Drop a Mail Button -->
+  <div class="contact-button">
+    <a href="contact.html" class="btn">Drop a Mail</a>
+  </div>
+</section>
+  
+
+<!-- Footer -->
+<footer>
+  <p>Made with ❤️ by Aditya, Chinmay & Paras</p>
+</footer>
+
+<script src="script1.js"></script>
+</body>
+</html>
