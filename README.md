@@ -14,12 +14,11 @@ Edit **[`assets/js/content.js`](assets/js/content.js)**. Search for `TODO` to fi
 | Big intro screen (greeting, typing roles, photo) | `hero` |
 | Big numbers strip | `stats` |
 | About text and quick facts | `about` |
-| Work / education timeline | `experience` |
+| Research & publications | `research` |
 | Projects (`featured: true` shows on home page) | `projects` |
 | Skills and certifications | `skills`, `certifications` |
 | Music / theatre / writing cards | `passions` |
 | Photos | `gallery` |
-| Blog posts and poems (open at `writing.html?p=<slug>`) | `posts` |
 | Rotating quotes | `quotes` |
 | Contact text and form | `contact`, `socials` |
 
@@ -31,9 +30,8 @@ Edit **[`assets/js/content.js`](assets/js/content.js)**. Search for `TODO` to fi
 ## Structure
 
 ```
-index.html        Home: hero, about, experience, work, skills, beyond, writing, gallery, quotes, contact
+index.html        Home: hero, about, research, projects, skills, beyond, gallery, quotes, contact
 projects.html     All projects, with category filters
-writing.html      Blog list + individual posts
 gallery.html      Full photo gallery with lightbox
 assets/
   css/style.css   All styles (light/dark themes)
@@ -42,7 +40,7 @@ assets/
   images/
 ```
 
-`Experience.html`, `contact.html` and `blogs_photos.html` now redirect to the new pages, so old links still work.
+`Experience.html`, `contact.html` and `blogs_photos.html` redirect to the new pages, so old links still work.
 
 ## Preview locally
 

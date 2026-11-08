@@ -52,7 +52,6 @@
     { id: "research", label: "Research", href: `${home}#research` },
     { id: "projects", label: "Projects", href: "projects.html", homeHref: "#work" },
     { id: "beyond", label: "Beyond", href: `${home}#beyond` },
-    { id: "writing", label: "Writing", href: "writing.html" },
     { id: "gallery", label: "Gallery", href: "gallery.html" },
     { id: "contact", label: "Contact", href: `${home}#contact` },
   ];
@@ -94,7 +93,7 @@
     }));
 
     // Mark current page in nav
-    const pageNav = { projects: "projects", writing: "writing", gallery: "gallery" }[page];
+    const pageNav = { projects: "projects", gallery: "gallery" }[page];
     if (pageNav) $(`[data-nav="${pageNav}"]`, el)?.classList.add("active");
 
     // Header: solid after scroll, hide when scrolling down
@@ -163,20 +162,6 @@
       <img src="${g.src}" alt="${g.caption || ""}" loading="lazy">
       ${g.caption || g.place ? `<figcaption><span>${g.caption || ""}</span><span class="mono">${g.place || ""}</span></figcaption>` : ""}
     </figure>`).join("");
-
-  const fmtDate = (d) => {
-    const dt = new Date(d);
-    return isNaN(dt) ? d || "" : dt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-  };
-  const postsSorted = () => (S.posts || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-  const postRow = (p) => `
-    <li class="post-row reveal">
-      <a href="writing.html?p=${encodeURIComponent(p.slug)}">
-        <span class="mono post-date">${fmtDate(p.date)}</span>
-        <div><h3 class="post-title">${p.title}</h3>${p.excerpt ? `<p class="post-excerpt">${p.excerpt}</p>` : ""}</div>
-        <span class="mono post-tags">${(p.tags || []).join(" · ")}</span>
-      </a>
-    </li>`;
 
   /* ---------------- Home sections ---------------- */
   function renderHome() {
@@ -318,13 +303,6 @@
         </article>`).join("")}</div>
     </div>` : "";
 
-    // WRITING (latest 3)
-    const posts = postsSorted().slice(0, 3);
-    $("#writing").innerHTML = posts.length ? `<div class="wrap">
-      ${sectionHead(next(), "Writing", "Notes, essays &amp; <em>poems</em>", `<a class="link-arrow" href="writing.html">All writing ${icon("arrow")}</a>`)}
-      <ul class="posts">${posts.map(postRow).join("")}</ul>
-    </div>` : "";
-
     // GALLERY preview
     const G = S.gallery || [];
     $("#gallery").innerHTML = G.length ? `<div class="wrap">
@@ -407,37 +385,6 @@
       $$(".filter").forEach((x) => x.classList.toggle("active", x === b));
       $$(".project", grid).forEach((card) => {
         card.style.display = b.dataset.cat === "All" || card.dataset.cat === b.dataset.cat ? "" : "none";
-      });
-    }));
-  }
-
-  function renderWritingPage() {
-    const slug = new URLSearchParams(location.search).get("p");
-    const post = slug && (S.posts || []).find((p) => p.slug === slug);
-    if (post) {
-      document.title = `${post.title} — ${fullName}`;
-      $("#page-head").remove();
-      $("#writing-main").innerHTML = `<article class="article">
-        <header class="article-head">
-          <div class="mono crumbs"><a href="writing.html">← All writing</a></div>
-          <span class="mono muted">${fmtDate(post.date)}${post.tags?.length ? " · " + post.tags.join(" · ") : ""}</span>
-          <h1 class="article-title">${post.title}</h1>
-          ${post.excerpt ? `<p class="muted">${post.excerpt}</p>` : ""}
-        </header>
-        ${post.cover ? `<img class="article-cover" src="${post.cover}" alt="">` : ""}
-        <div class="article-body">${post.body || ""}</div>
-      </article>`;
-      $("#writing-main").parentElement.style.paddingTop = "140px";
-      return;
-    }
-    const posts = postsSorted();
-    const tags = ["All", ...new Set(posts.flatMap((p) => p.tags || []))];
-    $("#filters").innerHTML = tags.map((t, i) => `<button type="button" class="filter ${i === 0 ? "active" : ""}" data-tag="${t}">${t}</button>`).join("");
-    $("#writing-main").innerHTML = posts.length ? `<ul class="posts">${posts.map(postRow).join("")}</ul>` : `<p class="empty">No posts yet.</p>`;
-    $$(".filter").forEach((b) => b.addEventListener("click", () => {
-      $$(".filter").forEach((x) => x.classList.toggle("active", x === b));
-      $$(".post-row").forEach((row, i) => {
-        row.style.display = b.dataset.tag === "All" || (posts[i].tags || []).includes(b.dataset.tag) ? "" : "none";
       });
     }));
   }
@@ -563,7 +510,6 @@
   renderHeader();
   if (isHome) renderHome();
   if (page === "projects") renderProjectsPage();
-  if (page === "writing") renderWritingPage();
   if (page === "gallery") renderGalleryPage();
   renderFooter();
   setupLightbox();

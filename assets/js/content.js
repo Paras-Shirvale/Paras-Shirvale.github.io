@@ -161,16 +161,6 @@ window.SITE = {
       links: { code: "", live: "" },                          // TODO
       featured: false,
     },
-    {
-      title: "Personal Portfolio",
-      year: "2025",
-      category: "Web",
-      tags: ["HTML", "CSS", "JavaScript"],
-      summary: "This website — a content-driven portfolio with light/dark themes, a writing archive and a photo gallery.",
-      image: "assets/images/port.jpg",
-      links: { code: "https://github.com/Paras-Shirvale/Paras-Shirvale.github.io", live: "" },
-      featured: false,
-    },
   ],
 
   /* ---------- Skills (grouped) ---------- */
@@ -212,7 +202,7 @@ window.SITE = {
       title: "Poet · Writer",
       text: "Poetry and prose on Indian culture, history, philosophy — and the emotions that make us human.",
       image: "assets/images/photo3.jpeg",
-      link: { label: "Read my writing", url: "writing.html" },
+      link: null,
     },
   ],
 
@@ -225,49 +215,11 @@ window.SITE = {
     { src: "assets/images/blog.jpg", caption: "TODO: caption", place: "" },
   ],
 
-  /* ---------- Writing / blog ----------
-     Each post opens at  writing.html?p=<slug>
-     body: HTML string — use <p>, <h2>, <blockquote>, <img>, etc.        */
-  posts: [
-    {
-      slug: "learning-web-development",
-      title: "How I Learned Web Development",
-      date: "2025-01-10",
-      tags: ["Tech", "Journey"],
-      excerpt: "My journey into the world of web development, with tips for beginners.",
-      cover: "assets/images/port.jpg",
-      body: `
-        <p>TODO: write your post here.</p>
-        <h2>A sub-heading</h2>
-        <p>More paragraphs…</p>
-        <blockquote>A line worth highlighting.</blockquote>
-      `,
-    },
-    {
-      slug: "lessons-from-ml-models",
-      title: "5 Lessons from Building ML Models",
-      date: "2024-11-02",
-      tags: ["Machine Learning"],
-      excerpt: "Insights and challenges from developing machine learning models.",
-      cover: "assets/images/ml_dashboard.png",
-      body: `<p>TODO</p>`,
-    },
-    {
-      slug: "a-poem",
-      title: "TODO: Title of a poem",
-      date: "2024-08-15",
-      tags: ["Poetry"],
-      excerpt: "TODO: first line of the poem…",
-      cover: "",
-      body: `<p class="poem">TODO: line one<br>line two<br>line three</p>`,
-    },
-  ],
-
   /* ---------- Favourite quotes (rotate automatically) ---------- */
   quotes: [
     { text: "If you don't fight for what you want, then don't cry for what you lost. Nothing depends on luck, everything depends on work — because even luck has to work.", author: "Lord Shree Krishna", source: "Shrimad Bhagavad Gita" },
     { text: "Don't let the noise of others' opinions drown out your own inner voice.", author: "Steve Jobs", source: "" },
-    { text: "The one who loves his mother language and culture can love any other language and culture.", author: "P. L. Deshpande", source: "" },
+    { text: "We become what we think about most of the time — and that's the strangest secret.", author: "Earl Nightingale", source: "The Strangest Secret" },
   ],
 
   /* ---------- Contact ----------
