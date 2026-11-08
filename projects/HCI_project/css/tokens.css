@@ -1,0 +1,140 @@
+/* ============================================================
+   tokens.css — the whole palette and type scale lives here.
+   Change a value here and it changes everywhere.
+   Light values sit on :root. The two blocks below restate them
+   for dark, so both the OS setting and the in-app toggle work.
+   ============================================================ */
+
+:root{
+  /* A sentinel the page checks for. If this variable is missing at
+     load, the stylesheets did not arrive and index.html says so
+     instead of rendering an unstyled mess. */
+  --spark-css:1;
+
+  /* surfaces — warm paper, not grey */
+  --bg:#F6F1E7;
+  --surface:#FFFDF8;
+  --surface-2:#F0EADD;
+  --line:#E2D9C8;
+
+  /* ink */
+  --ink:#231F1A;
+  --ink-2:#6A6054;
+
+  /* subject colours: reading, writing, homework */
+  --violet:#5B4BD6;   --violet-soft:#EBE8FF;
+  --rose:#D6246E;     --rose-soft:#FFE7F0;
+  --moss:#23835C;     --moss-soft:#E2F3EB;
+
+  /* attention + reward */
+  --amber:#E09200;    --amber-soft:#FFF2D6;
+  --danger:#C62B35;
+  --focus:#5B4BD6;
+
+  /* on-colour text (flips in dark so contrast holds) */
+  --on-violet:#FFFFFF;
+  --on-rose:#FFFFFF;
+  --on-moss:#FFFFFF;
+  --on-danger:#FFFFFF;
+  --on-amber:#2A1F00;
+
+  /* shape */
+  --r:14px;
+  --r-lg:20px;
+  --shadow:0 1px 2px rgba(60,45,20,.06), 0 6px 20px rgba(60,45,20,.07);
+  --shadow-lg:0 14px 48px rgba(60,45,20,.22);
+
+  /* ── type ────────────────────────────────────────────
+     OpenDyslexic throughout. The heavier bottoms and the
+     distinct shapes for b/d/p/q are the point: they give each
+     letter a unique silhouette, which is what makes mirror
+     confusions harder to make. Bundled in /fonts so it works
+     with no network. */
+  --font-ui:'OpenDyslexic', 'Nunito', ui-rounded, -apple-system, system-ui, sans-serif;
+  --font-read:'OpenDyslexic', 'Nunito', system-ui, sans-serif;
+
+  /* ── reading comfort, set from Settings ──────────────
+     These drive every piece of text in the app, not just the
+     passage, so moving a slider changes what the child sees
+     wherever they are. */
+  --read-size:18px;      /* passage text */
+  --read-space:0.4px;    /* letter spacing */
+  --read-word:1px;       /* word spacing   */
+  --read-lead:1.95;      /* line height    */
+  --ui-scale:1;          /* scales the rest of the interface with it */
+
+  color-scheme:light;
+}
+
+/* The bundled face. Only the three weights the app uses. */
+@font-face{
+  font-family:'OpenDyslexic';
+  src:url('../fonts/OpenDyslexic-Regular.woff2') format('woff2');
+  font-weight:400;font-style:normal;font-display:swap;
+}
+@font-face{
+  font-family:'OpenDyslexic';
+  src:url('../fonts/OpenDyslexic-Bold.woff2') format('woff2');
+  font-weight:700;font-style:normal;font-display:swap;
+}
+@font-face{
+  font-family:'OpenDyslexic';
+  src:url('../fonts/OpenDyslexic-Italic.woff2') format('woff2');
+  font-weight:400;font-style:italic;font-display:swap;
+}
+
+/* A plain face, for anyone who finds OpenDyslexic harder rather
+   than easier — which does happen, and is worth allowing for.
+   System fonts only, so this needs no network either. */
+:root[data-font="plain"]{
+  --font-ui:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-read:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#191714;
+    --surface:#221F1B;
+    --surface-2:#2B2722;
+    --line:#3A352E;
+    --ink:#F2EDE4;
+    --ink-2:#A89E90;
+    --violet:#A79BFF;  --violet-soft:#2E2A4D;
+    --rose:#FF8FBB;    --rose-soft:#432433;
+    --moss:#6FD3A8;    --moss-soft:#1E3A30;
+    --amber:#F5BE4A;   --amber-soft:#3D3115;
+    --danger:#FF8A84;
+    --focus:#A79BFF;
+    --on-violet:#1A1630;
+    --on-rose:#2C0F1E;
+    --on-moss:#0D2219;
+    --on-danger:#2E0B0B;
+    --on-amber:#2A1F00;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
+    --shadow-lg:0 14px 48px rgba(0,0,0,.5);
+    color-scheme:dark;
+  }
+}
+
+:root[data-theme="dark"]{
+  --bg:#191714;
+  --surface:#221F1B;
+  --surface-2:#2B2722;
+  --line:#3A352E;
+  --ink:#F2EDE4;
+  --ink-2:#A89E90;
+  --violet:#A79BFF;  --violet-soft:#2E2A4D;
+  --rose:#FF8FBB;    --rose-soft:#432433;
+  --moss:#6FD3A8;    --moss-soft:#1E3A30;
+  --amber:#F5BE4A;   --amber-soft:#3D3115;
+  --danger:#FF8A84;
+  --focus:#A79BFF;
+  --on-violet:#1A1630;
+  --on-rose:#2C0F1E;
+  --on-moss:#0D2219;
+  --on-danger:#2E0B0B;
+  --on-amber:#2A1F00;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
+  --shadow-lg:0 14px 48px rgba(0,0,0,.5);
+  color-scheme:dark;
+}

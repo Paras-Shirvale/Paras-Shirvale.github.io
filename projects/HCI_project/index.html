@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spark — your learning space</title>
+<meta name="description" content="A reading companion for children with dyslexia. Listens while you read, learns what kind of help works for you, and builds practice from the words you found hard.">
+
+<!-- OpenDyslexic ships with the project in /fonts, so the site works
+     with no network at all. Nothing else is loaded from outside. -->
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23E09200'/%3E%3Cpath d='M12 4l1.8 5.2L19 11l-4.4 1.8L12 18l-1.8-5.2L5.2 11l5-1.5z' fill='%232A1F00'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<!-- ══ TOP BAR ══════════════════════════════════════════════════ -->
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#home" data-go="home">
+      <span class="brand-mark"><span class="i" data-icon="spark" data-icon-size="18"></span></span>
+      <span class="brand-text">Spark<small>your learning space</small></span>
+    </a>
+
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <button class="tab" data-go="home" aria-current="page"><span class="i tab-ico" data-icon="home" data-icon-size="20"></span><span class="tab-txt">Home</span></button>
+      <button class="tab" data-go="read"><span class="i tab-ico" data-icon="book" data-icon-size="20"></span><span class="tab-txt">Read</span></button>
+      <button class="tab" data-go="write"><span class="i tab-ico" data-icon="pencil" data-icon-size="20"></span><span class="tab-txt">Write</span></button>
+      <button class="tab" data-go="homework"><span class="i tab-ico" data-icon="stack" data-icon-size="20"></span><span class="tab-txt">Homework</span></button>
+      <button class="tab" data-go="progress"><span class="i tab-ico" data-icon="trophy" data-icon-size="20"></span><span class="tab-txt">Progress</span></button>
+    </nav>
+
+    <div class="topbar-end">
+      <span class="sparks-chip" title="Sparks you have earned"><span class="i" data-icon="spark" data-icon-size="30"></span>&nbsp;<span id="sparkCount">0</span></span>
+      <button class="icon-sq" id="btnMenu" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><span class="i" data-icon="menu" data-icon-size="18"></span></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ══ HOME ═════════════════════════════════════════════════════ -->
+<section class="view" id="v-home">
+  <div class="hero">
+    <p class="eyebrow">A little practice, your own pace</p>
+    <h1 id="hiName">Hello</h1>
+    <p class="lede">What would you like to do today?</p>
+  </div>
+
+  <div class="noticed" id="noticedBox">
+    <span class="noticed-ico"><span class="i" data-icon="spark" data-icon-size="18"></span></span>
+    <p id="noticed">Read something aloud and Spark will start learning what helps you most.</p>
+  </div>
+
+  <div class="doors">
+    <button class="door door-read" data-go="read">
+      <span class="door-ico" data-pic="book"></span>
+      <h3>Read</h3>
+      <p>A story in small steps, with help whenever you want it</p>
+      <span class="door-go">Start reading →</span>
+    </button>
+    <button class="door door-write" data-go="write">
+      <span class="door-ico" data-pic="flower"></span>
+      <h3>Write</h3>
+      <p>Say it out loud, and Spark helps you shape the sentence</p>
+      <span class="door-go">Start writing →</span>
+    </button>
+    <button class="door door-hw" data-go="homework">
+      <span class="door-ico" data-pic="star"></span>
+      <h3>Homework</h3>
+      <p>Practise your tricky words, or open what your teacher sent</p>
+      <span class="door-go">Open homework →</span>
+    </button>
+  </div>
+
+  <div class="home-grid">
+    <section class="card">
+      <h2>Your picture</h2>
+      <p class="sub">Every 25 sparks colours in one more part.</p>
+      <div class="scene-wrap" id="sceneWrap"></div>
+      <div class="meter"><i id="sceneMeter"></i></div>
+      <div class="pieces" id="scenePieces"></div>
+    </section>
+
+    <section class="card">
+      <h2>Today</h2>
+      <p class="sub">Three small things. Any order.</p>
+      <div class="today" id="todayList"></div>
+    </section>
+  </div>
+</section>
+
+<!-- ══ READ ═════════════════════════════════════════════════════ -->
+<section class="view" id="v-read" hidden>
+
+  <!-- library -->
+  <div id="readLibrary">
+    <h1>Choose something to read</h1>
+    <p class="lede">Three steps each — read it, show you understood it, then put it back in order.</p>
+
+    <!-- the letter check: short, targeted, done first -->
+    <section class="screening-block">
+      <div class="screening-head">
+        <div>
+          <h2>Letter check</h2>
+          <p class="sub">Six short sets, about five minutes. Each one is full of
+            letters that are easy to mix up, so Spark can find out early which
+            ones catch you.</p>
+        </div>
+        <div class="screening-score" id="screenScore"></div>
+      </div>
+      <div class="lib lib-screening" id="screenList"></div>
+      <div id="screenReport"></div>
+    </section>
+
+    <h2 class="lib-heading">Stories and other reading</h2>
+    <div class="lib" id="libList"></div>
+  </div>
+
+  <!-- one passage -->
+  <div id="readWork" hidden>
+    <button class="btn btn-sm" id="backToLib">← All readings</button>
+
+    <div class="work-head">
+      <h1 id="pTitle">—</h1>
+      <p class="sub" id="pMeta"></p>
+    </div>
+
+    <div class="steps" role="tablist" aria-label="Steps">
+      <button class="step" role="tab" data-step="read"       aria-selected="true"><span class="step-n">1</span>Read</button>
+      <button class="step" role="tab" data-step="understand" aria-selected="false"><span class="step-n">2</span>Understand</button>
+      <button class="step" role="tab" data-step="order"      aria-selected="false"><span class="step-n">3</span>Order</button>
+    </div>
+
+    <div class="reader-grid">
+      <div class="reader-main">
+
+        <!-- step 1 -->
+        <div id="stepRead">
+          <div class="voice-warn" id="voiceWarn" hidden>
+            <span class="vw-ico"><span class="i" data-icon="mic" data-icon-size="20"></span></span>
+            <p data-msg>This sounds like a different person reading.</p>
+            <button class="btn btn-sm" data-voice-accept>It's still me</button>
+            <button class="icon-sq" data-voice-dismiss aria-label="Dismiss">✕</button>
+          </div>
+          <div class="toolbar">
+            <button class="btn btn-primary" id="btnMic"><span class="i" data-icon="mic" data-icon-size="18"></span> Read to Spark</button>
+            <button class="btn" id="btnListen"><span class="i" data-icon="speaker" data-icon-size="18"></span> Listen first</button>
+            <button class="btn" id="btnFinishRead">Done reading ✓</button>
+          </div>
+          <div class="passage">
+            <div id="ruler" aria-hidden="true"></div>
+            <div class="prose" id="prose"></div>
+          </div>
+          <p class="hint" id="micHint"></p>
+        </div>
+
+        <!-- step 2 -->
+        <div id="stepUnderstand" hidden></div>
+
+        <!-- step 3 -->
+        <div id="stepOrder" hidden>
+          <p class="sub">Put the sentences back in the order they happened.</p>
+          <div class="seq" id="seqList"></div>
+          <button class="btn btn-primary" id="btnCheckSeq">Check my order</button>
+          <div id="seqMsg"></div>
+        </div>
+      </div>
+
+      <!-- help rail -->
+      <aside class="rail">
+        <div class="spark-say">
+          <span class="spark-face"><span class="i" data-icon="spark" data-icon-size="18"></span></span>
+          <span id="railSay">Read at your own speed. Tap any word you want help with.</span>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat"><b id="statWpm">—</b><span>words / min</span></div>
+          <div class="stat"><b id="statWords">0</b><span>words read</span></div>
+        </div>
+
+        <div class="tools" id="railTools">
+          <button class="tool" data-tool="picture"><i><span class="i" data-icon="picture" data-icon-size="18"></span></i><span>Picture</span></button>
+          <button class="tool" data-tool="sound"><i><span class="i" data-icon="speaker" data-icon-size="18"></span></i><span>Hear it</span></button>
+          <button class="tool" data-tool="parts"><i><span class="i" data-icon="parts" data-icon-size="18"></span></i><span>Parts</span></button>
+          <button class="tool" data-tool="explain"><i><span class="i" data-icon="idea" data-icon-size="18"></span></i><span>Explain</span></button>
+          <button class="tool tool-wide" data-tool="ask"><i><span class="i" data-icon="spark" data-icon-size="18"></span></i><span>Ask Spark about this</span></button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ══ WRITE ════════════════════════════════════════════════════ -->
+<section class="view" id="v-write" hidden>
+  <h1>Write something</h1>
+  <p class="lede">Speak it or type it. Spark helps you build it piece by piece.</p>
+
+  <div class="write-grid">
+    <div>
+      <div class="prompt-pic" id="writePic"><span class="i" data-icon="picture" data-icon-size="18"></span></div>
+      <p class="prompt-q" id="writeQ">What is happening in this picture?</p>
+      <div class="toolbar">
+        <button class="btn btn-sm" id="btnNewPrompt"><span class="i" data-icon="refresh" data-icon-size="18"></span> Different picture</button>
+        <button class="btn btn-sm" id="btnHearPrompt"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear the question</button>
+      </div>
+
+      <p class="eyebrow mt">Build it in three pieces</p>
+      <p class="sub">Have a go on your own first. Tap <b>Stuck?</b> only if you need it —
+        Spark gives a little more each time.</p>
+
+      <div class="field" data-field="who">
+        <label for="fWho">Who or what?
+          <button class="icon-xs" data-say="Who or what is in the picture?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+        </label>
+        <div class="field-row">
+          <input class="inp" id="fWho" autocomplete="off">
+          <button class="mic" data-micfor="fWho" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
+          <button class="btn btn-sm stuck" data-stuck="who">Stuck?</button>
+        </div>
+        <div class="field-help" data-help="who" hidden></div>
+      </div>
+
+      <div class="field" data-field="what">
+        <label for="fWhat">What is happening?
+          <button class="icon-xs" data-say="What is happening?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+        </label>
+        <div class="field-row">
+          <input class="inp" id="fWhat" autocomplete="off">
+          <button class="mic" data-micfor="fWhat" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
+          <button class="btn btn-sm stuck" data-stuck="what">Stuck?</button>
+        </div>
+        <div class="field-help" data-help="what" hidden></div>
+      </div>
+
+      <div class="field" data-field="where">
+        <label for="fWhere">Where?
+          <button class="icon-xs" data-say="Where is it happening?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+        </label>
+        <div class="field-row">
+          <input class="inp" id="fWhere" autocomplete="off">
+          <button class="mic" data-micfor="fWhere" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
+          <button class="btn btn-sm stuck" data-stuck="where">Stuck?</button>
+        </div>
+        <div class="field-help" data-help="where" hidden></div>
+      </div>
+    </div>
+
+    <aside class="write-side">
+      <section class="card">
+        <h2>My sentence</h2>
+        <div class="sentence-out" id="sentOut">Your sentence will appear here.</div>
+        <div class="toolbar">
+          <button class="btn btn-sm" id="btnSaySent"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear it</button>
+          <button class="btn btn-sm" id="btnTidy">✓ Check my spelling</button>
+          <button class="btn btn-sm" id="btnClearSent">Clear</button>
+        </div>
+        <div id="fixList"></div>
+        <button class="btn btn-rose btn-block" id="btnSaveSent">Save it ✓</button>
+      </section>
+
+      <section class="card">
+        <h2>Things you've written</h2>
+        <div id="savedList"></div>
+      </section>
+    </aside>
+  </div>
+</section>
+
+<!-- ══ HOMEWORK ═════════════════════════════════════════════════ -->
+<section class="view" id="v-homework" hidden>
+  <h1>Homework</h1>
+  <p class="lede">Practice Spark built from your own reading, and anything your teacher sent.</p>
+
+  <div class="hw-tabs" role="tablist">
+    <button class="hw-tab" role="tab" data-hw="spark"   aria-selected="true"><span class="i" data-icon="spark" data-icon-size="18"></span> From Spark</button>
+    <button class="hw-tab" role="tab" data-hw="teacher" aria-selected="false"><span class="i" data-icon="clip" data-icon-size="18"></span> From my teacher</button>
+  </div>
+
+  <div id="hwSpark"></div>
+
+  <div id="hwTeacher" hidden>
+    <div class="drop" id="dropZone">
+      <span class="drop-ico"><span class="i" data-icon="clip" data-icon-size="18"></span></span>
+      <div class="drop-text">
+        <b>Add what your teacher sent</b>
+        <p class="sub">Drop a .txt file here, choose one, or paste the text.</p>
+      </div>
+      <input type="file" id="fileIn" accept=".txt,.md,text/plain,text/markdown" hidden>
+      <button class="btn btn-sm" id="btnPick">Choose file</button>
+      <button class="btn btn-sm" id="btnPaste">Paste text</button>
+    </div>
+    <div id="teacherList"></div>
+  </div>
+</section>
+
+<!-- ══ PROGRESS ═════════════════════════════════════════════════ -->
+<section class="view" id="v-progress" hidden>
+  <h1>Your progress</h1>
+  <p class="lede">Everything here is measured from your own reading. Nothing is made up.</p>
+
+  <div class="kpis">
+    <div class="kpi"><b id="kSparks">0</b><span>sparks</span></div>
+    <div class="kpi"><b id="kSessions">0</b><span>readings done</span></div>
+    <div class="kpi"><b id="kWpm">—</b><span>best words/min</span></div>
+    <div class="kpi"><b id="kStreak">0</b><span>day streak</span></div>
+  </div>
+
+  <!-- the drill-down: every difficulty, in full -->
+  <div id="reviewPanel" hidden>
+    <button class="btn btn-sm" id="btnReviewBack">← Back to progress</button>
+    <h2 style="margin:16px 0 4px">Every difficulty, in full</h2>
+    <p class="sub">Each moment Spark judged to be a real difficulty — the word,
+      the sentence it was in, and what happened.</p>
+    <div class="review-filters" id="reviewFilters"></div>
+    <div id="reviewList"></div>
+  </div>
+
+  <div class="prog-grid" id="progGrid">
+    <section class="card">
+      <h2>Reading speed</h2>
+      <p class="sub">Words per minute, each time you read aloud.</p>
+      <div class="chart-box" id="chartBox"></div>
+    </section>
+
+    <section class="card">
+      <h2>What helps you most</h2>
+      <p class="sub">How often each kind of help got you moving again.</p>
+      <div id="cueBars"></div>
+      <p class="note" id="cueNote"></p>
+    </section>
+
+    <section class="card">
+      <h2>Why you stopped</h2>
+      <p class="sub">Everyone pauses while reading. Spark separates the ordinary
+        pauses from the ones that mean a word was hard — only the second kind
+        becomes homework.</p>
+      <div id="pauseSplit"></div>
+      <button class="btn btn-sm btn-block" id="btnReview" style="margin-top:14px">
+        See every one →
+      </button>
+    </section>
+
+    <section class="card">
+      <h2>Letters getting mixed up</h2>
+      <p class="sub">Pairs Spark saw you swap while reading aloud.</p>
+      <div id="letterList"></div>
+    </section>
+
+    <section class="card">
+      <h2>Words to practise</h2>
+      <p class="sub">Words you paused on more than once. Tap one to hear its parts.</p>
+      <div id="trickyList"></div>
+    </section>
+
+    <section class="card">
+      <h2>Your readings</h2>
+      <p class="sub">The last few times you read aloud.</p>
+      <div id="sessionList"></div>
+    </section>
+  </div>
+</section>
+
+</main>
+
+<!-- ══ WORD CARD ════════════════════════════════════════════════ -->
+<div id="wordcard" role="dialog" aria-label="Word help">
+  <button class="wc-x" id="wcClose" aria-label="Close">✕</button>
+  <div class="wc-word" id="wcWord"></div>
+  <div class="wc-phon" id="wcPhon"></div>
+  <div class="wc-syls" id="wcSyls"></div>
+  <div class="wc-pic"  id="wcPic"></div>
+  <div class="wc-mean" id="wcMean"></div>
+  <div class="wc-acts">
+    <button class="btn btn-sm" id="wcSay"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear it</button>
+    <button class="btn btn-sm" id="wcSlow"><span class="i" data-icon="parts" data-icon-size="18"></span> Bit by bit</button>
+  </div>
+</div>
+<div id="hovertip" aria-hidden="true"></div>
+
+<!-- ══ CHAT ═════════════════════════════════════════════════════ -->
+<button id="fab" aria-label="Ask Spark"><span class="i" data-icon="spark" data-icon-size="18"></span> <span class="fab-txt">Ask Spark</span></button>
+
+<div id="chat" role="dialog" aria-label="Ask Spark">
+  <div class="chat-top">
+    <span class="chat-face"><span class="i" data-icon="spark" data-icon-size="18"></span></span>
+    <div class="chat-id"><b>Spark</b><small id="chatCtx">here to help</small></div>
+    <button class="icon-sq" id="chatClose" aria-label="Close">✕</button>
+  </div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chips" id="chatChips"></div>
+  <div class="chat-foot">
+    <input class="inp" id="chatIn" placeholder="Ask me anything…" autocomplete="off">
+    <button class="mic chat-mic" id="chatMic" aria-label="Speak"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
+    <button class="send" id="chatSend" aria-label="Send"><span class="i" data-icon="send" data-icon-size="18"></span></button>
+  </div>
+</div>
+
+<!-- ══ SHEET + TOAST ════════════════════════════════════════════ -->
+<div class="scrim" id="scrim"><div class="sheet" id="sheet"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ══ SETUP CHECK ══════════════════════════════════════════════
+     If the stylesheets or scripts did not load, the page would just
+     look broken and give no clue why. Almost always the cause is
+     opening index.html on its own — from inside the zip, or without
+     the css/ and js/ folders beside it. So check, and explain. -->
+<div id="setupProblem" hidden>
+  <div class="sp-card">
+    <h1>Spark can&rsquo;t find its files</h1>
+    <p>The page loaded, but <code id="spMissing">its stylesheets and scripts</code>
+       did not. That means <code>index.html</code> is being opened on its own,
+       without the folders that belong next to it.</p>
+
+    <p class="sp-h">Almost always, this is one of these</p>
+    <ol>
+      <li><b>Opened from inside the zip.</b> Double-clicking a file in a zip
+          preview copies only that one file to a temporary folder, leaving
+          everything else behind.</li>
+      <li><b>Only <code>index.html</code> was extracted</b>, rather than the
+          whole <code>spark-ai</code> folder.</li>
+      <li><b>The server is running in the wrong folder</b>, one level above or
+          below the one holding <code>index.html</code>.</li>
+    </ol>
+
+    <p class="sp-h">To fix it</p>
+    <ol>
+      <li>Right-click the zip and choose <b>Extract All</b> &mdash; not just a
+          preview or a double-click.</li>
+      <li>Open the extracted <b>spark-ai</b> folder. You should see
+          <code>index.html</code>, <code>css</code>, <code>js</code> and
+          <code>fonts</code> sitting side by side.</li>
+      <li>Run <b>start.bat</b> (Windows) or <b>bash start.sh</b> (Mac/Linux)
+          from inside that folder.</li>
+    </ol>
+
+    <p class="sp-note">Starting it that way also matters for the microphone:
+       browsers only allow it on <code>http://localhost</code>, which the start
+       script sets up. Opening the file directly turns off reading aloud and
+       dictation even when the styling is fine.</p>
+  </div>
+</div>
+
+<style>
+  /* Deliberately self-contained: this has to look right when no other
+     stylesheet has loaded, which is exactly the case it exists for. */
+  #setupProblem:not([hidden]){
+    position:fixed;inset:0;z-index:9999;overflow-y:auto;
+    background:#F6F1E7;color:#231F1A;
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:28px 20px;
+  }
+  #setupProblem .sp-card{
+    max-width:620px;margin:0 auto;background:#fff;
+    border:1px solid #E2D9C8;border-left:5px solid #E09200;
+    border-radius:14px;padding:26px 28px;
+  }
+  #setupProblem h1{font-size:25px;margin:0 0 14px;line-height:1.2}
+  #setupProblem p{margin:0 0 14px}
+  #setupProblem .sp-h{font-weight:700;margin:22px 0 8px}
+  #setupProblem ol{margin:0 0 6px;padding-left:22px}
+  #setupProblem li{margin-bottom:9px}
+  #setupProblem code{
+    background:#F0EADD;border-radius:5px;padding:2px 6px;
+    font:13.5px ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  #setupProblem .sp-note{
+    margin-top:20px;padding-top:16px;border-top:1px solid #E2D9C8;
+    font-size:14px;color:#6A6054;
+  }
+</style>
+
+<script>
+  /* Runs before the app's own scripts, so it reports even when those
+     are the thing that failed to load. */
+  (function () {
+    function check() {
+      var cssOK = !!getComputedStyle(document.documentElement)
+                      .getPropertyValue('--spark-css').trim();
+      var jsOK = !!(window.Spark && window.Spark.P);
+
+      if (cssOK && jsOK) return;
+
+      var missing = !cssOK && !jsOK ? 'its stylesheets and scripts'
+                  : !cssOK ? 'the stylesheets in <code>css/</code>'
+                  : 'the scripts in <code>js/</code>';
+      var el = document.getElementById('spMissing');
+      if (el) el.innerHTML = missing;
+      document.getElementById('setupProblem').hidden = false;
+    }
+    /* give the real scripts a moment to finish booting first */
+    if (document.readyState === 'complete') setTimeout(check, 300);
+    else window.addEventListener('load', function () { setTimeout(check, 300); });
+  })();
+</script>
+
+<!-- ══ SCRIPTS (order matters) ══════════════════════════════════ -->
+<script src="js/config.js"></script>
+<script src="js/store.js"></script>
+<script src="js/lexicon.js"></script>
+<script src="js/pictures.js"></script>
+<script src="js/analysis.js"></script>
+<script src="js/align.js"></script>
+<script src="js/speech.js"></script>
+<script src="js/speaker.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/content.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/exercises.js"></script>
+<script src="js/reader.js"></script>
+<script src="js/write.js"></script>
+<script src="js/homework.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/app.js"></script>
+
+<!-- If the stylesheets or scripts did not load, this page would render as
+     bare HTML and look broken for no obvious reason. This says so instead. -->
+<div id="setupProblem" style="display:none;font:16px/1.6 system-ui,sans-serif;
+     max-width:38em;margin:14vh auto;padding:28px;border:2px solid #C62B35;
+     border-radius:14px;background:#fff;color:#231F1A">
+  <h1 style="margin:0 0 10px;font-size:22px;color:#C62B35">Spark can&rsquo;t find its files</h1>
+  <p style="margin:0 0 14px">This page loaded, but the folders that go with it
+     (<code>css</code>, <code>js</code>, <code>fonts</code>) did not. That is why
+     it looks like a plain document.</p>
+  <p style="margin:0 0 8px"><b>Almost always this means:</b></p>
+  <ul style="margin:0 0 16px;padding-left:22px">
+    <li style="margin-bottom:6px">The zip was opened <i>without extracting it first</i>.
+        On Windows, double-clicking a zip shows its contents like a folder, but
+        opening a file from in there copies out only that one file.
+        <b>Right-click the zip &rarr; Extract All</b>, then open the extracted folder.</li>
+    <li style="margin-bottom:6px">Or <code>index.html</code> was moved away from its
+        sibling folders. All of them have to stay together.</li>
+  </ul>
+  <p style="margin:0;padding-top:14px;border-top:1px solid #E2D9C8">
+     The folder you open <code>index.html</code> from must also contain the
+     <code>css</code>, <code>js</code> and <code>fonts</code> folders.</p>
+</div>
+<script>
+// The check runs after everything has had a chance to load.
+addEventListener('load', function () {
+  var styled = getComputedStyle(document.body).backgroundColor;
+  var cssOK  = styled && styled !== 'rgba(0, 0, 0, 0)' && styled !== 'transparent';
+  var jsOK   = !!(window.Spark && window.Spark.P);
+  if (cssOK && jsOK) return;
+  var main = document.getElementById('main');
+  var bar  = document.querySelector('.topbar');
+  if (main) main.style.display = 'none';
+  if (bar) bar.style.display = 'none';
+  document.getElementById('setupProblem').style.display = 'block';
+});
+</script>
+</body>
+</html>

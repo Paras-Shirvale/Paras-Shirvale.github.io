@@ -1,0 +1,180 @@
+/* ============================================================
+   base.css — reset, typography, buttons, form controls.
+   ============================================================ */
+
+*,*::before,*::after{box-sizing:border-box}
+
+html,body{margin:0;padding:0}
+
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-ui);
+  /* the whole interface scales with the reading-size setting */
+  font-size:calc(16px * var(--ui-scale));
+  line-height:1.5;
+  letter-spacing:calc(var(--read-space) * 0.5);
+  -webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;
+}
+
+/* Everything the child reads obeys the comfort settings. */
+.prose,
+.q-text,
+.opt,
+.seq-txt,
+.sentence-out,
+.saved-text,
+.wc-word,
+.syl,
+.tile,
+.slot,
+.pair-opt,
+.choice,
+.letter-cell,
+.hw-body,
+.inp{
+  font-family:var(--font-read);
+  letter-spacing:var(--read-space);
+  word-spacing:var(--read-word);
+  line-height:var(--read-lead);
+}
+
+.prose{font-size:var(--read-size)}
+.q-text,.opt,.seq-txt{font-size:calc(var(--read-size) * 0.92)}
+.sentence-out{font-size:calc(var(--read-size) * 0.95)}
+.inp{font-size:calc(var(--read-size) * 0.88)}
+
+img,svg,canvas{max-width:100%}
+img,svg{display:block}
+
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+input,textarea,select{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}
+}
+
+[hidden]{display:none!important}
+
+/* ── headings and text ──────────────────────────────── */
+h1{
+  font-size:clamp(25px,4.4vw,33px);
+  line-height:1.12;
+  margin:0 0 6px;
+  font-weight:800;
+  letter-spacing:-.02em;
+  text-wrap:balance;
+}
+h2{font-size:19px;margin:0 0 4px;font-weight:800;letter-spacing:-.01em}
+h3{font-size:15px;margin:0;font-weight:800}
+p{margin:0}
+
+.lede{color:var(--ink-2);font-size:16px;margin:0 0 20px;max-width:62ch}
+.sub{color:var(--ink-2);font-size:13.5px;margin:0 0 14px;line-height:1.5}
+.note{font-size:13.5px;line-height:1.5}
+.hint{font-size:12.5px;color:var(--ink-2);margin-top:10px}
+.muted{color:var(--ink-2)}
+.mt{margin-top:18px}
+
+.eyebrow{
+  font-size:12px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-2);margin:0 0 7px;
+}
+
+/* ── buttons ────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 17px;border-radius:999px;
+  font-weight:700;font-size:14.5px;
+  border:1px solid var(--line);background:var(--surface);
+  transition:transform .12s ease, background .15s ease, filter .15s ease;
+}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+
+.btn-primary{background:var(--violet);color:var(--on-violet);border-color:transparent}
+.btn-primary:hover{background:var(--violet);filter:brightness(1.08)}
+
+.btn-rose{background:var(--rose);color:var(--on-rose);border-color:transparent}
+.btn-rose:hover{filter:brightness(1.08);background:var(--rose)}
+
+.btn-rec{background:var(--danger);color:var(--on-danger);border-color:transparent}
+
+.btn-sm{padding:7px 13px;font-size:13px}
+.btn-lg{padding:13px 24px;font-size:16px}
+.btn-block{width:100%}
+
+.icon-sq{
+  width:34px;height:34px;flex-shrink:0;
+  border-radius:10px;display:grid;place-items:center;
+  border:1px solid var(--line);background:var(--surface);font-size:15px;
+}
+.icon-sq:hover{background:var(--surface-2)}
+
+.icon-xs{
+  width:24px;height:24px;border-radius:7px;display:inline-grid;place-items:center;
+  font-size:11px;border:1px solid var(--line);background:var(--surface);
+}
+.icon-xs:hover{background:var(--surface-2)}
+
+/* ── form controls ──────────────────────────────────── */
+.inp{
+  flex:1;min-width:0;width:100%;
+  padding:11px 14px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+  font-family:var(--font-read);font-size:15.5px;
+}
+.inp:focus{
+  border-color:var(--violet);outline:none;
+  box-shadow:0 0 0 3px var(--violet-soft);
+}
+textarea.inp{resize:vertical;min-height:110px;line-height:1.6}
+
+input[type=range]{width:128px;accent-color:var(--violet)}
+
+/* ── icons ──────────────────────────────────────────── */
+/* .i is the placeholder the script fills; .icon is the SVG itself. */
+.i{display:inline-flex;align-items:center;gap:6px;line-height:0;flex-shrink:0}
+.icon{display:block;flex-shrink:0}
+/* buttons put their label beside the icon */
+.btn .i,.tool .i,.chip .i{line-height:0}
+
+/* ── small shared pieces ────────────────────────────── */
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r-lg);
+  padding:18px;
+}
+
+.badge{
+  font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;
+  background:var(--violet-soft);color:var(--violet);letter-spacing:.02em;
+}
+.badge-done{background:var(--moss-soft);color:var(--moss)}
+
+.sparks-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--amber-soft);color:var(--amber);
+  font-weight:800;font-size:13px;padding:5px 11px;border-radius:999px;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+
+.empty{text-align:center;padding:30px 18px;color:var(--ink-2)}
+.empty .e-ico{font-size:34px;margin-bottom:9px}
+.empty p{margin:0 auto;max-width:34ch;font-size:14px;line-height:1.5}
+
+.pulse{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(198,43,53,.35)}
+  50%    {box-shadow:0 0 0 9px rgba(198,43,53,0)}
+}
+@keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}

@@ -1,0 +1,132 @@
+/* ============================================================
+   layout.css — the shell, the grids, and how they stack on a phone.
+   ============================================================ */
+
+/* ── top bar ────────────────────────────────────────── */
+.topbar{
+  position:sticky;
+  top:env(safe-area-inset-top,0px);
+  z-index:30;
+  background:var(--surface);
+  border-bottom:1px solid var(--line);
+}
+/* paints the strip above a sticky bar on a notched phone */
+body::before{
+  content:"";position:fixed;inset:0 0 auto;
+  height:env(safe-area-inset-top,0px);
+  z-index:40;background:var(--surface);
+}
+
+.topbar-in{
+  max-width:1120px;margin:0 auto;
+  display:flex;align-items:center;gap:10px;
+  padding-block:9px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+
+.brand{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.brand-mark{
+  width:28px;height:28px;border-radius:9px;
+  background:var(--amber);color:var(--on-amber);
+  display:grid;place-items:center;font-size:15px;font-weight:800;
+}
+.brand-text{font-weight:800;font-size:17px;letter-spacing:-.01em;line-height:1.05}
+.brand-text small{
+  display:block;font-size:10px;font-weight:500;
+  color:var(--ink-2);letter-spacing:0;
+}
+
+.tabs{
+  display:flex;gap:2px;margin-left:auto;
+  overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  padding:7px 13px;border-radius:999px;
+  font-size:14px;font-weight:700;color:var(--ink-2);white-space:nowrap;
+}
+/* The icons are for the phone bar below; on a wide screen the
+   words alone are clearer and the row stays compact. */
+.tab-ico{display:none}
+.tab:hover{background:var(--surface-2);color:var(--ink)}
+.tab[aria-current="page"]{background:var(--violet-soft);color:var(--violet)}
+
+.topbar-end{display:flex;align-items:center;gap:6px;flex-shrink:0}
+
+/* ── main column ────────────────────────────────────── */
+main{
+  max-width:1120px;margin:0 auto;
+  padding-block:26px 96px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+
+.view{animation:rise .22s ease both}
+
+/* ── page grids ─────────────────────────────────────── */
+.home-grid{display:grid;grid-template-columns:1fr 330px;gap:16px}
+.reader-grid{display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start}
+.write-grid{display:grid;grid-template-columns:1fr 330px;gap:20px;align-items:start}
+.write-side{display:flex;flex-direction:column;gap:16px}
+.prog-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:20px}
+.doors{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:20px}
+.lib{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px}
+
+/* any grid child that holds running text must be allowed to shrink */
+.reader-main,.write-grid > div,.home-grid > *,.prog-grid > *{min-width:0}
+
+.rail{
+  display:flex;flex-direction:column;gap:11px;
+  position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px);
+}
+
+.work-head{margin-bottom:16px}
+
+/* ── phone ──────────────────────────────────────────── */
+@media (max-width:900px){
+  .home-grid,.reader-grid,.write-grid,.prog-grid{grid-template-columns:1fr}
+  .doors{grid-template-columns:1fr}
+  .kpis{grid-template-columns:1fr 1fr}
+  .rail{position:static}
+  .brand-text small{display:none}
+}
+
+/* ── phone navigation ───────────────────────────────────
+   A row of tabs that scrolls sideways hides half the app behind
+   an edge, and a child has no reason to suspect there is more
+   there. On a phone the sections move to a fixed bar along the
+   bottom: all five visible at once, each with a picture, each a
+   full thumb-sized target. */
+@media (max-width:560px){
+  main{padding-block:18px 108px}
+  .brand-text{display:none}
+
+  .tabs{
+    position:fixed;left:0;right:0;bottom:0;z-index:45;
+    margin:0;gap:0;overflow:visible;
+    display:grid;grid-template-columns:repeat(5,1fr);
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+    box-shadow:0 -2px 14px rgba(0,0,0,.05);
+  }
+  .tab{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:6px 2px;border-radius:12px;
+    /* OpenDyslexic is wide; at five across, the two longest
+       labels need this to keep clear of each other. */
+    font-size:10px;letter-spacing:-.02em;
+    width:100%;overflow:hidden;
+    min-height:48px;justify-content:center;
+  }
+  .tab-ico{display:block;line-height:0}
+  .tab-txt{display:block;width:100%;text-align:center;
+           overflow:hidden;text-overflow:ellipsis}
+  .tab[aria-current="page"]{background:transparent;color:var(--violet)}
+  .tab[aria-current="page"] .tab-ico{
+    background:var(--violet-soft);border-radius:999px;
+    padding:3px 10px;margin-bottom:1px;
+  }
+}

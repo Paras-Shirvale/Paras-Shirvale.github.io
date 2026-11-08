@@ -1,0 +1,442 @@
+/* ============================================================
+   components.css — pieces that appear on more than one page:
+   the word card, the chat, the settings sheet, toasts, charts.
+   ============================================================ */
+
+/* ── word card ──────────────────────────────────────── */
+#wordcard{
+  position:fixed;z-index:70;
+  width:280px;max-width:calc(100vw - 24px);
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-lg);box-shadow:var(--shadow-lg);
+  padding:16px;display:none;
+}
+#wordcard[data-open="1"]{display:block;animation:rise .16s ease both}
+
+.wc-word{
+  font-family:var(--font-read);font-size:23px;font-weight:700;
+  letter-spacing:.01em;margin-bottom:3px;word-break:break-word;padding-right:26px;
+}
+.wc-phon{font-size:13.5px;color:var(--ink-2);margin-bottom:11px;font-style:italic;min-height:19px}
+.wc-syls{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:13px}
+.syl{
+  padding:5px 11px;border-radius:9px;
+  font-family:var(--font-read);font-size:16px;font-weight:700;
+}
+.syl:nth-child(3n+1){background:var(--violet-soft);color:var(--violet)}
+.syl:nth-child(3n+2){background:var(--rose-soft);color:var(--rose)}
+.syl:nth-child(3n+3){background:var(--moss-soft);color:var(--moss)}
+
+.wc-pic{
+  min-height:96px;border-radius:var(--r);background:var(--surface-2);
+  display:grid;place-items:center;margin-bottom:11px;padding:8px;
+}
+
+/* ── pictures (drawn SVG or a fetched pictogram) ─────── */
+.pic{display:block;width:88px;height:88px;object-fit:contain}
+.pic-slot{display:grid;place-items:center;padding:10px}
+.pic-none{font-size:12.5px;color:var(--ink-2);font-style:italic;text-align:center}
+.pic-wait{
+  width:26px;height:26px;border-radius:50%;
+  border:2.5px solid var(--line);border-top-color:var(--violet);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* a fetched picture is drawn on white, so give it a card of its own */
+img.pic{background:#fff;border-radius:10px;padding:4px;object-fit:contain}
+.pic-credit{
+  display:block;font-size:10px;color:var(--ink-2);
+  text-align:center;margin-top:5px;opacity:.75;
+}
+.wc-mean{font-size:14px;line-height:1.5;color:var(--ink-2);margin-bottom:12px}
+.wc-mean:empty{margin-bottom:0}
+.wc-acts{display:flex;gap:7px;flex-wrap:wrap}
+.wc-x{
+  position:absolute;top:11px;right:11px;
+  width:27px;height:27px;border-radius:50%;
+  display:grid;place-items:center;font-size:14px;color:var(--ink-2);
+}
+.wc-x:hover{background:var(--surface-2)}
+
+#hovertip{
+  position:fixed;z-index:65;display:none;
+  align-items:center;gap:9px;
+  background:var(--ink);color:var(--bg);
+  padding:7px 12px;border-radius:11px;
+  pointer-events:none;white-space:nowrap;box-shadow:var(--shadow);
+}
+#hovertip .tip-pic{display:flex;line-height:0}
+#hovertip .tip-pic .pic{width:40px;height:40px;border-radius:6px;background:#fff}
+#hovertip .tip-parts{font-family:var(--font-read);font-size:14px;font-weight:600}
+
+/* ── chat ───────────────────────────────────────────── */
+#fab{
+  position:fixed;z-index:50;
+  right:calc(18px + env(safe-area-inset-right,0px));
+  bottom:calc(18px + env(safe-area-inset-bottom,0px));
+  height:52px;padding:0 19px;
+  border-radius:999px;background:var(--amber);color:var(--on-amber);
+  display:flex;align-items:center;gap:8px;
+  font-weight:800;font-size:14.5px;
+  box-shadow:0 5px 22px rgba(0,0,0,.2);
+}
+#fab:hover{filter:brightness(1.06)}
+
+#chat{
+  position:fixed;z-index:60;display:none;flex-direction:column;
+  right:calc(18px + env(safe-area-inset-right,0px));
+  bottom:calc(18px + env(safe-area-inset-bottom,0px));
+  width:368px;max-width:calc(100vw - 32px);
+  height:min(520px,72vh);
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-lg);box-shadow:var(--shadow-lg);overflow:hidden;
+}
+#chat[data-open="1"]{display:flex}
+
+.chat-top{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 15px;border-bottom:1px solid var(--line);
+  background:var(--amber-soft);
+}
+.chat-face{font-size:21px}
+.chat-id{flex:1;min-width:0}
+.chat-id b{font-size:15px}
+.chat-id small{display:block;font-size:11.5px;color:var(--ink-2);font-weight:600}
+
+.chat-body{
+  flex:1;overflow-y:auto;padding:15px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.bub{
+  max-width:86%;padding:10px 14px;border-radius:16px;
+  font-size:14.5px;line-height:1.5;
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.bub.s{background:var(--surface-2);border-bottom-left-radius:5px;align-self:flex-start}
+.bub.u{background:var(--violet);color:var(--on-violet);border-bottom-right-radius:5px;align-self:flex-end}
+.bub em{color:var(--ink-2);font-style:italic}
+
+/* three dots while the model is thinking */
+.typing{display:inline-flex;gap:4px;align-items:center;padding:2px 0}
+.typing i{
+  width:6px;height:6px;border-radius:50%;background:var(--ink-2);
+  animation:blink 1.3s ease-in-out infinite;
+}
+.typing i:nth-child(2){animation-delay:.18s}
+.typing i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+/* a real picture, in the thread */
+.chat-pic{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px}
+.chat-pic-slot{display:grid;place-items:center;min-height:90px}
+.chat-pic-slot .pic{width:96px;height:96px}
+.chat-pic-word{font-family:var(--font-read);font-size:15px;font-weight:700}
+
+/* shown instead of a conversation when no model is connected */
+.chat-setup{
+  background:var(--amber-soft);border-radius:14px;padding:14px 15px;
+  font-size:14px;line-height:1.5;
+}
+.chat-setup b{display:block;font-size:15px;margin-bottom:5px}
+.chat-setup p{margin:0 0 10px}
+.chat-setup .btn{margin-bottom:10px}
+.chat-setup-alt{font-size:13px;color:var(--ink-2);margin:0!important}
+.chat-setup code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+  background:var(--surface);padding:1px 5px;border-radius:4px;
+}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 15px 10px}
+.chips:empty{display:none}
+.chip{
+  padding:6px 12px;border-radius:999px;border:1px solid var(--line);
+  font-size:12.5px;font-weight:700;background:var(--surface);color:var(--ink-2);
+}
+.chip:hover{background:var(--violet-soft);border-color:var(--violet);color:var(--violet)}
+
+.chat-foot{display:flex;gap:8px;padding:11px;border-top:1px solid var(--line)}
+.chat-foot .inp{border-radius:999px;padding:10px 15px;font-family:var(--font-ui);font-size:14.5px}
+.send{
+  width:40px;height:40px;flex-shrink:0;border-radius:50%;
+  background:var(--violet);color:var(--on-violet);
+  display:grid;place-items:center;font-size:15px;
+}
+.send:hover{filter:brightness(1.08)}
+
+/* ── microphone button ──────────────────────────────── */
+.mic{
+  width:42px;height:42px;flex-shrink:0;
+  border-radius:var(--r);border:1px solid var(--line);
+  background:var(--surface);display:grid;place-items:center;font-size:16px;
+}
+.mic:hover{background:var(--violet-soft);border-color:var(--violet)}
+.mic[data-on="1"]{background:var(--danger);border-color:transparent;color:var(--on-danger)}
+.chat-mic{width:40px;height:40px;border-radius:50%}
+
+/* ── sheet (settings, dialogs) ──────────────────────── */
+.scrim{
+  position:fixed;inset:0;z-index:80;
+  background:rgba(25,20,10,.45);
+  display:none;align-items:center;justify-content:center;
+  padding:18px;
+}
+.scrim[data-open="1"]{display:flex}
+.sheet{
+  background:var(--surface);border-radius:var(--r-lg);
+  width:min(500px,100%);max-height:86vh;overflow-y:auto;
+  padding:24px;box-shadow:var(--shadow-lg);
+}
+/* Title and control on one line; the explanation runs full width
+   beneath them. Letting the explanation share the line left it in a
+   nine-line ribbon about twelve characters wide, which is exactly
+   the shape this app exists to avoid. */
+.srow{
+  display:grid;grid-template-columns:1fr auto;align-items:center;
+  gap:4px 14px;
+  padding:11px 0;border-bottom:1px solid var(--line);
+}
+.srow > :not(label):not(.srow-note){grid-column:2;grid-row:1}
+.srow label{grid-column:1;grid-row:1}
+.srow-note{grid-column:1/-1;grid-row:2;margin:0}
+.srow:last-of-type{border-bottom:none}
+.srow label{font-size:14px;font-weight:700;min-width:0}
+.srow label small,.srow-note{display:block;font-weight:400;color:var(--ink-2);font-size:12px;margin-top:2px;line-height:1.5}
+
+.seg{display:flex;gap:4px;background:var(--surface-2);padding:3px;border-radius:999px}
+.seg button{padding:5px 11px;border-radius:999px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+
+/* ── settings: voice picker and provider list ───────── */
+.set-label{display:block;font-size:14px;font-weight:700;margin-bottom:6px}
+
+.voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.voice-card{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:15px 10px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+}
+.voice-card:hover{background:var(--surface-2)}
+.voice-card[data-on="1"]{border-color:var(--violet);background:var(--violet-soft);color:var(--violet)}
+.voice-card b{font-size:15px}
+.voice-sub{font-size:12px;color:var(--ink-2)}
+.voice-card[data-on="1"] .voice-sub{color:var(--violet)}
+
+/* the sample line under the font/size controls */
+.sample-text{
+  font-family:var(--font-read);font-size:var(--read-size);
+  letter-spacing:var(--read-space);word-spacing:var(--read-word);
+  line-height:var(--read-lead);
+  background:var(--surface-2);border-radius:var(--r);
+  padding:13px 15px;margin-top:14px;
+}
+
+/* live voice meter */
+.vtest{background:var(--surface-2);border-radius:var(--r);padding:14px;margin-top:12px}
+.vmeter-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;margin-bottom:5px}
+.vm-label{color:var(--ink-2);font-weight:600}
+.vm-val{font-variant-numeric:tabular-nums}
+.vm-bar{height:10px;border-radius:999px;background:var(--surface);overflow:hidden;margin:9px 0 7px}
+.vm-bar i{display:block;height:100%;width:0;border-radius:999px;transition:width .25s ease}
+.vm-bar i[data-state="learning"]{background:var(--ink-2)}
+.vm-bar i[data-state="matched"]{background:var(--moss)}
+.vm-bar i[data-state="changed"]{background:var(--danger)}
+.vm-state{font-size:13px;font-weight:700;margin:0}
+
+/* AI status block */
+.ai-state{border-radius:var(--r);padding:13px 15px;background:var(--surface-2)}
+.ai-state[data-on="1"]{background:var(--moss-soft)}
+.ai-state b{display:block;font-size:15px;margin-bottom:4px}
+.ai-state[data-on="1"] b{color:var(--moss)}
+.ai-state p{font-size:13.5px;color:var(--ink-2);line-height:1.5;margin:0}
+.ai-howto{background:var(--surface-2);border-radius:var(--r);padding:14px 16px;margin-top:14px}
+.ai-howto ol{margin:0;padding-left:20px;font-size:13.5px;line-height:1.7}
+.ai-howto code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+  background:var(--surface);padding:2px 6px;border-radius:5px;
+}
+
+/* ── toast ──────────────────────────────────────────── */
+#toast{
+  position:fixed;z-index:90;left:50%;transform:translateX(-50%);
+  top:calc(env(safe-area-inset-top,0px) + 70px);
+  background:var(--ink);color:var(--bg);
+  padding:11px 19px;border-radius:999px;
+  font-weight:800;font-size:14.5px;
+  box-shadow:var(--shadow);display:none;max-width:calc(100vw - 32px);text-align:center;
+}
+#toast[data-on="1"]{display:block;animation:rise .25s ease both}
+
+/* ── charts and bars ────────────────────────────────── */
+.chart-box{position:relative;width:100%}
+canvas{display:block;width:100%;height:auto}
+
+.bar-row{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.bar-label{width:78px;flex-shrink:0;font-size:13px;font-weight:700}
+.bar-track{flex:1;min-width:0;height:22px;border-radius:7px;background:var(--surface-2);overflow:hidden}
+/* a span is inline by default and would ignore width/height */
+.bar-fill{display:block;height:100%;border-radius:7px;transition:width .6s ease}
+.bar-val{
+  width:54px;text-align:right;font-size:12.5px;font-weight:800;
+  font-variant-numeric:tabular-nums;color:var(--ink-2);
+}
+
+.meter{height:7px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--amber);border-radius:999px;transition:width .5s ease}
+
+/* age picker on the setup sheet */
+.age-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.age-btn{
+  padding:12px 0;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+  font-family:var(--font-read);font-size:18px;font-weight:700;
+}
+.age-btn:hover{background:var(--surface-2)}
+.age-btn[data-on="1"]{background:var(--violet);color:var(--on-violet);border-color:transparent}
+
+/* three text sizes, shown at their real size */
+.size-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.size-btn{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:14px 8px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+}
+.size-btn:hover{background:var(--surface-2)}
+.size-btn[data-on="1"]{border-color:var(--violet);background:var(--violet-soft);color:var(--violet)}
+.size-demo{font-family:var(--font-read);font-weight:700;line-height:1.1}
+.size-btn b{font-size:13px}
+.size-px{font-size:11px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.size-btn[data-on="1"] .size-px{color:var(--violet)}
+
+
+/* ── the reading band, during read-along ──────────────── */
+#ruler{opacity:.1}
+
+/* ── buttons that are doing something right now ───────── */
+/* A button mid-action should look unmistakably live — a child
+   should never have to wonder whether their tap registered. */
+.btn[data-active="1"],
+.btn.btn-rec{
+  background:var(--amber);
+  color:var(--on-amber);
+  border-color:transparent;
+  box-shadow:0 0 0 3px var(--amber-soft);
+}
+.btn[data-active="1"] .icon,
+.btn.btn-rec .icon{color:currentColor}
+
+/* four voices, two rows */
+.voice-grid.four{grid-template-columns:repeat(2,1fr)}
+
+/* ── voice calibration ────────────────────────────────── */
+.calib{
+  background:var(--surface-2);border-radius:var(--r);
+  padding:16px;margin-top:16px;
+}
+.calib-head h3{font-size:15px;margin-bottom:4px}
+.calib-head p{font-size:13px;color:var(--ink-2);line-height:1.5;margin:0 0 14px}
+.calib-line{
+  font-family:var(--font-read);
+  font-size:calc(var(--read-size) * 0.95);
+  letter-spacing:var(--read-space);
+  word-spacing:var(--read-word);
+  line-height:var(--read-lead);
+  background:var(--surface);border-radius:var(--r);
+  padding:14px 16px;margin:0 0 14px;
+}
+.calib-line.big{font-size:calc(var(--read-size) * 1.1)}
+.calib-known{font-size:12.5px;color:var(--ink-2);margin:10px 0 0}
+.calib-level{
+  height:12px;border-radius:999px;background:var(--surface);
+  overflow:hidden;margin-bottom:10px;
+}
+.calib-level i{
+  display:block;height:100%;width:0;border-radius:999px;
+  background:var(--amber);transition:width .25s ease;
+}
+.calib-level i[data-state="done"]{background:var(--moss)}
+.calib-status{font-size:14px;font-weight:700;margin:0 0 12px}
+.calib-done{
+  display:flex;gap:12px;align-items:flex-start;
+  background:var(--moss-soft);color:var(--moss);
+  border-radius:var(--r);padding:14px;margin-bottom:12px;
+}
+.calib-done b{display:block;font-size:15px;margin-bottom:3px}
+.calib-done p{font-size:13.5px;line-height:1.5;margin:0;color:var(--ink-2)}
+
+/* what the chat is actually for */
+.chat-uses{
+  background:var(--surface-2);border-radius:14px;
+  padding:13px 15px;font-size:13.5px;line-height:1.55;
+}
+.chat-uses b{display:block;font-size:13px;margin-bottom:7px}
+.chat-uses ul{margin:0 0 8px;padding-left:18px}
+.chat-uses li{margin-bottom:3px}
+.chat-uses span{color:var(--ink-2);font-size:13px}
+
+/* ── pick-your-font, first run ──────────────────────────────
+   Two cards showing the same sentence. The demo text is pinned
+   to a literal family rather than the variable, because the whole
+   point is to show the difference between them. */
+.font-try{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.font-card{
+  display:flex;flex-direction:column;gap:8px;text-align:left;
+  background:var(--surface-2);border:2px solid var(--line);
+  border-radius:14px;padding:13px;cursor:pointer;
+  transition:border-color .15s, background .15s;
+}
+.font-card:hover{border-color:var(--violet-soft)}
+.font-card[data-on="1"]{border-color:var(--violet);background:var(--violet-soft)}
+.font-demo{
+  font-size:15px;line-height:1.5;color:var(--ink);
+  letter-spacing:.03em;word-spacing:.1em;
+  /* OpenDyslexic is the wider of the two, so the cards would
+     otherwise end up different heights and look like a mistake
+     rather than a fair comparison. */
+  min-height:5.6em;
+}
+@media (max-width:420px){ .font-demo{min-height:0} }
+.fd-dys{font-family:'OpenDyslexic','Nunito',sans-serif}
+.fd-plain{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif}
+.font-name{font-size:12.5px;color:var(--ink-2)}
+.font-card[data-on="1"] .font-name{color:var(--violet);font-weight:700}
+@media (max-width:420px){ .font-try{grid-template-columns:1fr} }
+
+/* ── Ask Spark on a phone ───────────────────────────────────
+   The wide pill sat on top of the bottom navigation and hid
+   three of the five sections. Here it becomes a circle tucked
+   just above the bar, so nothing is covered. */
+@media (max-width:560px){
+  #fab{
+    bottom:calc(74px + env(safe-area-inset-bottom,0px));
+    height:52px;width:52px;padding:0;justify-content:center;
+  }
+  #fab .fab-txt{display:none}
+  #chat{
+    bottom:calc(74px + env(safe-area-inset-bottom,0px));
+    height:min(520px,64vh);
+  }
+}
+
+/* ── the menu ───────────────────────────────────────────── */
+.menu-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.menu-item{
+  display:flex;align-items:center;gap:13px;text-align:left;
+  background:var(--surface-2);border:1px solid var(--line);
+  border-radius:14px;padding:13px 15px;cursor:pointer;
+  transition:border-color .15s, background .15s;
+}
+.menu-item:hover{border-color:var(--violet-soft);background:var(--violet-soft)}
+.menu-ico{line-height:0;color:var(--violet);flex:0 0 auto}
+.menu-text{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;min-width:0}
+.menu-text b{font-size:14.5px}
+.menu-text small{font-size:12.5px;color:var(--ink-2);font-weight:400}
+.menu-arrow{color:var(--ink-2);flex:0 0 auto;font-size:16px}
+
+/* the hover tip's "hear it" button */
+#hovertip{pointer-events:auto}
+.tip-say{
+  display:grid;place-items:center;flex:0 0 auto;
+  width:30px;height:30px;border-radius:9px;cursor:pointer;
+  background:var(--violet-soft);color:var(--violet);border:0;
+}
+.tip-say:hover{background:var(--violet);color:#fff}

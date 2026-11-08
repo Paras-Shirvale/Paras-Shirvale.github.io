@@ -1,0 +1,600 @@
+/* ============================================================
+   pages.css — styles that belong to one page only.
+   ============================================================ */
+
+/* ══ HOME ═════════════════════════════════════════════ */
+.hero{margin-bottom:20px}
+
+.noticed{
+  display:flex;gap:11px;align-items:flex-start;
+  background:var(--amber-soft);border-radius:var(--r);
+  padding:13px 15px;margin-bottom:20px;
+  font-size:14.5px;line-height:1.45;
+}
+.noticed-ico{font-size:19px;line-height:1.2}
+.noticed b{font-weight:800}
+
+.door{
+  text-align:left;border-radius:var(--r-lg);padding:17px;
+  border:1px solid transparent;
+  display:flex;flex-direction:column;gap:5px;min-height:132px;
+  transition:transform .14s ease;
+}
+.door:hover{transform:translateY(-3px)}
+.door-read{background:var(--violet-soft)}
+.door-write{background:var(--rose-soft)}
+.door-hw{background:var(--moss-soft)}
+.door-ico{line-height:0;margin-bottom:3px}
+.door-ico .pic{width:38px;height:38px}
+.lib-pic{line-height:0}
+.lib-pic .pic{width:40px;height:40px}
+.door h3{font-size:18px}
+.door p{font-size:13.5px;color:var(--ink-2);flex:1;line-height:1.45}
+.door-go{font-weight:800;font-size:13.5px}
+.door-read .door-go{color:var(--violet)}
+.door-write .door-go{color:var(--rose)}
+.door-hw .door-go{color:var(--moss)}
+
+.scene-wrap{
+  border-radius:var(--r);overflow:hidden;
+  background:var(--surface-2);margin-bottom:12px;max-width:420px;
+}
+.pieces{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+.piece{
+  font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;
+  background:var(--surface-2);color:var(--ink-2);
+}
+.piece.on{background:var(--amber-soft);color:var(--amber)}
+
+.today{display:flex;flex-direction:column;gap:11px}
+.today-row{display:flex;gap:10px;align-items:center}
+.today-tick{
+  width:23px;height:23px;flex-shrink:0;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+  background:var(--surface-2);color:var(--ink-2);
+}
+.today-row[data-done="1"] .today-tick{background:var(--moss-soft);color:var(--moss)}
+.today-text{flex:1;min-width:0}
+.today-text b{font-size:14px;display:block}
+.today-text span{font-size:12.5px;color:var(--ink-2)}
+
+/* ══ READ ═════════════════════════════════════════════ */
+.lib-card{
+  text-align:left;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:15px;
+  display:flex;flex-direction:column;gap:7px;transition:transform .14s ease;
+}
+.lib-card:hover{transform:translateY(-3px)}
+.lib-top{display:flex;align-items:center;gap:9px}
+.lib-emoji{font-size:24px}
+.lib-card h3{font-size:16px}
+.lib-card p{font-size:13px;color:var(--ink-2);line-height:1.45;flex:1}
+.lib-foot{font-size:12.5px;color:var(--ink-2);font-weight:600}
+
+.steps{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap}
+.step{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 14px;border-radius:999px;
+  font-size:13.5px;font-weight:700;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+}
+.step:hover{background:var(--surface-2)}
+.step[aria-selected="true"]{background:var(--violet);color:var(--on-violet);border-color:transparent}
+.step[data-done="1"]{border-color:var(--moss);color:var(--moss)}
+.step[data-done="1"][aria-selected="true"]{background:var(--moss);color:var(--on-moss)}
+.step-n{
+  width:19px;height:19px;border-radius:50%;background:var(--surface-2);
+  display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--ink-2);
+}
+.step[aria-selected="true"] .step-n{background:rgba(127,127,127,.3);color:inherit}
+
+.passage{
+  position:relative;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-lg);padding:26px 24px;
+}
+#ruler{
+  position:absolute;left:0;right:0;
+  background:var(--amber);opacity:.14;border-radius:4px;
+  pointer-events:none;display:none;
+  transition:top .16s ease, height .16s ease;
+}
+.prose{font-family:var(--font-read);max-width:62ch;position:relative;z-index:1}
+.prose p{margin:0 0 .95em}
+.prose p:last-child{margin-bottom:0}
+
+.w{border-radius:5px;padding:0 1px;cursor:pointer;transition:background .12s}
+.w:hover{background:var(--amber-soft)}
+.w.done{color:var(--ink-2)}
+.w.at{
+  background:var(--amber-soft);
+  box-shadow:0 0 0 3px var(--amber-soft);
+  border-bottom:2px solid var(--amber);
+}
+.w.tricky{text-decoration:underline wavy var(--danger) 1.5px;text-underline-offset:4px}
+/* Stepped over without being read. Marked faintly, underneath —
+   never struck through. A line through a child's own reading says
+   "wrong", and skipping a word is not wrong, it is just skipping. */
+.w.skipped{
+  opacity:.55;
+  border-bottom:2px dotted var(--ink-2);
+  border-radius:0;
+}
+/* said wrongly just now */
+.w.missaid{
+  background:var(--rose-soft);
+  box-shadow:0 0 0 2px var(--rose-soft);
+  border-bottom:2px solid var(--rose);
+}
+
+.voice-warn{
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+  background:var(--amber-soft);border:1px solid var(--amber);
+  border-radius:var(--r);padding:12px 14px;margin-bottom:14px;
+}
+.voice-warn p{flex:1;min-width:170px;font-size:14px;line-height:1.45;margin:0}
+.vw-ico{font-size:20px}
+
+.spark-say{
+  display:flex;gap:10px;align-items:flex-start;
+  background:var(--amber-soft);border-radius:var(--r);
+  padding:13px 14px;font-size:14px;line-height:1.45;min-height:58px;
+}
+.spark-face{font-size:21px;line-height:1.2;flex-shrink:0}
+
+.stat-row{display:flex;gap:9px}
+.stat{
+  flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:10px 12px;
+}
+.stat b{
+  display:block;font-size:21px;font-weight:800;
+  font-variant-numeric:tabular-nums;line-height:1.1;
+}
+.stat span{font-size:11.5px;color:var(--ink-2);font-weight:700}
+
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tool{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:12px 7px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+  font-size:12.5px;font-weight:700;transition:background .15s;
+}
+.tool:hover{background:var(--violet-soft);border-color:var(--violet);color:var(--violet)}
+.tool i{font-style:normal;font-size:19px}
+.tool-wide{grid-column:span 2;flex-direction:row;justify-content:center;gap:8px}
+/* The kind of help this child actually responds to sits first and
+   reads slightly warmer. Deliberately unlabelled: a child told
+   "pictures work for you" starts performing the label instead of
+   choosing what they need. The adaptation shows up in what Spark
+   reaches for, not in a badge. */
+.tool.favoured{border-color:var(--amber)}
+
+/* ── questions ──────────────────────────────────────── */
+.q{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:17px;margin-bottom:11px;
+}
+.q-head{display:flex;gap:9px;align-items:flex-start;margin-bottom:12px}
+.q-n{
+  width:23px;height:23px;flex-shrink:0;border-radius:50%;
+  background:var(--violet-soft);color:var(--violet);
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+}
+.q-text{
+  flex:1;min-width:0;
+  font-family:var(--font-read);font-size:16.5px;font-weight:500;line-height:1.5;
+}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{
+  text-align:left;padding:11px 15px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+  font-family:var(--font-read);font-size:15.5px;transition:background .14s;
+}
+.opt:hover{background:var(--violet-soft);border-color:var(--violet)}
+.opt[data-s="right"]{background:var(--moss-soft);border-color:var(--moss);color:var(--moss);font-weight:700}
+.opt[data-s="wrong"]{background:var(--rose-soft);border-color:var(--danger);color:var(--danger)}
+.q-after{
+  margin-top:11px;font-size:14px;padding:10px 13px;
+  border-radius:var(--r);background:var(--surface-2);line-height:1.45;
+}
+.q-after.good{background:var(--moss-soft);color:var(--moss);font-weight:700}
+
+/* ── order ──────────────────────────────────────────── */
+.seq{display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
+.seq-row{
+  display:flex;align-items:center;gap:11px;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:13px 15px;
+}
+.seq-row[data-s="right"]{border-color:var(--moss);background:var(--moss-soft)}
+.seq-row[data-s="wrong"]{border-color:var(--danger);background:var(--rose-soft)}
+.seq-pos{
+  width:27px;height:27px;flex-shrink:0;border-radius:50%;
+  background:var(--violet-soft);color:var(--violet);
+  display:grid;place-items:center;font-weight:800;font-size:13px;
+}
+.seq-txt{flex:1;min-width:0;font-family:var(--font-read);font-size:15.5px;line-height:1.5}
+.seq-move{display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+.mv{
+  width:28px;height:23px;border-radius:7px;
+  border:1px solid var(--line);background:var(--surface);
+  display:grid;place-items:center;font-size:11px;
+}
+.mv:hover{background:var(--violet-soft);border-color:var(--violet)}
+.mv[disabled]{opacity:.3;pointer-events:none}
+#seqMsg:empty{display:none}
+#seqMsg{margin-top:14px}
+
+/* ══ WRITE ════════════════════════════════════════════ */
+.prompt-pic{
+  border-radius:var(--r-lg);background:var(--surface-2);
+  display:grid;place-items:center;padding:22px;
+  border:1px solid var(--line);margin-bottom:12px;min-height:150px;
+}
+.prompt-pic .pic{width:140px;height:140px}
+.prompt-q{font-family:var(--font-read);font-size:18px;font-weight:500;margin-bottom:14px}
+
+.field{margin-bottom:13px}
+.field label{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:800;margin-bottom:6px}
+.field-row{display:flex;gap:8px}
+
+/* ── the writing help ladder ─────────────────────────── */
+.stuck{flex-shrink:0;color:var(--ink-2)}
+.stuck:hover{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.stuck[disabled]{opacity:.4}
+
+.field-help{margin-top:9px}
+.rung{
+  display:flex;gap:11px;align-items:flex-start;
+  background:var(--amber-soft);border-radius:var(--r);padding:12px 14px;
+}
+.rung-n{
+  flex-shrink:0;font-size:10.5px;font-weight:800;letter-spacing:.04em;
+  background:var(--surface);color:var(--amber);
+  padding:3px 8px;border-radius:999px;text-transform:uppercase;
+}
+.rung-body{flex:1;min-width:0;font-size:14px;line-height:1.5}
+.rung-body > b{display:block;font-size:12.5px;margin-bottom:3px}
+.cue-pic{display:block;margin-bottom:6px}
+.cue-pic .pic{width:56px;height:56px}
+.model-answer{font-family:var(--font-read);font-size:16px;color:var(--violet)}
+
+.choice-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
+.choice{
+  padding:9px 15px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+  font-family:var(--font-read);font-size:15px;text-align:left;
+}
+.choice:hover{background:var(--violet-soft);border-color:var(--violet);color:var(--violet)}
+
+/* ── what the spelling check changed ─────────────────── */
+.fix{
+  border-left:3px solid var(--amber);
+  padding:9px 0 9px 12px;margin-bottom:10px;
+}
+.fix-swap{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-family:var(--font-read);font-size:16px}
+.fix-swap .was{text-decoration:line-through;color:var(--danger)}
+.fix-swap .arrow{color:var(--ink-2);font-size:13px}
+.fix-swap .now{color:var(--moss);font-weight:700}
+.fix-why{font-size:13.5px;color:var(--ink-2);margin:4px 0 0;line-height:1.45}
+.fix-none{
+  background:var(--moss-soft);color:var(--moss);
+  border-radius:var(--r);padding:11px 14px;margin-top:12px;
+  font-size:14px;font-weight:700;
+}
+.fix-none .sub{color:var(--ink-2);font-weight:400}
+
+.sentence-out{
+  font-family:var(--font-read);font-size:17px;line-height:1.65;
+  padding:15px;border-radius:var(--r);background:var(--surface-2);
+  min-height:84px;margin-bottom:12px;overflow-wrap:anywhere;
+}
+.sentence-out.placeholder{color:var(--ink-2)}
+
+.saved-item{
+  display:flex;gap:9px;align-items:center;
+  padding:10px 0;border-top:1px solid var(--line);font-size:14px;
+}
+.saved-item:first-child{border-top:none}
+.saved-text{flex:1;min-width:0;font-family:var(--font-read)}
+
+/* ══ HOMEWORK ═════════════════════════════════════════ */
+.hw-tabs{display:flex;gap:7px;margin-bottom:18px;flex-wrap:wrap}
+.hw-tab{
+  padding:8px 16px;border-radius:999px;font-size:14px;font-weight:700;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+}
+.hw-tab:hover{background:var(--surface-2)}
+.hw-tab[aria-selected="true"]{background:var(--moss);color:var(--on-moss);border-color:transparent}
+
+.drill{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-lg);padding:20px;margin-bottom:12px;
+}
+.drill-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.drill-head h3{font-size:16px}
+.drill-word{font-family:var(--font-read);color:var(--violet);letter-spacing:.02em}
+.hw-intro{margin-bottom:14px}
+.drill-task{font-size:14.5px;font-weight:600;margin:0 0 10px}
+
+/* the picture sits beside the word for the whole drill */
+.drill-pic{
+  width:84px;height:84px;flex-shrink:0;
+  border-radius:var(--r);background:var(--surface-2);
+  display:grid;place-items:center;overflow:hidden;
+}
+.drill-pic .pic{width:72px;height:72px}
+.drill-pic .pic-none{font-size:10.5px;padding:4px}
+.drill-pic .pic-credit{display:none}
+
+/* build -> read -> write */
+.stage-bar{display:flex;gap:7px;flex-wrap:wrap;margin:4px 0 16px}
+.stage{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 13px;border-radius:999px;
+  font-size:12.5px;font-weight:700;
+  border:1px solid var(--line);color:var(--ink-2);background:var(--surface);
+}
+.stage i{
+  width:18px;height:18px;border-radius:50%;background:var(--surface-2);
+  display:grid;place-items:center;font-size:10.5px;font-style:normal;font-weight:800;
+}
+.stage[data-state="now"]{border-color:var(--violet);background:var(--violet-soft);color:var(--violet)}
+.stage[data-state="now"] i{background:var(--violet);color:var(--on-violet)}
+.stage[data-state="done"]{border-color:var(--moss);color:var(--moss)}
+.stage[data-state="done"] i{background:var(--moss);color:var(--on-moss)}
+
+/* stage 2: the word, big, to read aloud */
+.say-word{
+  font-family:var(--font-read);
+  font-size:calc(var(--read-size) * 1.9);
+  font-weight:700;letter-spacing:calc(var(--read-space) + 1px);
+  text-align:center;padding:20px 12px;margin-bottom:14px;
+  background:var(--surface-2);border-radius:var(--r);
+}
+
+/* stage 3: typing it */
+.spell-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.spell-in{
+  flex:1;min-width:150px;
+  font-size:calc(var(--read-size) * 1.15);
+  letter-spacing:calc(var(--read-space) + 1px);
+}
+.spell-diff{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-family:var(--font-read);font-size:19px;font-weight:600;
+}
+.sd-yours{color:var(--danger)}
+.sd-right{color:var(--moss)}
+.sd-arrow{font-family:var(--font-ui);font-size:12px;font-weight:700;color:var(--ink-2)}
+.spell-diff em{
+  font-style:normal;background:var(--amber);color:var(--on-amber);
+  border-radius:4px;padding:0 3px;
+}
+
+/* letter discrimination: big, well-spaced, unambiguous shapes */
+.letter-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+.letter-cell{
+  width:46px;height:52px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+  font-family:var(--font-read);font-size:26px;font-weight:600;
+  display:grid;place-items:center;transition:background .12s;
+}
+.letter-cell:hover{background:var(--violet-soft);border-color:var(--violet)}
+.letter-cell[data-picked="1"]{background:var(--violet-soft);border-color:var(--violet);color:var(--violet)}
+.letter-cell[data-s="right"]{background:var(--moss-soft);border-color:var(--moss);color:var(--moss)}
+.letter-cell[data-s="wrong"]{background:var(--rose-soft);border-color:var(--danger);color:var(--danger)}
+.letter-cell[data-s="missed"]{border-color:var(--amber);border-style:dashed;color:var(--amber)}
+
+.pair-task{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.pair-opts{display:flex;gap:9px;flex-wrap:wrap}
+.pair-opt{
+  padding:12px 22px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+  font-family:var(--font-read);font-size:19px;font-weight:600;
+}
+.pair-opt:hover{background:var(--violet-soft);border-color:var(--violet)}
+.pair-opt[data-s="right"]{background:var(--moss-soft);border-color:var(--moss);color:var(--moss)}
+.pair-opt[data-s="wrong"]{background:var(--rose-soft);border-color:var(--danger);color:var(--danger)}
+
+.tiles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tile{
+  padding:11px 17px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--surface);
+  font-family:var(--font-read);font-size:19px;font-weight:600;letter-spacing:.02em;
+}
+.tile:hover{background:var(--violet-soft);border-color:var(--violet)}
+.tile[data-used="1"]{opacity:.3;pointer-events:none}
+
+.slots{
+  display:flex;gap:6px;flex-wrap:wrap;align-items:center;
+  min-height:52px;padding:9px;border-radius:var(--r);
+  background:var(--surface-2);border:1px dashed var(--line);margin-bottom:12px;
+}
+.slots:empty::after{content:"Tap the parts below to build the word";font-size:13px;color:var(--ink-2)}
+.slot{
+  padding:9px 15px;border-radius:10px;
+  background:var(--violet-soft);color:var(--violet);
+  font-family:var(--font-read);font-size:19px;font-weight:700;
+}
+
+.drop{
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+  padding:20px;border-radius:var(--r);
+  border:2px dashed var(--line);background:var(--surface);margin-bottom:14px;
+}
+.drop.over{border-color:var(--moss);background:var(--moss-soft)}
+.drop-ico{font-size:27px}
+.drop-text{flex:1;min-width:150px}
+.drop-text b{font-size:14.5px}
+.drop-text .sub{margin:3px 0 0}
+
+.file-row{
+  display:flex;align-items:center;gap:11px;
+  padding:13px 15px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r);margin-bottom:9px;
+}
+.file-row b{font-size:14.5px}
+.file-meta{flex:1;min-width:0}
+.file-meta .sub{margin:2px 0 0}
+
+/* ══ PROGRESS ═════════════════════════════════════════ */
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px}
+.kpi b{
+  display:block;font-size:26px;font-weight:800;
+  font-variant-numeric:tabular-nums;line-height:1.08;
+}
+.kpi span{font-size:12px;color:var(--ink-2);font-weight:700}
+
+/* ── pause split ─────────────────────────────────────── */
+.split-bar{display:flex;height:26px;border-radius:8px;overflow:hidden;background:var(--surface-2)}
+.split-nat{background:var(--moss)}
+.split-str{background:var(--amber)}
+.split-key{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:13px;font-weight:600}
+.split-key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+.dot-nat{background:var(--moss)}
+.dot-str{background:var(--amber)}
+.split-list{margin-top:14px;border-top:1px solid var(--line)}
+.split-row{
+  display:flex;justify-content:space-between;gap:12px;
+  padding:7px 0;font-size:13.5px;border-bottom:1px solid var(--line);
+}
+.split-row:last-child{border-bottom:none}
+.split-row b{font-variant-numeric:tabular-nums;color:var(--ink-2)}
+
+/* ── the review drill-down ───────────────────────────── */
+.review-filters{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 4px}
+.rev-filter{
+  padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:700;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+}
+.rev-filter:hover{background:var(--surface-2)}
+.rev-filter[data-on="1"]{background:var(--violet);color:var(--on-violet);border-color:transparent}
+.rev-filter b{font-variant-numeric:tabular-nums;opacity:.7}
+
+.rev-item{
+  background:var(--surface);border:1px solid var(--line);
+  border-left:4px solid var(--amber);
+  border-radius:var(--r);padding:14px 16px;margin-bottom:9px;
+}
+.rev-item[data-kind="misread"]{border-left-color:var(--danger)}
+
+.rev-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px}
+.rev-word{
+  font-family:var(--font-read);font-size:19px;font-weight:700;
+  letter-spacing:var(--read-space);
+}
+.rev-type{
+  font-size:11.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;
+  background:var(--surface-2);color:var(--ink-2);padding:3px 9px;border-radius:999px;
+}
+
+.rev-stat-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.rev-stat{font-size:13px;color:var(--ink-2)}
+.rev-stat b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+.rev-said{
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+  font-family:var(--font-read);font-size:20px;font-weight:600;margin-bottom:8px;
+}
+.rev-wrong{color:var(--danger)}
+.rev-right{color:var(--moss)}
+.rev-arrow{font-family:var(--font-ui);font-size:12px;font-weight:700;color:var(--ink-2)}
+/* the letters that actually differ */
+.rev-said em{
+  font-style:normal;background:var(--amber);color:var(--on-amber);
+  border-radius:4px;padding:0 3px;
+}
+.rev-pairs{font-size:13px;color:var(--ink-2);margin:0 0 8px}
+.rev-pairs b{font-family:var(--font-read);color:var(--rose)}
+
+.rev-sentence{
+  font-family:var(--font-read);font-size:14.5px;line-height:1.6;
+  background:var(--surface-2);border-radius:10px;padding:10px 13px;margin:0 0 8px;
+}
+.rev-sentence mark{background:var(--amber);color:var(--on-amber);border-radius:4px;padding:0 3px}
+.rev-why{font-size:13px;color:var(--ink-2);margin:0;line-height:1.5}
+
+/* ── letter confusions ───────────────────────────────── */
+.letter-trouble{
+  display:flex;align-items:center;gap:13px;
+  padding:10px 0;border-bottom:1px solid var(--line);
+}
+.letter-trouble:last-of-type{border-bottom:none}
+.lt-pair{
+  font-family:var(--font-read);font-size:21px;font-weight:700;
+  background:var(--rose-soft);color:var(--rose);
+  padding:5px 13px;border-radius:10px;white-space:nowrap;
+}
+.lt-meta{flex:1;min-width:0;font-size:13px}
+.lt-meta b{display:block;font-size:13.5px}
+.lt-meta span{color:var(--ink-2);font-family:var(--font-read)}
+
+.wordchip{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 13px;border-radius:999px;background:var(--surface-2);
+  font-family:var(--font-read);font-size:15px;font-weight:500;
+  margin:0 7px 7px 0;
+}
+.wordchip:hover{background:var(--violet-soft);color:var(--violet)}
+.wordchip b{font-size:11px;color:var(--danger);font-weight:800;font-family:var(--font-ui)}
+
+.session-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-top:1px solid var(--line);
+}
+.session-row:first-child{border-top:none}
+.session-main{flex:1;min-width:0}
+.session-main b{font-size:14px;display:block}
+.session-main span{font-size:12.5px;color:var(--ink-2)}
+
+/* the word Spark is saying right now, during read-along */
+.w.saying{
+  background:var(--violet-soft);color:var(--violet);
+  border-radius:5px;box-shadow:0 0 0 3px var(--violet-soft);
+  font-weight:700;
+}
+
+/* ── the letter check ─────────────────────────────────── */
+.screening-block{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-lg);padding:20px;margin-bottom:26px;
+}
+.screening-head{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.screening-head h2{margin-bottom:4px}
+.screening-head .sub{margin:0;max-width:52ch}
+.screening-score{text-align:right;flex-shrink:0}
+.screening-score b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
+.screening-score span{font-size:12px;color:var(--ink-2)}
+
+.lib-screening{grid-template-columns:repeat(auto-fill,minmax(186px,1fr))}
+.screen-card h3{font-family:var(--font-read);letter-spacing:var(--read-space)}
+.screen-card .badge{background:var(--amber-soft);color:var(--amber)}
+.screen-card .badge-done{background:var(--moss-soft);color:var(--moss)}
+
+.screen-report{
+  margin-top:16px;padding:14px 16px;
+  background:var(--surface-2);border-radius:var(--r);font-size:14px;line-height:1.6;
+}
+/* only the heading, which is a direct child — not the <b> words
+   inside the findings list, which must stay inline */
+.screen-report > b{display:block;margin-bottom:5px}
+.screen-report p{margin:0}
+.lt-pair.sm{font-size:15px;padding:2px 9px;display:inline-block;margin:0 2px}
+
+.lib-heading{margin-bottom:14px}
+
+/* every answer can be read aloud, for a child who cannot read it */
+.opt-row{display:flex;gap:7px;align-items:stretch}
+.opt-row .opt{flex:1;min-width:0}
+.opt-say{flex-shrink:0;align-self:stretch;height:auto;border-radius:var(--r)}
+.read-all{margin-top:10px;color:var(--ink-2)}
+.read-all:hover{color:var(--violet);border-color:var(--violet)}
+
+/* what the letter check found — pairs with the real words */
+.found-list{list-style:none;margin:8px 0 10px;padding:0;
+            display:flex;flex-direction:column;gap:7px}
+.found-list li{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.found-words{font-size:13.5px;color:var(--ink-2);display:inline}
+.found-words b{color:var(--ink);font-weight:700;display:inline;white-space:nowrap}

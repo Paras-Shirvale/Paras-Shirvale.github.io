@@ -97,6 +97,23 @@ window.SITE = {
      image: leave "" to show an auto-generated cover tile               */
   projects: [
     {
+      title: "Spark — A Reading Companion for Children with Dyslexia",
+      year: "2026",                                           // TODO: confirm
+      period: "",                                             // TODO: e.g. "Aug — Nov 2026"
+      with: "",                                               // TODO: course / professor
+      category: "HCI",
+      tags: ["Accessibility", "Web Speech API", "LLMs", "JavaScript", "Adaptive UI"],
+      summary: "An AI reading companion for children aged 9–14 with dyslexia. Spark listens while the child reads aloud, notices where they get stuck, and learns which kind of help works for that child — a picture, hearing the word, or breaking it into parts.",
+      points: [
+        "Live speech-to-text alignment that follows the reader word-by-word and classifies pauses as ordinary phrasing or real difficulty.",
+        "Detects letter confusions (b/d, p/q, m/w, reversals like was/saw) and builds personalised homework from the exact words a child struggled with.",
+        "Adaptive cue engine, dyslexia-friendly typography (OpenDyslexic) and an LLM-powered “Ask Spark” chat with child-safe guardrails — all data stays on the device.",
+      ],
+      image: "assets/images/spark.png",
+      links: { code: "", live: "projects/HCI_project/" },
+      featured: true,
+    },
+    {
       title: "Vision-Guided Human-to-Robot Handover",
       year: "2026",
       period: "Feb — Apr 2026",
