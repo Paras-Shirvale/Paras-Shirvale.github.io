@@ -27,8 +27,8 @@ window.SITE = {
   /* ---------- Hero (the first full screen) ---------- */
   hero: {
     greeting: "Namaste — I'm",
-    roles: ["Engineer", "ML Builder", "Robotics", "Musician", "Composer", "Stage Actor", "Poet"],
-    intro: "B.Tech–M.Tech student at <strong>IIT Gandhinagar</strong>, building with machine learning, robotics and software — and telling stories on stage, in music and in verse.",
+    roles: ["Robotics Researcher", "Dexterous Manipulation", "Machine Learning", "Musician", "Composer", "Stage Actor", "Poet"],
+    intro: "B.Tech–M.Tech student at <strong>IIT Gandhinagar</strong> researching dexterous, contact-rich robotic manipulation with dynamical systems — and telling stories on stage, in music and in verse.",
     image: "assets/images/profile.jpg",
     imageCaption: "Fig. 01 — Gandhinagar, 2025",
   },
@@ -51,7 +51,8 @@ window.SITE = {
     facts: [
       { label: "Based in", value: "Gandhinagar, India" },
       { label: "Studying", value: "B.Tech–M.Tech, Mechanical Eng. + Minor in CSE" },
-      { label: "Focus", value: "ML · Robotics · Web" },
+      { label: "Hometown", value: "Pune, Maharashtra" },
+      { label: "Research", value: "In-hand manipulation · Dynamical systems" },
       { label: "Languages", value: "Marathi · Hindi · English" },   // TODO: confirm
     ],
   },
@@ -60,39 +61,112 @@ window.SITE = {
      type: "work" | "education" | "research" | "leadership"           */
   experience: [
     {
-      period: "2024",                                   // TODO: exact dates
-      role: "Data Science Trainee & Intern",
-      org: "Corizo",
-      type: "work",
+      period: "May 2026 — Present",
+      role: "Coordinated In-Hand Object Manipulation Using Second-Order Dynamical Systems",
+      org: "Research with Prof. Harish Palanthandalam-Madapusi, IIT Gandhinagar",
+      type: "research",
       points: [
-        "TODO: what you built / analysed.",
-        "TODO: a measurable result.",
+        "Manuscript in preparation, targeting <strong>ICRA 2027</strong>.",
+        "Developed a second-order coupled Dynamical Systems (DS) framework for coordinated multi-finger in-hand object reorientation on the 16-DoF LEAP Hand, with commands generated in wrench space via closed-form Newton–Euler object dynamics.",
+        "Formulated full-wrench contact force distribution as a QP with friction-cone constraints, joint torques via the Jacobian transpose, and a time-scaling feasibility governor for bounded commands across contact transitions.",
+        "Implemented and validated the controller in MuJoCo; deploying it on the physical LEAP Hand with joint-level torque control (Dynamixel SDK) and RealSense/ArUco object pose estimation.",
       ],
       link: "",
     },
     {
-      period: "2023 — Present",
+      period: "2023 — 2028",
       role: "B.Tech–M.Tech, Mechanical Engineering (Minor in CSE)",
       org: "Indian Institute of Technology, Gandhinagar",
       type: "education",
       points: [
+        "CPI: <strong>7.47</strong>",
         "Coursework: Data Structures & Algorithms, Machine Learning, Introduction to Robotics.",
-        "TODO: CPI / clubs / positions of responsibility.",
       ],
       link: "https://iitgn.ac.in",
+    },
+    {
+      period: "2022 — 2023",
+      role: "Higher Secondary (Class XII)",
+      org: "City Pride Junior College, Pune",
+      type: "education",
+      points: ["Score: <strong>85.83%</strong>"],
+      link: "",
+    },
+    {
+      period: "2020 — 2021",
+      role: "Secondary School (Class X)",
+      org: "M. S. S. High School, Pune",
+      type: "education",
+      points: ["Score: <strong>100%</strong>"],
+      link: "",
     },
   ],
 
   /* ---------- Projects ----------
      featured: true  → appears on the home page (keep 3–6 featured)
-     category: used for the filter buttons on the Projects page          */
+     category: used for the filter buttons on the Projects page
+     with / period: shown under the title (supervisor, dates)
+     points: optional bullet highlights
+     image: leave "" to show an auto-generated cover tile               */
   projects: [
+    {
+      title: "Coordinated In-Hand Object Manipulation",
+      year: "2026",
+      period: "May 2026 — ongoing",
+      with: "Prof. Harish Palanthandalam-Madapusi",
+      category: "Robotics",
+      tags: ["Dynamical Systems", "QP", "MuJoCo", "LEAP Hand", "Dynamixel", "RealSense"],
+      summary: "A second-order coupled dynamical-systems controller for coordinated multi-finger in-hand reorientation on the 16-DoF LEAP Hand. Manuscript targeting ICRA 2027.",
+      points: [
+        "Commands generated in wrench space via closed-form Newton–Euler object dynamics.",
+        "Contact force distribution as a QP with friction-cone constraints and a time-scaling feasibility governor.",
+        "Validated in MuJoCo; deploying on hardware with joint-level torque control and ArUco pose estimation.",
+      ],
+      image: "",
+      links: { code: "", live: "" },
+      featured: true,
+    },
+    {
+      title: "Vision-Guided Human-to-Robot Handover",
+      year: "2026",
+      period: "Feb — Apr 2026",
+      with: "Prof. Harish Palanthandalam-Madapusi",
+      category: "Robotics",
+      tags: ["ROS 2", "YOLO", "MediaPipe", "RealSense", "MuJoCo", "IK"],
+      summary: "A real-time, grasp-aware handover pipeline: the robot finds a cup and the human's fingers in RGB-D, then grasps the cup at the point farthest from the human's hand.",
+      points: [
+        "YOLO26l cup detection + MediaPipe fingertip localisation, back-projected to 3D with aligned depth.",
+        "Grasp-aware target selection along the cup's vertical axis, streamed live to the robot base frame as a PointStamped target.",
+        "Safety logic (height-based activation, hold on detection loss) and DLS inverse kinematics in MuJoCo for pick-place and handover-to-place.",
+      ],
+      image: "",
+      links: { code: "", live: "" },                          // TODO: Project Link
+      featured: true,
+    },
+    {
+      title: "MDP-Based Pick and Place",
+      year: "2025",
+      period: "Dec 2025 — Feb 2026",
+      with: "Prof. Harish Palanthandalam-Madapusi",
+      category: "Robotics",
+      tags: ["MDP", "Dynamic Programming", "Value Iteration"],
+      summary: "Robotic pick-and-place formulated as a Markov Decision Process — with a designed state space, action space and reward — and solved with value iteration.",
+      image: "",
+      links: { code: "", live: "" },                          // TODO: Project Link
+      featured: true,
+    },
     {
       title: "MLP-Based Next-Word Text Generator",
       year: "2024",
+      period: "Aug — Nov 2024",
+      with: "Prof. Nipun Batra",
       category: "Machine Learning",
-      tags: ["PyTorch", "NLP", "Streamlit"],
-      summary: "An MLP language model that predicts the next words from input text using a custom vocabulary and learned embeddings.",
+      tags: ["PyTorch", "NLP", "t-SNE", "Streamlit"],
+      summary: "An MLP language model over an 8K-word custom vocabulary that generates the next words from input text, with an interactive Streamlit app.",
+      points: [
+        "Trained for 1000 epochs with embedding and hidden layers of up to 1024 units; t-SNE plots reveal semantic clusters (verbs, names, antonyms).",
+        "Streamlit app with controls for context length, embedding size, activation and prediction length, comparing 3 pre-trained variants.",
+      ],
       image: "assets/images/chatbot.jpg",
       links: { code: "https://github.com/HarshilShah1804/ES335_Assignment_3", live: "" },
       featured: true,
@@ -105,7 +179,7 @@ window.SITE = {
       summary: "A Flask–MySQL web app to analyse electoral bond transactions with dynamic search, filtering and visualisations.",
       image: "assets/images/stocks.jpg",
       links: { code: "", live: "" },                          // TODO: correct repo link
-      featured: true,
+      featured: false,
     },
     {
       title: "Habit Tracker Extension",
@@ -115,7 +189,7 @@ window.SITE = {
       summary: "A browser extension that tracks daily usage and streaks on chosen websites and nudges you with reminders.",
       image: "assets/images/quiz.jpg",
       links: { code: "", live: "" },                          // TODO
-      featured: true,
+      featured: false,
     },
     {
       title: "Personal Portfolio",
@@ -124,17 +198,7 @@ window.SITE = {
       tags: ["HTML", "CSS", "JavaScript"],
       summary: "This website — a content-driven portfolio with light/dark themes, a writing archive and a photo gallery.",
       image: "assets/images/port.jpg",
-      links: { code: "https://github.com/Paras-Shirvale/Paras-Shirvale.github.io", live: "https://paras-shirvale.github.io" },
-      featured: false,
-    },
-    {
-      title: "TODO: Robotics project",
-      year: "2025",
-      category: "Robotics",
-      tags: ["ROS", "Python"],
-      summary: "TODO: one or two lines on the problem, your approach and the result.",
-      image: "assets/images/ml_dashboard.png",
-      links: { code: "", live: "" },
+      links: { code: "https://github.com/Paras-Shirvale/Paras-Shirvale.github.io", live: "" },
       featured: false,
     },
   ],

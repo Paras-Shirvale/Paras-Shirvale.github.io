@@ -303,7 +303,7 @@ p { margin: 0 0 1em; }
 /* ---------- Projects ---------- */
 .projects { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(20px, 3vw, 36px); }
 .project { grid-column: span 6; display: flex; flex-direction: column; }
-.project.wide { grid-column: span 12; display: grid; grid-template-columns: 1.5fr 1fr; gap: clamp(20px, 3vw, 40px); align-items: end; }
+.project.wide { grid-column: span 12; display: grid; grid-template-columns: 1.5fr 1fr; gap: clamp(20px, 3vw, 40px); align-items: center; }
 .project-media {
   position: relative; overflow: hidden; border-radius: var(--radius); aspect-ratio: 16 / 10;
   background: var(--bg-alt); border: 1px solid var(--line);
@@ -315,6 +315,21 @@ p { margin: 0 0 1em; }
   background: var(--bg); color: var(--ink);
 }
 .project-body { padding-top: 20px; }
+.project-cover {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px;
+  padding: clamp(18px, 3vw, 32px); background-color: var(--ink); color: var(--bg);
+  background-image: radial-gradient(rgba(127,127,127,.28) 1px, transparent 1px),
+    radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--accent) 55%, transparent), transparent 55%);
+  background-size: 22px 22px, 100% 100%;
+  transition: transform 1s var(--ease);
+}
+.project:hover .project-cover { transform: scale(1.04); }
+.project-cover span { color: var(--accent); }
+.project-cover strong { font: 400 clamp(1.5rem, 3vw, 2.6rem)/1.05 var(--font-display); letter-spacing: -.03em; font-style: italic; max-width: 14em; }
+.project-meta { color: var(--muted); margin: -2px 0 12px; text-transform: none; letter-spacing: .02em; }
+.project-points { margin: 0 0 4px; padding-left: 1.1em; font-size: .92rem; color: var(--body); }
+.project-points li { margin-bottom: 4px; }
+.project-points li::marker { color: var(--accent); }
 .project-cat { color: var(--accent); }
 .project-title { margin: 8px 0 10px; font: 400 clamp(1.4rem, 2.4vw, 1.9rem)/1.15 var(--font-display); letter-spacing: -.02em; }
 .project-title a:hover { color: var(--accent); }

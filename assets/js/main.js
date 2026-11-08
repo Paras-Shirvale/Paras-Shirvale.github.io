@@ -8,7 +8,7 @@
   const M = S.meta || {};
   const page = document.body.dataset.page || "home";
   const isHome = page === "home";
-  const home = isHome ? "" : "index.html";
+  const home = isHome ? "" : "./";   // "./" (not "index.html") so browsers reuse the same cached page
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const pad = (n) => String(n).padStart(2, "0");
@@ -64,7 +64,7 @@
     el.className = "site-header";
     el.innerHTML = `
       <div class="wrap nav">
-        <a class="brand" href="index.html" aria-label="${fullName} — home">
+        <a class="brand" href="./" aria-label="${fullName} — home">
           <span class="brand-mark">${initials}</span>
           <span class="brand-name">${fullName}</span>
         </a>
@@ -136,7 +136,9 @@
 
   const projectCard = (p, wide = false) => {
     const main = p.links?.live || p.links?.code || "";
-    const img = p.image ? `<img src="${p.image}" alt="${p.title}" loading="lazy">` : "";
+    const img = p.image
+      ? `<img src="${p.image}" alt="${p.title}" loading="lazy">`
+      : `<div class="project-cover dots" aria-hidden="true"><span class="mono">${p.category || ""}</span><strong>${p.title}</strong></div>`;
     const media = `<div class="project-media">${img}${p.year ? `<span class="mono year">${p.year}</span>` : ""}</div>`;
     return `
       <article class="project reveal ${wide ? "wide" : ""}" data-cat="${p.category || ""}">
@@ -144,7 +146,9 @@
         <div class="project-body">
           <span class="mono project-cat">${p.category || ""}</span>
           <h3 class="project-title">${main ? `<a href="${main}" target="_blank" rel="noopener">${p.title}</a>` : p.title}</h3>
+          ${p.with || p.period ? `<div class="mono project-meta">${[p.with, p.period].filter(Boolean).join(" · ")}</div>` : ""}
           <p class="project-summary">${p.summary || ""}</p>
+          ${p.points?.length ? `<ul class="project-points">${p.points.map((t) => `<li>${t}</li>`).join("")}</ul>` : ""}
           ${p.tags?.length ? `<ul class="tags">${p.tags.map((t) => `<li class="tag">${t}</li>`).join("")}</ul>` : ""}
           <div class="project-links">
             ${p.links?.live ? `<a class="link-arrow" href="${p.links.live}" target="_blank" rel="noopener">Live ${icon("arrow")}</a>` : ""}
@@ -250,7 +254,7 @@
     const P = (S.projects || []).filter((p) => p.featured);
     $("#work").innerHTML = `<div class="wrap">
       ${sectionHead(next(), "Selected work", "Things I've <em>built</em>", `<a class="link-arrow" href="projects.html">All projects ${icon("arrow")}</a>`)}
-      <div class="projects">${P.map((p, i) => projectCard(p, i === 0)).join("") || `<p class="empty">Mark projects with <code>featured: true</code> in content.js</p>`}</div>
+      <div class="projects">${P.map((p, i) => projectCard(p, i === 0 || (i === P.length - 1 && P.length % 2 === 0))).join("") || `<p class="empty">Mark projects with <code>featured: true</code> in content.js</p>`}</div>
     </div>`;
 
     // SKILLS
@@ -532,6 +536,11 @@
   setupReveal();
   setupCounters();
   setupActiveNav();
+
+  // When opened straight from disk (file://), "./" shows a folder listing — point it at index.html instead
+  if (location.protocol === "file:") {
+    $$('a[href^="./"]').forEach((a) => a.setAttribute("href", "index.html" + a.getAttribute("href").slice(1)));
+  }
 
   // Re-jump to hash after content is rendered (e.g. coming from another page)
   if (location.hash) {
