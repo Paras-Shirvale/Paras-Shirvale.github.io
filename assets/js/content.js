@@ -27,8 +27,8 @@ window.SITE = {
   /* ---------- Hero (the first full screen) ---------- */
   hero: {
     greeting: "Namaste — I'm",
-    roles: ["Robotics Researcher", "Dexterous Manipulation", "Machine Learning", "Musician", "Composer", "Stage Actor", "Poet"],
-    intro: "B.Tech–M.Tech student at <strong>IIT Gandhinagar</strong> researching dexterous, contact-rich robotic manipulation with dynamical systems — and telling stories on stage, in music and in verse.",
+    roles: ["Physical AI", "Robot Manipulation", "Dynamical Systems", "Robot Learning", "Musician", "Stage Actor", "Poet"],
+    intro: "B.Tech–M.Tech student at <strong>IIT Gandhinagar</strong> working on <strong>Physical AI</strong> — teaching robot hands to coordinate, make contact and manipulate the real world with dexterity.",
     image: "assets/images/profile.jpg",
     imageCaption: "Fig. 01 — Gandhinagar, 2025",
   },
@@ -43,64 +43,51 @@ window.SITE = {
 
   /* ---------- About ---------- */
   about: {
-    heading: "Curious about how things work — and how they <em>feel</em>.",
+    heading: "Intelligence that doesn't just think — it <em>touches</em>, moves and adapts.",
     paragraphs: [
-      "I'm Paras Shirvale, a B.Tech pre-final year student at the Indian Institute of Technology, Gandhinagar. From a young age I've been fascinated by technology and how it can solve real-world problems, which led me to explore software development, machine learning and VLSI design.",
-      "Alongside the technical work, I write poetry and prose. Writing is how I express myself — my interests run deep into Indian culture, history and philosophy, and the human emotions of love, compassion and the hunger for living.",
+      "I'm Paras Shirvale, a B.Tech–M.Tech student at the Indian Institute of Technology, Gandhinagar, working at the intersection of robotics, control and machine learning — what's now called <strong>Physical AI</strong>.",
+      "Language models have learned to reason about the world; the next frontier is acting in it. Robots must handle objects they've never seen, make and break contact gracefully, and stay safe around people. I'm drawn to the hardest version of that problem: <strong>dexterous, contact-rich manipulation</strong> with multi-fingered hands.",
+      "My approach pairs principled control — dynamical systems, optimisation and contact mechanics — with perception and learning, so that robot behaviour is both adaptive and provably well-behaved. I build in simulation (MuJoCo) and take it to real hardware: the LEAP Hand, the Franka FR3 and RGB-D vision.",
     ],
     facts: [
       { label: "Based in", value: "Gandhinagar, India" },
       { label: "Studying", value: "B.Tech–M.Tech, Mechanical Eng. + Minor in CSE" },
-      { label: "Hometown", value: "Pune, Maharashtra" },
-      { label: "Research", value: "In-hand manipulation · Dynamical systems" },
-      { label: "Languages", value: "Marathi · Hindi · English" },   // TODO: confirm
+      { label: "Field", value: "Physical AI · Robot manipulation" },
+      { label: "Currently", value: "In-hand manipulation on the LEAP Hand" },
     ],
   },
 
-  /* ---------- Experience timeline (newest first) ----------
-     type: "work" | "education" | "research" | "leadership"           */
-  experience: [
-    {
-      period: "May 2026 — Present",
-      role: "Coordinated In-Hand Object Manipulation Using Second-Order Dynamical Systems",
-      org: "Research with Prof. Harish Palanthandalam-Madapusi, IIT Gandhinagar",
-      type: "research",
-      points: [
-        "Manuscript in preparation, targeting <strong>ICRA 2027</strong>.",
-        "Developed a second-order coupled Dynamical Systems (DS) framework for coordinated multi-finger in-hand object reorientation on the 16-DoF LEAP Hand, with commands generated in wrench space via closed-form Newton–Euler object dynamics.",
-        "Formulated full-wrench contact force distribution as a QP with friction-cone constraints, joint torques via the Jacobian transpose, and a time-scaling feasibility governor for bounded commands across contact transitions.",
-        "Implemented and validated the controller in MuJoCo; deploying it on the physical LEAP Hand with joint-level torque control (Dynamixel SDK) and RealSense/ArUco object pose estimation.",
-      ],
-      link: "",
-    },
-    {
-      period: "2023 — 2028",
-      role: "B.Tech–M.Tech, Mechanical Engineering (Minor in CSE)",
-      org: "Indian Institute of Technology, Gandhinagar",
-      type: "education",
-      points: [
-        "CPI: <strong>7.47</strong>",
-        "Coursework: Data Structures & Algorithms, Machine Learning, Introduction to Robotics.",
-      ],
-      link: "https://iitgn.ac.in",
-    },
-    {
-      period: "2022 — 2023",
-      role: "Higher Secondary (Class XII)",
-      org: "City Pride Junior College, Pune",
-      type: "education",
-      points: ["Score: <strong>85.83%</strong>"],
-      link: "",
-    },
-    {
-      period: "2020 — 2021",
-      role: "Secondary School (Class X)",
-      org: "M. S. S. High School, Pune",
-      type: "education",
-      points: ["Score: <strong>100%</strong>"],
-      link: "",
-    },
-  ],
+  /* ---------- Research ----------
+     interests: short chips shown above the list
+     Each entry: status (e.g. "Under review", "Manuscript · ICRA 2027"),
+     links: { paper, video, code, website } — empty ones are hidden         */
+  research: {
+    statement: "I study how robots can manipulate objects with human-like dexterity — combining <em>dynamical systems</em>, <em>contact-aware optimisation</em> and <em>perception</em> so hands can coordinate, adapt and recover in the physical world.",
+    interests: ["Physical AI", "Dexterous Manipulation", "Dynamical Systems Control", "Contact-Rich Manipulation", "Human–Robot Interaction", "Robot Learning"],
+    entries: [
+      {
+        title: "Coordinated In-Hand Object Manipulation Using Second-Order Dynamical Systems",
+        status: "Manuscript in preparation · targeting ICRA 2027",
+        period: "May 2026 — ongoing",
+        advisor: "Prof. Harish Palanthandalam-Madapusi",
+        lab: "IIT Gandhinagar",
+        summary: "A second-order coupled dynamical-systems framework for coordinated multi-finger in-hand object reorientation on the 16-DoF LEAP Hand, with commands generated directly in wrench space.",
+        points: [
+          "Closed-form Newton–Euler object dynamics to generate desired wrenches for the object.",
+          "Full-wrench contact force distribution as a QP with friction-cone constraints; joint torques via the Jacobian transpose.",
+          "Time-scaling feasibility governor that keeps commands bounded across contact transitions.",
+          "Validated in MuJoCo; deploying on the physical LEAP Hand with joint-level torque control (Dynamixel SDK) and RealSense/ArUco object pose estimation.",
+        ],
+        tags: ["LEAP Hand", "MuJoCo", "QP", "Dynamixel SDK", "RealSense", "ArUco"],
+        image: "",                    // e.g. "assets/images/leap-hand.jpg" or a .gif/.mp4 still
+        links: { paper: "", video: "", code: "", website: "" },
+      },
+    ],
+  },
+
+  /* ---------- Experience timeline (newest first) — set to [] to hide ----------
+     type: "work" | "internship" | "leadership"                          */
+  experience: [],
 
   /* ---------- Projects ----------
      featured: true  → appears on the home page (keep 3–6 featured)
@@ -109,23 +96,6 @@ window.SITE = {
      points: optional bullet highlights
      image: leave "" to show an auto-generated cover tile               */
   projects: [
-    {
-      title: "Coordinated In-Hand Object Manipulation",
-      year: "2026",
-      period: "May 2026 — ongoing",
-      with: "Prof. Harish Palanthandalam-Madapusi",
-      category: "Robotics",
-      tags: ["Dynamical Systems", "QP", "MuJoCo", "LEAP Hand", "Dynamixel", "RealSense"],
-      summary: "A second-order coupled dynamical-systems controller for coordinated multi-finger in-hand reorientation on the 16-DoF LEAP Hand. Manuscript targeting ICRA 2027.",
-      points: [
-        "Commands generated in wrench space via closed-form Newton–Euler object dynamics.",
-        "Contact force distribution as a QP with friction-cone constraints and a time-scaling feasibility governor.",
-        "Validated in MuJoCo; deploying on hardware with joint-level torque control and ArUco pose estimation.",
-      ],
-      image: "",
-      links: { code: "", live: "" },
-      featured: true,
-    },
     {
       title: "Vision-Guided Human-to-Robot Handover",
       year: "2026",
@@ -205,10 +175,13 @@ window.SITE = {
 
   /* ---------- Skills (grouped) ---------- */
   skills: [
-    { group: "Languages", items: ["Python", "C / C++", "JavaScript", "HTML & CSS", "SQL"] },
-    { group: "Machine Learning", items: ["PyTorch", "TensorFlow", "Keras", "Scikit-learn", "NumPy", "Pandas"] },
-    { group: "Web & Backend", items: ["React", "Node.js", "Flask", "Django", "MySQL"] },
-    { group: "Tools & Hardware", items: ["Git", "Docker", "Kubernetes", "Xilinx Vivado", "Cadence"] },
+    { group: "Languages", items: ["Python", "C++", "C", "MATLAB", "SQL", "JavaScript", "HTML", "CSS"] },
+    { group: "Libraries", items: ["NumPy", "Pandas", "Matplotlib", "Seaborn", "scikit-learn", "PyTorch", "TensorFlow", "OpenCV", "MediaPipe"] },
+    { group: "Frameworks", items: ["ROS 2", "ROS Noetic", "Flask", "Streamlit"] },
+    { group: "Robotics & Simulation", items: ["MuJoCo", "OpenSim", "KDL", "Dynamixel SDK", "Intel RealSense", "ArUco"] },
+    { group: "Hardware", items: ["LEAP Hand", "Franka FR3", "HEAL Arm"] },
+    { group: "Development Tools", items: ["Jupyter Notebook", "Google Colab", "Git & GitHub", "Linux", "LaTeX"] },
+    { group: "CAD & Analysis", items: ["Autodesk Inventor", "Autodesk Fusion", "MSC ADAMS", "ANSYS"] },
   ],
 
   certifications: [

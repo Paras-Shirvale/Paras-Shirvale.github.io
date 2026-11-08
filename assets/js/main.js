@@ -49,8 +49,8 @@
   /* ---------------- Header & footer ---------------- */
   const NAV = [
     { id: "about", label: "About", href: `${home}#about` },
-    { id: "experience", label: "Experience", href: `${home}#experience` },
-    { id: "projects", label: "Work", href: "projects.html", homeHref: "#work" },
+    { id: "research", label: "Research", href: `${home}#research` },
+    { id: "projects", label: "Projects", href: "projects.html", homeHref: "#work" },
     { id: "beyond", label: "Beyond", href: `${home}#beyond` },
     { id: "writing", label: "Writing", href: "writing.html" },
     { id: "gallery", label: "Gallery", href: "gallery.html" },
@@ -250,10 +250,44 @@
     </div>` : "";
     if (!E.length) $("#experience").remove();
 
+    // RESEARCH
+    const RS = S.research || {}, RE = RS.entries || [];
+    const linkLabels = { paper: "Paper", video: "Video", code: "Code", website: "Website" };
+    $("#research").innerHTML = RE.length || RS.statement ? `<div class="wrap">
+      ${sectionHead(next(), "Research", "Research &amp; <em>publications</em>")}
+      ${RS.statement || RS.interests?.length ? `<div class="research-intro">
+        <span class="mono muted">Focus</span>
+        <div>
+          ${RS.statement ? `<p class="research-statement reveal">${RS.statement}</p>` : ""}
+          ${RS.interests?.length ? `<ul class="tags interests reveal">${RS.interests.map((t) => `<li class="tag">${t}</li>`).join("")}</ul>` : ""}
+        </div>
+      </div>` : ""}
+      <ol class="pubs">${RE.map((r, i) => {
+        const links = Object.entries(r.links || {}).filter(([, u]) => u);
+        return `
+        <li class="pub reveal ${r.image ? "has-media" : ""}">
+          <div class="pub-side">
+            <span class="mono pub-num">[${pad(RE.length - i)}]</span>
+            <span class="mono muted">${r.period || ""}</span>
+          </div>
+          <div class="pub-main">
+            ${r.status ? `<span class="pub-status mono">${r.status}</span>` : ""}
+            <h3 class="pub-title">${r.title}</h3>
+            ${r.advisor || r.lab ? `<div class="pub-meta">${[r.advisor ? `with ${r.advisor}` : "", r.lab].filter(Boolean).join(" · ")}</div>` : ""}
+            ${r.summary ? `<p class="pub-summary">${r.summary}</p>` : ""}
+            ${r.points?.length ? `<ul class="project-points">${r.points.map((t) => `<li>${t}</li>`).join("")}</ul>` : ""}
+            ${r.tags?.length ? `<ul class="tags">${r.tags.map((t) => `<li class="tag">${t}</li>`).join("")}</ul>` : ""}
+            ${links.length ? `<div class="pub-links">${links.map(([k, u]) => `<a class="btn ghost sm" href="${u}" target="_blank" rel="noopener">${linkLabels[k] || k} ${icon("arrow")}</a>`).join("")}</div>` : ""}
+          </div>
+          ${r.image ? `<div class="pub-media"><img src="${r.image}" alt="${r.title}" loading="lazy"></div>` : ""}
+        </li>`;
+      }).join("")}</ol>
+    </div>` : "";
+
     // PROJECTS (featured)
     const P = (S.projects || []).filter((p) => p.featured);
     $("#work").innerHTML = `<div class="wrap">
-      ${sectionHead(next(), "Selected work", "Things I've <em>built</em>", `<a class="link-arrow" href="projects.html">All projects ${icon("arrow")}</a>`)}
+      ${sectionHead(next(), "Projects", "Things I've <em>built</em>", `<a class="link-arrow" href="projects.html">All projects ${icon("arrow")}</a>`)}
       <div class="projects">${P.map((p, i) => projectCard(p, i === 0 || (i === P.length - 1 && P.length % 2 === 0))).join("") || `<p class="empty">Mark projects with <code>featured: true</code> in content.js</p>`}</div>
     </div>`;
 
@@ -261,7 +295,7 @@
     const SK = S.skills || [], C = S.certifications || [];
     $("#skills").innerHTML = SK.length || C.length ? `<div class="wrap">
       ${sectionHead(next(), "Toolkit", "Skills &amp; <em>tools</em>")}
-      <div class="skills-grid">${SK.map((g) => `<div class="skill-group reveal"><h3>${g.group}</h3><ul>${g.items.map((i) => `<li>${i}</li>`).join("")}</ul></div>`).join("")}</div>
+      <div class="skills-table">${SK.map((g) => `<div class="skill-row reveal"><h3 class="mono">${g.group}</h3><ul class="tags">${g.items.map((i) => `<li class="tag">${i}</li>`).join("")}</ul></div>`).join("")}</div>
       ${C.length ? `<div class="certs"><span class="mono muted">Certifications &amp; courses</span>
         <ul class="cert-list">${C.map((c) => {
           const inner = `<strong>${c.title}</strong><span>${c.issuer || ""}${c.year ? ` · ${c.year}` : ""}</span>`;
@@ -514,7 +548,7 @@
 
   function setupActiveNav() {
     if (!isHome) return;
-    const map = { about: "about", experience: "experience", work: "projects", beyond: "beyond", contact: "contact" };
+    const map = { about: "about", research: "research", work: "projects", beyond: "beyond", contact: "contact" };
     const io = new IntersectionObserver((entries) => entries.forEach((e) => {
       if (!e.isIntersecting) return;
       $$("[data-nav]").forEach((a) => a.classList.toggle("active", a.dataset.nav === map[e.target.id]));
