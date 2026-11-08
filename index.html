@@ -3,253 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Portfolio</title>
-  <!-- Add Roboto Slab font from Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.15.1/devicon.min.css">
+  <title>Paras Shirvale</title>
+  <meta name="description" content="Paras Shirvale — engineer, musician, actor and writer from IIT Gandhinagar.">
+  <meta property="og:title" content="Paras Shirvale">
+  <meta property="og:image" content="assets/images/profile.jpg">
+  <meta name="theme-color" content="#0b0b0b">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23d9480f'/><text x='50' y='66' font-size='46' text-anchor='middle' fill='white' font-family='Georgia' font-style='italic'>PS</text></svg>">
+  <script>try{var t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
-
-<body>
-
-  <!-- Header -->
-<header class="top-bar" id="header">
-  <a href="index.html"><h1 class="portfolio-title">Paras Shirvale</h1></a>
-  <nav class="navbar">
-    <ul>
-      <li class="dropdown"><a href="index.html" class="dropdown-toggle">About Me</a>
-        <ul class="dropdown-content">
-          <li><a href="index.html">General Info</a></li>
-          <li><a href="Experience.html">Experience</a></li>
-          <li><a href="your-resume.pdf">Download CV</a></li>
-        </ul>
-      </li>
-      <li><a href="projects.html">Projects</a></li>
-      <li><a href="contact.html">Contact</a></li>
-    </ul>
-  </nav>
-</header>
-
-<div class="under-construction-banner" style="background-color: #ffcc00; color: #000; text-align: center; padding: 8px; font-weight: bold;">
-  🚧 Website Under Construction 🚧
-</div>
-
-<!-- Dark Mode Toggle -->
-<button id="dark-mode-toggle">🌙</button>
-
-<!-- Introduction -->
-<section id="Intro" class="section">
-  <div class="intro-container">
-    <div class="image-container">
-      <img src="IMG_20250105_130942.jpg" alt="Paras Shirvale" margin-left="auto" margin-right="auto" class="profile-image">
-    </div>
-    <div class="intro-text">
-      <h1>Namste Everyone<br> I'm Paras Shirvale</h1>
-      <p class="short-description">Web-developer, Robotics enthusiast, Musician-Singer-Composer, Stage Actor</p>
-    </div>
-  </div>
-
-<!-- Buttons Section -->
-<section id="buttons" class="section">
-  <div class="button-container">
-    <!-- Resume Button -->
-    <a href="" class="btn">  <!-- <a href="" class="btn" download></a> -->
-      <span>Download My Resume</span>
-    </a>
-    <!-- View My Work Button -->
-    <a href="Experience.html" class="btn">
-      <span>View My Work</span>
-    </a>
-  </div>
-</section>
-
-<!-- About Me-->
-<section id="about" class="section">
-  <div class="about-container">
-    <h2>About Me</h2>
-    <!-- Personal Introduction -->
-    <p>
-     Hi, I am Paras Shirvale, a BTech Pre-Final undergraduate at the Indian Institute of Technology, Gandhinagar. From a young age, I have been fascinated by technology and how it can be used to solve real-world problems.
-    So, using my curiosity to learn the latest technologies, I joint IIT Gandhinagar, where I have been able to explore my interests in software development, machine learning, and VLSI design.
-    </p>
-    <p>
-     Along with the technical skills, I have also developed a passion for writing and poetry. I believe that writing is a powerful tool by which I can express myself in front of all.
-      My major interests are in Indian culture, history and philosophy along with the human emotions of love, compassion and hunger for living. 
-    </p>
-
-<!-- Skills Overview -->
-<h3>Skills & Technologies</h3>
-  <div class="skills-container">
-    <ul class="skills-column">
-      <li><i class="devicon-html5-plain colored skill-icon"></i> <strong>HTML</strong> - Building the structure of responsive websites.</li>
-      <li><i class="devicon-css3-plain colored skill-icon"></i> <strong>CSS</strong> - Crafting visually appealing designs with animations.</li>
-      <li><i class="devicon-javascript-plain colored skill-icon"></i> <strong>JavaScript</strong> - Enhancing interactivity and building SPAs with React.</li>
-      <!-- <li><i class="devicon-nodejs-plain colored skill-icon"></i> <strong>Node.js</strong> - Building scalable back-end services.</li> -->
-    </ul>
-    <ul class="skills-column">
-      <li><i class="devicon-python-plain colored skill-icon"></i> <strong>Python</strong> - Developing ML models using TensorFlow, NumPy, and Pandas.</li>
-      <li><i class="devicon-c-plain colored skill-icon"></i> <strong>C & C++</strong> - Making algorithms for better computations</li>
-      <li><i class="devicon-docker-plain colored skill-icon"></i> <strong>Docker</strong> - Containerizing applications for seamless deployment.</li>
-      <li><i class="devicon-git-plain colored skill-icon"></i> <strong>Git</strong> - Version control for collaborative development.</li>
-      <!-- <li><i class="devicon-wordpress-plain colored skill-icon"></i> <strong>Blogging</strong> - Simplifying tech concepts for learners through writing.</li> -->
-    </ul>
-  </div>
-
-<!-- Projects -->
-<section id="projects" class="section">
-  <h2>Best Projects</h2>
-
-  <div class="project-grid">
-    <div class="project-box">
-      <img src="chatbot.jpg" alt="Project 1">
-      <h3>MLP-Based Next-Word Text Generator</h3>
-      <p>Built an MLP model to generate next words from input text using custom vocabulary.</p>
-      <a href="https://github.com/HarshilShah1804/ES335_Assignment_3" target="_blank">View Project</a>
-    </div>
-  </div>
-
-  <div class="project-grid">
-    <div class="project-box">
-      <img src="stocks.jpg" alt="Project 2">
-      <h3>Electoral Bonds Website</h3>
-      <p>Developed a Flask-MySQL web app to analyze electoral bond transactions with dynamic search, filtering, and visualizations.</p>
-      <a href="https://github.com/HarshilShah1804/ES335_Assignment_3" target="_blank">View Project</a>
-    </div>
-  </div>
-  
-  <div class="project-grid">
-    <div class="project-box">
-      <img src="port.jpg" alt="Project 3">
-      <h3>Personal Portfolio Site</h3>
-      <p>A responsive portfolio site showcasing web development projects with smooth animations. Built with HTML, CSS, and JavaScript, featuring dynamic project showcases.</p>
-      <a href="https://Paras-Shirvale.github.io" target="_blank">View Project</a>
-    </div>
-  </div>
-
-</section>
-
-<!-- Skills -->
-<section id="skills-expertise" class="section">
-  <div class="skills-certifications-container">
-    <!-- Left Column: Skills -->
-    <div class="skills-column">
-      <h2>Skills</h2>
-      <div class="skill">
-        <div class="skill-name">HTML, CSS, JavaScript</div>
-        <div class="skill-bar">
-          <div class="skill-level" style="width: 90%;">90%</div>
-        </div>
-      </div>
-      <div class="skill">
-        <div class="skill-name">Machine learning</div>
-        <div class="skill-bar">
-          <div class="skill-level" style="width: 80%;">80%</div>
-        </div>
-      </div>
-      <div class="skill">
-        <div class="skill-name">Data Stuctures and Algorithms</div>
-        <div class="skill-bar">
-          <div class="skill-level" style="width: 80%;">80%</div>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Right Column: Certifications -->
-    <div class="certifications-column">
-      <h2>Certifications & Courses</h2>
-      <ul class="certification-list">
-        <li>
-          <strong>BTech-MTech ME with Minors in CSE</strong> - IITGN
-        </li>
-        <li>
-          <strong>Data Structures and Algorithms and Machine Learning</strong> - IITGN
-        </li>
-        <li>
-          <strong>Introduction to Robotics</strong> - IITGN
-        </li>
-        <li>
-          <strong>Machine Learning Specialization</strong> - Stanford University
-        </li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<section id="testimonials" class="section">
-  <h2>Favorite Quotes</h2>
-  <div class="testimonials-container">
-    <!-- Testimonial 1 -->
-    <div class="testimonial-card">
-      <p class="testimonial-quote">“If you don’t fight for what you want, then don’t cry for what you lost.
-        Likewise,
-        Nothing depends on luck, everything depends on work,
-        Because Even Luck has to work.”</p>
-      <p class="testimonial-author">- Lord Shree Krishna, Shrimad Bhagwat Geeta</p>
-    </div>
-    <!-- Testimonial 2 -->
-    <div class="testimonial-card">
-      <p class="testimonial-quote">"Don't let the noise of others' opinions drown out your own inner voice"</p>
-      <p class="testimonial-author">- Steve Jobs, CEO Apple Inc.</p>
-    </div>
-    <!-- Testimonial 3 -->
-    <div class="testimonial-card">
-      <p class="testimonial-quote">"The one who loves his mother language and culture, can love any other language and culture."</p>
-      <p class="testimonial-author">- P.L. Deshpande</p>
-    </div>
-    <!-- Social Proof Links -->
-    <div class="social-proof">
-      <p>Check more recommendations on:</p>
-      <a href="https://www.linkedin.com/in/paras-shirvale" target="_blank" class="social-link">
-        <i class="devicon-linkedin-plain colored"></i> LinkedIn
-      </a>
-    </div>
-  </div>
-</section>
-  
-<!-- Blogs and Photos -->
-<section id="buttons" class="section">
-  <div class="button-container">
-    <a href="blogs_photos.html" class="btn">
-      <span>Click here to check out my Blogs and Photographs</span>
-    </a>
-  </div>
-</section>
-
-<!-- Contact info -->
-<section id="contact" class="section contact-section">
-  <h2>Contact Me</h2>
-  <div class="contact-links">
-    <!-- GitHub -->
-    <a href="https://github.com/Paras-Shirvale" target="_blank" class="contact-link">
-      <i class="devicon-github-original contact-icon"></i> GitHub
-    </a>
-    <!-- LinkedIn -->
-    <a href="https://www.linkedin.com/in/paras-shirvale" target="_blank" class="contact-link">
-      <i class="devicon-linkedin-plain contact-icon"></i> LinkedIn
-    </a>
-    
-    <!-- Instagram -->
-    <a href="https://www.instagram.com/1_parass" target="_blank" class="contact-link">
-      <i class="devicon-instagram-plain contact-icon"></i> Instagram
-    </a>
-
-    <!-- Youtube -->
-    <a href="https://www.youtube.com/@parasshirvale" target="_blank" class="contact-link">
-      <i class="Youtube"></i> Youtube
-    </a>    
-  </div>
-  <!-- Drop a Mail Button -->
-  <div class="contact-button">
-    <a href="contact.html" class="btn">Drop a Mail</a>
-  </div>
-</section>
-  
-
-<!-- Footer -->
-<footer>
-  <p>Made with ❤️ by Aditya, Chinmay & Paras</p>
-</footer>
-
-<script src="script1.js"></script>
+<body data-page="home" id="top">
+  <a class="skip" href="#main">Skip to content</a>
+  <header id="site-header"></header>
+  <main id="main">
+    <!-- Every section is filled from assets/js/content.js -->
+    <section id="hero" class="hero dots"></section>
+    <section id="stats"></section>
+    <section id="about" class="section"></section>
+    <section id="experience" class="section alt"></section>
+    <section id="work" class="section"></section>
+    <section id="skills" class="section alt"></section>
+    <section id="beyond" class="section"></section>
+    <section id="writing" class="section alt"></section>
+    <section id="gallery" class="section"></section>
+    <section id="quotes" class="section alt"></section>
+    <section id="contact" class="section contact"></section>
+  </main>
+  <footer id="site-footer"></footer>
+  <script src="assets/js/content.js"></script>
+  <script src="assets/js/main.js"></script>
 </body>
 </html>

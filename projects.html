@@ -3,73 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Portfolio</title>
-  <!-- Add Roboto Slab font from Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="projects.css">
+  <title>Projects</title>
+  <meta name="description" content="Paras Shirvale — engineer, musician, actor and writer from IIT Gandhinagar.">
+  <meta property="og:title" content="Paras Shirvale">
+  <meta property="og:image" content="assets/images/profile.jpg">
+  <meta name="theme-color" content="#0b0b0b">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23d9480f'/><text x='50' y='66' font-size='46' text-anchor='middle' fill='white' font-family='Georgia' font-style='italic'>PS</text></svg>">
+  <script>try{var t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
-
-<body>
-
-  <!-- Header -->
-<header class="top-bar" id="header">
-  <a href="index.html"><h1 class="portfolio-title">Paras Shirvale</h1></a>
-  <nav class="navbar">
-    <ul>
-      <li class="dropdown"><a href="index.html" class="dropdown-toggle">About Me</a>
-        <ul class="dropdown-content">
-          <li><a href="index.html">General Info</a></li>
-          <li><a href="Experience.html">Experience</a></li>
-          <li><a href="your-resume.pdf">Download CV</a></li>
-        </ul>
-      </li>
-      <li><a href="projects.html">Projects</a></li>
-      <li><a href="contact.html">Contact</a></li>
-    </ul>
-  </nav>
-</header>
-  
-<!-- Dark Mode Toggle -->
-<button id="dark-mode-toggle">🌙</button>
-
-<!-- Projects -->
-<section id="projects" class="section">
-
-  <div class="project-grid">
-    <div class="project-box">
-      <img src="chatbot.jpg" alt="Project 1">
-      <h3>MLP-Based Next-Word Text Generator</h3>
-      <p>Built an MLP model to generate next words from input text using custom vocabulary.</p>
-      <a href="https://github.com/HarshilShah1804/ES335_Assignment_3" target="_blank">View Project</a>
-    </div>
-  </div>
-
-  <div class="project-grid">
-    <div class="project-box">
-      <img src="stocks.jpg" alt="Project 2">
-      <h3>Electoral Bonds Website</h3>
-      <p>Developed a Flask-MySQL web app to analyze electoral bond transactions with dynamic search, filtering, and visualizations.</p>
-      <a href="https://github.com/HarshilShah1804/ES335_Assignment_3" target="_blank">View Project</a>
-    </div>
-  </div>
-  
-  <h2>Projects</h2>
-  <div class="project-grid">
-    <div class="project-box">
-      <img src="port.jpg" alt="Project 3">
-      <h3>Personal Portfolio Site</h3>
-      <p>A responsive portfolio site showcasing web development projects with smooth animations. Built with HTML, CSS, and JavaScript, featuring dynamic project showcases.</p>
-      <a href="https://paras-shirvale.github.io/" target="_blank">View Project</a>
-    </div>   
-  </div>
-</section>
-
-<!-- Footer -->
-<footer>
-  <p>Made with ❤️ by Aditya, Chinmay & Paras</p>
-</footer>
-
-<script src="script1.js"></script>
-
+<body data-page="projects" id="top">
+  <a class="skip" href="#main">Skip to content</a>
+  <header id="site-header"></header>
+  <main id="main">
+    <section class="page-head dots">
+      <div class="wrap">
+        <div class="mono crumbs"><a href="index.html">Home</a> / Projects</div>
+        <h1>Selected <em>work</em></h1>
+        <p>Machine learning, robotics, web and everything in between — the things I've designed, built and shipped.</p>
+      </div>
+    </section>
+    <section class="section" style="padding-top:20px">
+      <div class="wrap">
+        <div class="filters" id="filters"></div>
+        <div class="projects" id="project-grid"></div>
+      </div>
+    </section>
+  </main>
+  <footer id="site-footer"></footer>
+  <script src="assets/js/content.js"></script>
+  <script src="assets/js/main.js"></script>
 </body>
 </html>

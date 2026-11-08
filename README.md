@@ -1,12 +1,49 @@
-# Portfolio Website Overview
+# Paras Shirvale — Personal Website
 
-This is a responsive and interactive portfolio website built using **HTML**, **CSS**, and **JavaScript** to showcase my work and interests.
+Live at **https://paras-shirvale.github.io**
 
-The website includes:
+A content-driven portfolio: every piece of text, image and link lives in **one file**, so you can update the site without touching HTML or CSS.
 
-- Sections highlighting my **skills**, **projects**, **work experience**, **blogs**, and **hobbies**
-- A clean and modern layout with a **user-friendly design**
-- Toggle support for both **light and dark modes**
-- An interactive **photo gallery** to share visual content
+## How to update content
 
-Each page is thoughtfully designed to reflect who I am and make it easy for visitors to explore my journey and creations.
+Edit **[`assets/js/content.js`](assets/js/content.js)**. Search for `TODO` to find placeholders.
+
+| What you want to change | Key in `content.js` |
+|---|---|
+| Name, email, résumé link, "open to work" badge | `meta` |
+| Big intro screen (greeting, typing roles, photo) | `hero` |
+| Big numbers strip | `stats` |
+| About text and quick facts | `about` |
+| Work / education timeline | `experience` |
+| Projects (`featured: true` shows on home page) | `projects` |
+| Skills and certifications | `skills`, `certifications` |
+| Music / theatre / writing cards | `passions` |
+| Photos | `gallery` |
+| Blog posts and poems (open at `writing.html?p=<slug>`) | `posts` |
+| Rotating quotes | `quotes` |
+| Contact text and form | `contact`, `socials` |
+
+- Put images in `assets/images/` and your CV at `assets/resume.pdf`.
+- Setting any list to `[]` hides that section.
+- **Contact form:** create a free form at [formspree.io](https://formspree.io) and paste its URL into `contact.formEndpoint`. If you leave it empty, the form opens the visitor's email app.
+- **Accent colour:** change `--accent` at the top of `assets/css/style.css`.
+
+## Structure
+
+```
+index.html        Home: hero, about, experience, work, skills, beyond, writing, gallery, quotes, contact
+projects.html     All projects, with category filters
+writing.html      Blog list + individual posts
+gallery.html      Full photo gallery with lightbox
+assets/
+  css/style.css   All styles (light/dark themes)
+  js/content.js   ← YOUR CONTENT
+  js/main.js      Renders the content, animations, theme toggle
+  images/
+```
+
+`Experience.html`, `contact.html` and `blogs_photos.html` now redirect to the new pages, so old links still work.
+
+## Preview locally
+
+Open `index.html` in a browser, or run `python -m http.server` and visit http://localhost:8000.
