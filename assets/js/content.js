@@ -15,7 +15,7 @@ window.SITE = {
   meta: {
     firstName: "Paras",
     lastName: "Shirvale",
-    tagline: "Engineer · Musician · Actor · Writer",
+    tagline: "Physical AI · Robotics · Music · Theatre",
     description: "Paras Shirvale — engineering student at IIT Gandhinagar working across machine learning, robotics and software, with a life on stage and in music.",
     email: "paras.shirvale@iitgn.ac.in",
     location: "Gandhinagar, India",
@@ -27,7 +27,7 @@ window.SITE = {
   /* ---------- Hero (the first full screen) ---------- */
   hero: {
     greeting: "Namaste — I'm",
-    roles: ["Physical AI", "Robot Manipulation", "Dynamical Systems", "Robot Learning", "Musician", "Stage Actor", "Poet"],
+    roles: ["Physical AI", "Robot Manipulation", "Dynamical Systems", "Robot Learning", "Musician", "Stage Actor"],
     intro: "B.Tech–M.Tech student at <strong>IIT Gandhinagar</strong> working on <strong>Physical AI</strong> — teaching robot hands to coordinate, make contact and manipulate the real world with dexterity.",
     image: "assets/images/profile.jpg",
     imageCaption: "Fig. 01 — Gandhinagar, 2025",
@@ -181,7 +181,7 @@ window.SITE = {
     { title: "Introduction to Robotics", issuer: "IIT Gandhinagar", year: "", link: "" },
   ],
 
-  /* ---------- Beyond engineering (music, theatre, writing…) ---------- */
+  /* ---------- Beyond engineering (music, theatre…) ---------- */
   passions: [
     {
       kicker: "Music",
@@ -195,13 +195,6 @@ window.SITE = {
       title: "Stage Actor",
       text: "TODO: plays, roles, festivals, the theatre group you're part of.",
       image: "assets/images/photo2.jpg",
-      link: null,
-    },
-    {
-      kicker: "Writing",
-      title: "Poet · Writer",
-      text: "Poetry and prose on Indian culture, history, philosophy — and the emotions that make us human.",
-      image: "assets/images/photo3.jpeg",
       link: null,
     },
   ],

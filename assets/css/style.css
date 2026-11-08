@@ -399,6 +399,11 @@ a.cert:hover { border-color: var(--accent); transform: translateY(-3px); }
 
 /* ---------- Passions (beyond engineering) ---------- */
 .passions { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(16px, 2vw, 24px); }
+/* fewer than 3 cards: let them fill the row with a wider shape */
+.passions:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, 1fr); }
+.passions:has(> :nth-child(2):last-child) .passion { aspect-ratio: 16 / 11; }
+.passions:has(> :only-child) { grid-template-columns: 1fr; }
+.passions:has(> :only-child) .passion { aspect-ratio: 21 / 9; }
 .passion {
   position: relative; overflow: hidden; border-radius: var(--radius);
   aspect-ratio: 3 / 4; color: #fff; display: flex; flex-direction: column; justify-content: flex-end;
