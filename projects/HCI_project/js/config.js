@@ -22,7 +22,7 @@ window.SPARK_CONFIG = {
   /* ⬇ The address of your Cloudflare Worker, e.g.
        'https://spark-proxy.your-name.workers.dev'
      Until this is filled in, Ask Spark uses its built-in answers. */
-  ENDPOINT: '',
+  ENDPOINT: 'https://spark-proxy.parasshirvale10b62.workers.dev',
 
   /* ── where word pictures come from ──────────────────────────
      Tried in order, first hit wins. All are free and need no key.
