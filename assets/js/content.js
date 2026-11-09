@@ -36,9 +36,9 @@ window.SITE = {
   /* ---------- Big numbers strip (set to [] to hide) ---------- */
   stats: [
     { value: 10, suffix: "+", label: "Projects built" },          // TODO: real numbers
-    { value: 3,  suffix: "",  label: "Years at IIT Gandhinagar" },
+    { value: 4,  suffix: "",  label: "Years at IIT Gandhinagar" },
     { value: 20, suffix: "+", label: "Stage performances" },
-    { value: 15, suffix: "+", label: "Songs & compositions" },
+    { value: 10, suffix: "+", label: "Songs & compositions" },
   ],
 
   /* ---------- About ---------- */
@@ -98,9 +98,9 @@ window.SITE = {
   projects: [
     {
       title: "Spark — A Reading Companion for Children with Dyslexia",
-      year: "2026",                                           // TODO: confirm
-      period: "",                                             // TODO: e.g. "Aug — Nov 2026"
-      with: "",                                               // TODO: course / professor
+      year: "2026",                                           
+      period: "Aug — Nov 2026",                                             
+      with: "Prof. Yogesh K Meena",                                              
       category: "HCI",
       tags: ["Accessibility", "Web Speech API", "LLMs", "JavaScript", "Adaptive UI"],
       summary: "An AI reading companion for children aged 9–14 with dyslexia. Spark listens while the child reads aloud, notices where they get stuck, and learns which kind of help works for that child — a picture, hearing the word, or breaking it into parts.",
@@ -203,14 +203,14 @@ window.SITE = {
     {
       kicker: "Music",
       title: "Singer · Composer",
-      text: "TODO: what you sing, compose, perform — bands, albums, shows.",
+      text: "Hindustani Classical Music",
       image: "assets/images/photo1.jpg",
       link: { label: "Listen on YouTube", url: "https://www.youtube.com/@parasshirvale" },
     },
     {
       kicker: "Theatre",
-      title: "Stage Actor",
-      text: "TODO: plays, roles, festivals, the theatre group you're part of.",
+      title: "Theater Actor",
+      text: "",
       image: "assets/images/photo2.jpg",
       link: null,
     },
@@ -218,11 +218,9 @@ window.SITE = {
 
   /* ---------- Photo gallery ---------- */
   gallery: [
-    { src: "assets/images/photo1.jpg", caption: "TODO: caption", place: "TODO: place" },
-    { src: "assets/images/photo2.jpg", caption: "TODO: caption", place: "" },
-    { src: "assets/images/photo3.jpeg", caption: "TODO: caption", place: "" },
-    { src: "assets/images/travel.avif", caption: "TODO: caption", place: "" },
-    { src: "assets/images/blog.jpg", caption: "TODO: caption", place: "" },
+    { src: "assets/images/photo1.jpeg", caption: "TODO: Stories waiting to happen.", place: "TODO: place" },
+    { src: "assets/images/photo2.jpeg", caption: "TODO: Some evenings stay with you.", place: "" },
+    { src: "assets/images/photo3.jpeg", caption: "TODO: A place to pause.", place: "" },
   ],
 
   /* ---------- Favourite quotes (rotate automatically) ---------- */
