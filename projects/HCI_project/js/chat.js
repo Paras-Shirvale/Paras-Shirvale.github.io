@@ -118,23 +118,10 @@
     var card = document.createElement('div');
     card.className = 'chat-setup';
     card.innerHTML =
-      '<b>I can\'t chat yet</b>' +
-      '<p>To talk properly I need to be connected to a language model. ' +
-      'It\'s free and takes about a minute — an adult can do it once.</p>' +
-      (S.AI.uiAllowed()
-        ? '<button class="btn btn-sm btn-primary" id="chatConnect">Connect me</button>'
-        : '<p class="chat-setup-alt">Set <code>API_KEY</code> in <code>js/config.js</code>.</p>') +
-      '<p class="chat-setup-alt">Until then I can still read words to you, ' +
+      '<b>My thinking helper is resting</b>' +
+      '<p>I can\'t have a full chat right now, but I can still read words to you, ' +
       'break them into parts and show you pictures — tap any word on the page.</p>';
     body.appendChild(card);
-
-    var btn = S.$('#chatConnect');
-    if (btn) {
-      btn.addEventListener('click', function () {
-        S.closeChat();
-        S.openAISettings();
-      });
-    }
   }
 
   S.closeChat = function () {

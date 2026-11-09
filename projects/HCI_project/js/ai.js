@@ -135,7 +135,7 @@
       free: 'The key stays on the server',
       where: 'Set up when the site was deployed. See DEPLOY.md.',
       shape: 'openai',
-      endpoint: '/api/chat',
+      endpoint: '',          /* comes from config.js ENDPOINT (the Worker URL) */
       models: [],
       needsKey: false        /* the server holds it, not the browser */
     },
@@ -161,7 +161,10 @@
   var FILE = window.SPARK_CONFIG || {};
 
   AI.uiAllowed = function () { return !!FILE.ALLOW_UI_OVERRIDE; };
-  AI.configured = function () { return !!(FILE.API_KEY || FILE.PROVIDER === 'ollama'); };
+  AI.configured = function () {
+    return !!(FILE.API_KEY || FILE.PROVIDER === 'ollama' ||
+              (FILE.PROVIDER === 'proxy' && FILE.ENDPOINT));
+  };
 
   /** The live settings: config.js, unless the app is allowed to override. */
   AI.settings = function () {
@@ -179,6 +182,7 @@
     var p = PROVIDERS[name];
     if (!p) return false;
     if (name === 'claude') return !!AI.claudeFn;
+    if (name === 'proxy') return !!AI.endpointFor('proxy');   /* needs the Worker URL */
     if (!p.needsKey) return true;                 /* Ollama needs no key */
     return !!AI.settings().key;
   }
@@ -217,7 +221,7 @@
 
   AI.endpointFor = function (name) {
     var cfg = AI.settings();
-    if (name === 'custom') return cfg.endpoint || '';
+    if (name === 'custom' || name === 'proxy') return cfg.endpoint || '';
     return (PROVIDERS[name] && PROVIDERS[name].endpoint) || '';
   };
 

@@ -71,12 +71,9 @@
       '</div>' +
 
       '<div class="toolbar" style="margin:18px 0 0">' +
-        '<button class="btn btn-sm" id="sVoice">Voices…</button>' +
-        '<button class="btn btn-sm" id="sAI">Thinking helper…</button>' +
-        '<button class="btn btn-sm" id="sReset">Start over</button>' +
-      '</div>' +
-
-      '<button class="btn btn-primary btn-block" data-close style="margin-top:14px">Done</button>',
+        '<button class="btn" id="sBack">&larr; Back</button>' +
+        '<button class="btn btn-primary" data-close style="flex:1">Done</button>' +
+      '</div>',
 
       function () {
         S.$$('[data-size]').forEach(function (b) {
@@ -113,9 +110,7 @@
           });
         });
 
-        S.$('#sVoice').addEventListener('click', S.openVoiceSettings);
-        S.$('#sAI').addEventListener('click', S.openAISettings);
-        S.$('#sReset').addEventListener('click', confirmReset);
+        S.$('#sBack').addEventListener('click', S.openMenu);
       }
     );
   };
@@ -246,7 +241,7 @@
 
         S.$('#vBack').addEventListener('click', function () {
           stopCalibration();
-          S.openSettings();
+          S.openMenu();
         });
       }
     );
@@ -495,7 +490,7 @@
           });
         }
 
-        S.$('#aiBack').addEventListener('click', S.openSettings);
+        S.$('#aiBack').addEventListener('click', S.openMenu);
 
         function report(text, good) {
           var box = S.$('#aiMsg');
@@ -521,8 +516,6 @@
         note: 'Text size, spacing, letter shapes, theme', go: S.openSettings },
       { icon: 'mic',     label: 'Voices and calibration',
         note: 'Pick a voice, let Spark learn yours',      go: S.openVoiceSettings },
-      { icon: 'spark',   label: 'Thinking helper',
-        note: 'The model behind Ask Spark',               go: S.openAISettings },
       { icon: 'trophy',  label: 'Your progress',
         note: 'What Spark has noticed so far',
         go: function () { S.go('progress'); } }

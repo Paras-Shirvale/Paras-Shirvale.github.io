@@ -1,84 +1,27 @@
 /* ============================================================
-   config.js — SET THIS UP ONCE, AS THE DEVELOPER.
+   config.js — Spark on paras-shirvale.github.io
 
-   This is the only file you need to edit to give Spark a brain.
-   The child and the teacher never see a key or a settings form;
-   they just open the app and it works.
-
-   ─── HOW TO SET IT UP ──────────────────────────────────────
-
-   1. Get a free key (60 seconds, no card needed):
-
-        Groq    →  https://console.groq.com     ... API Keys
-        Gemini  →  https://aistudio.google.com  ... Get API key
-
-   2. Put it in API_KEY below, and set PROVIDER to match.
-
-   3. Save the file and reload the page. Done.
-
-   Leave API_KEY empty and the app still runs — Spark falls back
-   to its built-in answers. Everything that makes this project
-   what it is (pause classification, letter-confusion detection,
-   the cue engine, the drills) is arithmetic and needs no model
-   at all. A model only improves four things:
-
-        · Ask Spark becomes a real conversation
-        · word cards get a plain-English meaning
-        · comprehension questions get better
-        · spelling corrections explain the rule
-
-   ─── PLEASE READ THIS BEFORE YOU PUBLISH ───────────────────
-
-   A key written into a file the browser downloads can be read by
-   anyone who opens the page and looks. That is a property of all
-   browser code, not of this app.
-
-   So this arrangement is right for:
-     · running on your own machine
-     · a demo or a class presentation
-     · a project submission
-
-   It is NOT safe for a site on the open internet. For that, the
-   key has to live on a small server that forwards the requests —
-   the browser then never holds it. The README explains what that
-   looks like.
-
-   If you are handing this in, use a free key, and revoke it in
-   the provider's dashboard when you are finished.
+   The AI model is FIXED and connected through a small server
+   (a Cloudflare Worker — see /_server/README.md in the website
+   repo). The API key lives ONLY on that server as a secret, so
+   it is never in any file a visitor downloads. Children and
+   guardians never see a key, a model list or a "connect" button.
    ============================================================ */
 
 window.SPARK_CONFIG = {
 
-  /* Which service.
+  /* Always go through the server — the browser never holds a key. */
+  PROVIDER: 'proxy',
 
-     'groq' is the easiest free one for running on your own machine.
-
-     Use 'proxy' when the site is PUBLISHED on the internet. The
-     browser then holds no key at all — it posts to this site's own
-     /api/chat, and the key sits on the server as an environment
-     variable where visitors cannot read it. See DEPLOY.md.
-
-     'proxy' | 'groq' | 'gemini' | 'openrouter' | 'cerebras'
-     | 'mistral' | 'together' | 'ollama' | 'custom' | ''        */
-  PROVIDER: 'groq',
-
-  /* ⬇  PASTE YOUR KEY BETWEEN THESE QUOTES  ⬇
-     It looks like  gsk_AbC123...  for Groq.
-     Leave it empty to run Spark without a model.
-
-     LEAVE THIS EMPTY IF YOU PUBLISH THE SITE. A key written here
-     is downloaded by every visitor and can be read by any of them.
-     Set PROVIDER to 'proxy' instead and put the key on the server. */
+  /* NEVER put a key here. This file is public. */
   API_KEY: '',
 
-  /* LEAVE THIS BLANK. Spark asks the service which models it has
-     and picks a working one, then remembers it. Providers retire
-     model names without warning, so a name written here today is
-     a "model not found" error in six months.
-     Only fill it in to force one specific model.               */
+  /* The server picks the model. Leave blank. */
   MODEL: '',
 
-  /* Only for PROVIDER: 'custom' or 'ollama' on another machine. */
+  /* ⬇ The address of your Cloudflare Worker, e.g.
+       'https://spark-proxy.your-name.workers.dev'
+     Until this is filled in, Ask Spark uses its built-in answers. */
   ENDPOINT: '',
 
   /* ── where word pictures come from ──────────────────────────
@@ -118,5 +61,5 @@ window.SPARK_CONFIG = {
      Set it to false for a classroom or shared machine, where
      nobody using the app should meet an API key at all — then
      API_KEY above is the only way in.                           */
-  ALLOW_UI_OVERRIDE: true
+  ALLOW_UI_OVERRIDE: false
 };
