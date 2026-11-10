@@ -61,5 +61,16 @@ window.SPARK_CONFIG = {
      Set it to false for a classroom or shared machine, where
      nobody using the app should meet an API key at all — then
      API_KEY above is the only way in.                           */
-  ALLOW_UI_OVERRIDE: false
+  ALLOW_UI_OVERRIDE: false,
+
+  /* ── the study database (Supabase) ──────────────────────────
+     Every reading, writing, mix-up and cue card is logged as a
+     row (see js/db.js and _server/supabase-schema.sql). Rows are
+     always kept on this device; with these two filled in they are
+     also sent to Supabase, where the teacher dashboard reads them.
+
+     The anon key is safe to publish: the database only lets it
+     INSERT rows, never read them back.                          */
+  SUPABASE_URL: '',
+  SUPABASE_ANON_KEY: ''
 };

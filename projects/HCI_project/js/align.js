@@ -82,6 +82,15 @@
       return null;
     }
 
+    /** A swap of easily-confused letters, or a reversal, rather than noise. */
+    function confusionSlip(heard, expected) {
+      var a = S.Analysis && S.Analysis.analyseMisread(heard, expected);
+      return !!(a && (a.kind === 'word-reversal' ||
+        (a.kind === 'letter-confusion' && a.pairs.some(function (p) {
+          return (S.CLASSES || []).indexOf(S.classOfPair ? S.classOfPair(p.key) : p.key) > -1;
+        }))));
+    }
+
     /** Close enough to be a misreading of this word rather than noise? */
     function plausibleMisreading(heard, expected) {
       if (!heard || !expected) return false;
@@ -149,11 +158,23 @@
           var heard = fresh[w];
           if (!heard) continue;
 
+          /* 0 — the expected word, but with letters swapped (dog → bog,
+                 beep → deep). soundsLike() forgives one-letter slips in
+                 longer words, which would hide exactly the confusions
+                 this tool exists to find — so check for those first. */
+          var here = tokenAt(cursor);
+          if (here && here.clean && heard !== here.clean && confusionSlip(heard, here.clean)) {
+            events.push({ type: 'misread', heard: heard, expected: here.clean, token: here });
+            continue;
+          }
+
           /* 1 — does it match something just ahead? */
           var matched = -1;
           for (var k = 0; k < LOOKAHEAD && cursor + k < tokens.length; k++) {
             var t = tokenAt(cursor + k);
-            if (t && t.clean && S.soundsLike(heard, t.clean)) { matched = k; break; }
+            if (t && t.clean && S.soundsLike(heard, t.clean) && (heard === t.clean || !confusionSlip(heard, t.clean))) {
+              matched = k; break;
+            }
           }
 
           if (matched > -1) {

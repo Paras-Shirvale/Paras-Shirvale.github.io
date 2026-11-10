@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Spark — grown-ups' dashboard</title>
+<link rel="stylesheet" href="css/teacher.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2323835C'/%3E%3Cpath d='M12 4l1.8 5.2L19 11l-4.4 1.8L12 18l-1.8-5.2L5.2 11l5-1.5z' fill='%23fff'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<header class="t-top">
+  <div class="t-top-in">
+    <b class="t-brand">spark<span>.ai</span></b>
+    <span class="t-tag">Teacher / parent view</span>
+    <span class="t-flex"></span>
+    <span class="t-source" id="tSource"></span>
+    <button class="t-btn t-ghost" id="tLogout" hidden>Sign out</button>
+    <a class="t-btn t-ghost" href="index.html">Back to the app</a>
+  </div>
+</header>
+
+<main class="t-main">
+
+  <!-- ── sign in ───────────────────────────────────────────── -->
+  <section id="tLogin" class="t-login">
+    <h1>Grown-ups' dashboard</h1>
+    <p class="t-sub">This page shows what Spark has measured: which letters a child
+      confuses, how they respond to help, and how that changes over time.
+      It is never shown on the child's screen.</p>
+
+    <div class="t-login-grid">
+      <form class="t-card" id="tCloudForm" hidden>
+        <h2>Sign in</h2>
+        <p class="t-sub">All children, all devices — from the study database.</p>
+        <label>Email <input type="email" id="tEmail" autocomplete="username" required></label>
+        <label>Password <input type="password" id="tPass" autocomplete="current-password" required></label>
+        <button class="t-btn" type="submit">Sign in</button>
+        <p class="t-err" id="tCloudErr"></p>
+      </form>
+
+      <form class="t-card" id="tLocalForm">
+        <h2>This device</h2>
+        <p class="t-sub" id="tPinHint">Data saved on this computer only.</p>
+        <label><span id="tPinLabel">PIN</span> <input type="password" id="tPin" inputmode="numeric" maxlength="8" minlength="4" required></label>
+        <button class="t-btn" type="submit" id="tPinBtn">Open</button>
+        <p class="t-err" id="tLocalErr"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- ── the dashboard ─────────────────────────────────────── -->
+  <section id="tDash" hidden>
+    <div class="t-head">
+      <div>
+        <label class="t-child">Child
+          <select id="tChild"></select>
+        </label>
+      </div>
+      <div class="t-exports">
+        <button class="t-btn t-ghost" id="tExportJson">Export all (JSON)</button>
+        <select id="tExportTable" aria-label="Table to export">
+          <option value="sessions">sessions</option>
+          <option value="confusion_events">confusion_events</option>
+          <option value="timing_events">timing_events</option>
+          <option value="help_events">help_events</option>
+          <option value="submissions">submissions</option>
+          <option value="confusion_profile">confusion_profile</option>
+        </select>
+        <button class="t-btn t-ghost" id="tExportCsv">Export CSV</button>
+      </div>
+    </div>
+
+    <div class="t-action" id="tAction"></div>
+
+    <div class="t-grid">
+      <section class="t-card t-span2">
+        <h2>Confusion heatmap</h2>
+        <p class="t-sub">One cell per letter pair. Darker = more confused. Click a cell for every event.</p>
+        <div class="heat" id="tHeat"></div>
+      </section>
+
+      <section class="t-card">
+        <h2>Trend</h2>
+        <p class="t-sub">Last 3 sessions vs the 3 before.</p>
+        <div id="tTrend"></div>
+      </section>
+
+      <section class="t-card">
+        <h2>Self-correct rate</h2>
+        <p class="t-sub">Of all confusions, how many the child fixed within 2 seconds. High = awareness is there; automaticity is not.</p>
+        <div id="tSelf"></div>
+      </section>
+
+      <section class="t-card">
+        <h2>Pause duration per pair</h2>
+        <p class="t-sub">Average time on words containing the pair, and the last 5 sessions.</p>
+        <div id="tPause"></div>
+      </section>
+
+      <section class="t-card">
+        <h2>Help rung breakdown</h2>
+        <p class="t-sub">Which rung each pair needed. Supply-heavy pairs need targeted practice.</p>
+        <div class="rung-key"><i class="r-prompt"></i>Prompt <i class="r-cue"></i>Cue <i class="r-choice"></i>Choice <i class="r-supply"></i>Supply</div>
+        <div id="tRungs"></div>
+      </section>
+
+      <section class="t-card">
+        <h2>Words per minute (read)</h2>
+        <p class="t-sub">Per reading session. Context for the confusion data, not the headline.</p>
+        <div id="tWpm"></div>
+      </section>
+
+      <section class="t-card">
+        <h2>Dismissal rate</h2>
+        <p class="t-sub">"Not now" taps as a share of cue cards shown. High = the cue arrives at the wrong moment.</p>
+        <div id="tDismiss"></div>
+      </section>
+
+      <section class="t-card">
+        <h2>Worlds</h2>
+        <p class="t-sub">Chapters read and written.</p>
+        <div id="tWorlds"></div>
+      </section>
+
+      <section class="t-card t-span2" id="tEventsCard" hidden>
+        <h2 id="tEventsTitle">Events</h2>
+        <div id="tEvents"></div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/teacher.js"></script>
+</body>
+</html>

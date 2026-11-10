@@ -158,7 +158,8 @@ window.Spark = window.Spark || {};
     S.save();
     var el = S.$('#sparkCount');
     if (el) el.textContent = S.P.sparks;
-    S.toast('<span class="i" data-icon="spark" data-icon-size="18"></span> +' + n + ' — ' + why);
+    /* no numbers for the child — just a kind word */
+    S.toast('<span class="i" data-icon="spark" data-icon-size="18"></span> ' + why + '!');
     if (S.paintScene) S.paintScene();
     if (S.checkMedals) S.checkMedals();
   };
@@ -170,6 +171,8 @@ window.Spark = window.Spark || {};
     S.P.streak = (S.P.lastDay === yesterday) ? S.P.streak + 1 : 1;
     S.P.lastDay = d;
     S.save();
+    var el = S.$('#streakCount');
+    if (el) el.textContent = S.P.streak;
   };
 
   /* ── derived views of the profile ───────────────────── */

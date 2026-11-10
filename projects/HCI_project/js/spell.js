@@ -157,6 +157,7 @@
         var a = S.Analysis.analyseMisread(f.from, f.to);
         if (a && a.pairs && a.pairs.length) {
           S.Analysis.recordMisread(a, { source: 'writing', sentence: text, passage: opts.where || 'Writing' });
+          if (S.DB) S.DB.confusion(a, { detected_by: 'spelling', mode: 'write' });
         }
       });
       S.save();

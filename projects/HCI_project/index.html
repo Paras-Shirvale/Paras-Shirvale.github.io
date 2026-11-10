@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/pages.css">
 <link rel="stylesheet" href="css/spark2.css">
+<link rel="stylesheet" href="css/worlds.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23E09200'/%3E%3Cpath d='M12 4l1.8 5.2L19 11l-4.4 1.8L12 18l-1.8-5.2L5.2 11l5-1.5z' fill='%232A1F00'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -27,14 +28,13 @@
     </a>
 
     <nav class="tabs" id="tabs" aria-label="Sections">
-      <button class="tab" data-go="home" aria-current="page"><span class="i tab-ico" data-icon="home" data-icon-size="20"></span><span class="tab-txt">Home</span></button>
-      <button class="tab" data-go="read"><span class="i tab-ico" data-icon="book" data-icon-size="20"></span><span class="tab-txt">Read</span></button>
-      <button class="tab" data-go="write"><span class="i tab-ico" data-icon="pencil" data-icon-size="20"></span><span class="tab-txt">Write</span></button>
-      <button class="tab" data-go="progress"><span class="i tab-ico" data-icon="trophy" data-icon-size="20"></span><span class="tab-txt">Progress</span></button>
+      <button class="tab" data-go="home" aria-current="page"><span class="i tab-ico" data-icon="spark" data-icon-size="20"></span><span class="tab-txt">Worlds</span></button>
+      <button class="tab" data-go="write"><span class="i tab-ico" data-icon="pencil" data-icon-size="20"></span><span class="tab-txt">Practice</span></button>
+      <button class="tab" data-go="progress"><span class="i tab-ico" data-icon="trophy" data-icon-size="20"></span><span class="tab-txt">Me</span></button>
     </nav>
 
     <div class="topbar-end">
-      <span class="sparks-chip" title="Sparks you have earned"><span class="i" data-icon="spark" data-icon-size="20"></span>&nbsp;<span id="sparkCount">0</span></span>
+      <span class="streak-chip" title="Days in a row"><span class="flame" aria-hidden="true"></span><span id="streakCount">0</span>-day streak</span>
       <button class="avatar-btn" id="btnProfile" data-go="profile" aria-label="My profile"><span id="topAvatar"></span></button>
       <button class="icon-sq" id="btnMenu" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><span class="i" data-icon="menu" data-icon-size="18"></span></button>
     </div>
@@ -43,74 +43,32 @@
 
 <main id="main">
 
-<!-- ══ HOME ═════════════════════════════════════════════════════ -->
+<!-- ══ WORLDS (home) ═══════════════════════════════════════════ -->
 <section class="view" id="v-home">
   <div class="hero hero-home">
     <span class="hero-avatar" id="homeAvatar"></span>
     <div>
-      <p class="eyebrow">A little practice, your own pace</p>
       <h1 id="hiName">Hello</h1>
-      <p class="lede">What would you like to do today?</p>
+      <p class="lede" style="margin:0">Choose your world.</p>
     </div>
   </div>
+  <p class="eyebrow world-eyebrow">Choose your world</p>
+  <div class="world-grid" id="worldGrid"></div>
+</section>
 
-  <div class="noticed" id="noticedBox">
-    <span class="noticed-ico"><span class="i" data-icon="spark" data-icon-size="18"></span></span>
-    <p id="noticed">Read a story aloud and Spark will start spotting which letters catch you.</p>
-  </div>
-
-  <div class="doors">
-    <button class="door door-read" data-go="read">
-      <span class="door-ico" data-pic="book"></span>
-      <h3>Read</h3>
-      <p>Stories full of tricky letters. Spark listens.</p>
-      <span class="door-go">Start reading →</span>
-    </button>
-    <button class="door door-write" data-go="write">
-      <span class="door-ico" data-pic="flower"></span>
-      <h3>Write</h3>
-      <p>Listen and write, or build a sentence.</p>
-      <span class="door-go">Start writing →</span>
-    </button>
-    <button class="door door-prog" data-go="progress">
-      <span class="door-ico" data-pic="star"></span>
-      <h3>Progress</h3>
-      <p>Your medals, and the letters to watch.</p>
-      <span class="door-go">See progress →</span>
-    </button>
-  </div>
-
-  <div class="home-grid">
-    <section class="card">
-      <h2>Your picture</h2>
-      <p class="sub">Every 25 sparks colours in one more part.</p>
-      <div class="scene-wrap" id="sceneWrap"></div>
-      <div class="meter"><i id="sceneMeter"></i></div>
-      <div class="pieces" id="scenePieces"></div>
-    </section>
-
-    <section class="card">
-      <h2>Today</h2>
-      <p class="sub">Three small things. Any order.</p>
-      <div class="today" id="todayList"></div>
-    </section>
-  </div>
+<!-- ══ ONE WORLD: its chapters ═════════════════════════════════ -->
+<section class="view" id="v-world" hidden>
+  <div id="worldMain"></div>
 </section>
 
 <!-- ══ READ ═════════════════════════════════════════════════════ -->
 <section class="view" id="v-read" hidden>
 
-  <!-- library: one card per letter family -->
-  <div id="readLibrary">
-    <h1>Read a story</h1>
-    <p class="lede">Each family is full of letters that are easy to mix up. Read aloud — Spark listens.</p>
-    <div class="fam-grid" id="famList"></div>
-    <div id="screenReport"></div>
-  </div>
+  <div id="readLibrary" hidden></div>
 
   <!-- one passage -->
   <div id="readWork" hidden>
-    <button class="btn btn-sm" id="backToLib">← All stories</button>
+    <button class="btn btn-sm" id="backToLib">← Back to the world</button>
 
     <div class="work-head">
       <h1 id="pTitle">—</h1>
@@ -169,8 +127,7 @@
         </div>
 
         <div class="stat-row">
-          <div class="stat"><b id="statWpm">—</b><span>words / min</span></div>
-          <div class="stat"><b id="statWords">0</b><span>words read</span></div>
+                    <div class="stat"><b id="statWords">0</b><span>words read</span></div>
         </div>
 
         <div class="tools" id="railTools">
@@ -189,13 +146,12 @@
 
   <!-- pick an activity -->
   <div id="writeLibrary">
-    <h1>Write</h1>
-    <p class="lede">Pick a letter family. Listen and write, or build a sentence from a word bank.</p>
-    <div class="fam-grid" id="writeFamList"></div>
-
-    <h2 class="lib-heading" style="margin-top:26px">Picture story</h2>
+    <h1>Practice</h1>
+    <p class="lede">Free writing, just for fun.</p>
+    <h2 class="lib-heading">Picture story</h2>
     <div class="lib" id="writePictureCard" style="margin-bottom:22px"></div>
-
+    <h2 class="lib-heading">Word banks</h2>
+    <div class="lib" id="writeFamList" style="margin-bottom:22px"></div>
     <section class="card">
       <h2>Things you've written</h2>
       <div data-saved-list></div>
@@ -287,18 +243,12 @@
   <div id="writeDictation" hidden></div>
 </section>
 
-<!-- ══ PROGRESS ═════════════════════════════════════════════════ -->
+<!-- ══ ME: the child's own progress ═══════════════════════════
+     Worlds, chapters, streak, badges, words read, sentences written.
+     No scores, no error counts, no letters, no timings — those live
+     only on the grown-ups' dashboard (teacher.html). -->
 <section class="view" id="v-progress" hidden>
   <div id="progMain"></div>
-
-  <!-- the drill-down: every difficulty, in full -->
-  <div id="reviewPanel" hidden>
-    <button class="btn btn-sm" id="btnReviewBack">← Back to progress</button>
-    <h2 style="margin:16px 0 4px">Every difficulty</h2>
-    <p class="sub">The word, the sentence it was in, and what happened.</p>
-    <div class="review-filters" id="reviewFilters"></div>
-    <div id="reviewList"></div>
-  </div>
 </section>
 
 <!-- ══ PROFILE ══════════════════════════════════════════════════ -->
@@ -317,9 +267,11 @@
   <div class="wc-syls" id="wcSyls"></div>
   <div class="wc-pic"  id="wcPic"></div>
   <div class="wc-mean" id="wcMean"></div>
+  <div class="wc-choice" id="wcChoice"></div>
   <div class="wc-acts">
     <button class="btn btn-sm" id="wcSay"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear it</button>
     <button class="btn btn-sm" id="wcSlow"><span class="i" data-icon="parts" data-icon-size="18"></span> Bit by bit</button>
+    <button class="btn btn-sm wc-notnow" id="wcNotNow" hidden>Not now</button>
   </div>
 </div>
 <div id="hovertip" aria-hidden="true"></div>
@@ -436,6 +388,7 @@
 <script src="js/ai.js"></script>
 <script src="js/content.js"></script>
 <script src="js/families.js"></script>
+<script src="js/db.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/exercises.js"></script>
 <script src="js/reader.js"></script>
@@ -444,6 +397,7 @@
 <script src="js/dictation.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/profile.js"></script>
+<script src="js/worlds.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/app.js"></script>
 

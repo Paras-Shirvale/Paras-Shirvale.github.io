@@ -230,7 +230,7 @@
       S.closeSheet();
       S.paintAvatars();
       S.paintHome();
-      if (S.paintLibrary) S.paintLibrary();
+      S.paintWorlds();
     }
 
     paint();
@@ -254,101 +254,47 @@
     setTimeout(function () { box.remove(); }, 2600);
   };
 
-  /* ══ medals ═════════════════════════════════════════════ */
-  function stats() {
-    var P = S.P;
-    var famRead = S.FAMILIES.filter(function (f) {
-      return f.stories.some(function (st) { return P.doneSteps[st.id] && P.doneSteps[st.id].read; });
-    }).length;
-    var dictSets = Object.keys(P.dictationDone || {}).length;
-    return {
-      reads: P.sessions.length, writes: P.writings.length, famRead: famRead,
-      dict: dictSets, streak: P.streak, sparks: P.sparks, voice: !!P.voicePrint
-    };
-  }
+  /* Medals are now the worlds' badges (worlds.js); this stays so
+     older callers do nothing harmful. */
+  S.checkMedals = function () {};
 
-  var MEDALS = [
-    { id: 'read-1',    title: 'First story',      tier: 'bronze', icon: 'book',    goal: 'Read a story',              test: function (s) { return s.reads >= 1; } },
-    { id: 'write-1',   title: 'First words',      tier: 'bronze', icon: 'pencil',  goal: 'Write a sentence',          test: function (s) { return s.writes >= 1; } },
-    { id: 'voice',     title: 'Voice taught',     tier: 'bronze', icon: 'mic',     goal: 'Teach Spark your voice',    test: function (s) { return s.voice; } },
-    { id: 'ears',      title: 'Sharp ears',       tier: 'bronze', icon: 'speaker', goal: 'Finish a Listen and write', test: function (s) { return s.dict >= 1; } },
-    { id: 'streak-3',  title: '3-day streak',     tier: 'silver', icon: 'spark',   goal: 'Practise 3 days running',   test: function (s) { return s.streak >= 3; } },
-    { id: 'read-5',    title: 'Bookworm',         tier: 'silver', icon: 'book',    goal: 'Read 5 stories',            test: function (s) { return s.reads >= 5; } },
-    { id: 'write-10',  title: 'Word builder',     tier: 'silver', icon: 'pencil',  goal: 'Write 10 sentences',        test: function (s) { return s.writes >= 10; } },
-    { id: 'fam-3',     title: 'Letter explorer',  tier: 'silver', icon: 'parts',   goal: 'Read 3 letter families',    test: function (s) { return s.famRead >= 3; } },
-    { id: 'sparks-50', title: 'Spark collector',  tier: 'silver', icon: 'spark',   goal: 'Collect 50 sparks',         test: function (s) { return s.sparks >= 50; } },
-    { id: 'fam-6',     title: 'Letter detective', tier: 'gold',   icon: 'trophy',  goal: 'Read all 6 letter families', test: function (s) { return s.famRead >= 6; } },
-    { id: 'streak-7',  title: 'Week of reading',  tier: 'gold',   icon: 'trophy',  goal: 'Practise 7 days running',   test: function (s) { return s.streak >= 7; } },
-    { id: 'sparks-150',title: 'Spark champion',   tier: 'gold',   icon: 'trophy',  goal: 'Collect 150 sparks',        test: function (s) { return s.sparks >= 150; } }
-  ];
-  S.MEDALS = MEDALS;
-
-  S.medalBadge = function (m, earned, size) {
-    return '<span class="medal medal-' + m.tier + (earned ? ' on' : '') + '"' +
-      (size ? ' style="--m:' + size + 'px"' : '') + '>' +
-      '<span class="medal-ribbon"></span>' +
-      '<span class="medal-disc">' + S.Pictures.icon(earned ? m.icon : 'lock', 20) + '</span>' +
-    '</span>';
-  };
-
-  /** Award any medal now earned, with a celebration. */
-  S.checkMedals = function () {
-    S.P.medals = S.P.medals || {};
-    var s = stats(), fresh = [];
-    MEDALS.forEach(function (m) {
-      if (!S.P.medals[m.id] && m.test(s)) { S.P.medals[m.id] = S.today(); fresh.push(m); }
-    });
-    if (!fresh.length) return;
-    S.save();
-    var m = fresh[0];
-    setTimeout(function () { celebrate(m); }, 900);
-  };
-
-  function celebrate(m) {
-    var el = document.createElement('div');
-    el.className = 'medal-pop';
-    el.innerHTML = S.medalBadge(m, true, 64) +
-      '<div><b>New medal!</b><span>' + S.esc(m.title) + '</span></div>';
-    document.body.appendChild(el);
-    S.confetti();
-    setTimeout(function () { el.classList.add('out'); }, 3200);
-    setTimeout(function () { el.remove(); }, 3700);
-  }
-
-  /* ══ the profile page ═══════════════════════════════════ */
+  /* ══ the profile page ═══════════════════════════════════
+     Who I am, my badges, and what I've done — no scores. */
   S.paintProfile = function () {
     var P = S.P;
-    var earned = MEDALS.filter(function (m) { return (P.medals || {})[m.id]; });
+    var badges = S.WORLDS.filter(function (w) { return P.worlds && P.worlds[w.id] && P.worlds[w.id].badge; });
+    var chapters = S.WORLDS.reduce(function (n, w) { return n + S.levelsDone(w.id); }, 0);
+    var explored = S.WORLDS.filter(function (w) { return S.isUnlocked(w); }).length;
 
     S.$('#profileMain').innerHTML =
       '<div class="prof-hero">' +
         '<span class="prof-avatar">' + S.myAvatar(104) + '</span>' +
         '<div class="prof-id">' +
           '<h1>' + S.esc(P.name || 'Reader') + '</h1>' +
-          '<p>' + (P.age ? P.age + ' years old · ' : '') + 'reading with Spark since ' +
+          '<p>' + (P.age ? P.age + ' years old · ' : '') + 'exploring with Spark since ' +
             S.esc(S.niceDate(P.started) || 'today') + '</p>' +
           '<button class="btn btn-sm" id="profEdit">' + S.Pictures.icon('pencil', 16) + ' Change my details</button>' +
         '</div>' +
       '</div>' +
 
       '<div class="prof-stats">' +
-        statTile('amber', 'spark', P.sparks, 'sparks') +
-        statTile('violet', 'book', P.sessions.length, 'stories read') +
-        statTile('rose', 'pencil', P.writings.length, 'things written') +
-        statTile('moss', 'trophy', earned.length, 'medals') +
+        statTile('violet', 'spark', explored + ' / 6', 'worlds explored') +
+        statTile('moss', 'book', chapters, 'chapters done') +
+        statTile('rose', 'trophy', badges.length, 'badges') +
+        statTile('amber', 'spark', P.streak, 'day streak') +
       '</div>' +
 
       '<section class="card prof-section">' +
-        '<h2>My medals</h2>' +
-        '<div class="medal-shelf">' + MEDALS.map(function (m) {
-          var got = (P.medals || {})[m.id];
-          return '<div class="medal-item' + (got ? ' on' : '') + '">' + S.medalBadge(m, !!got) +
-            '<b>' + S.esc(m.title) + '</b><span>' + (got ? S.esc(S.niceDate(got)) : S.esc(m.goal)) + '</span></div>';
+        '<h2>My badges</h2>' +
+        '<div class="badge-row">' + S.WORLDS.map(function (w) {
+          var got = badges.indexOf(w) > -1;
+          return '<div class="badge-item' + (got ? ' on' : '') + '">' + S.worldBadge(w, got) +
+            '<b>' + (got ? S.esc(w.badge) : '???') + '</b><span>' + S.esc(w.title) + '</span></div>';
         }).join('') + '</div>' +
       '</section>' +
 
       '<section class="card prof-section">' +
-        '<h2>My history</h2>' +
+        '<h2>My adventures</h2>' +
         history() +
       '</section>';
 
@@ -360,29 +306,21 @@
       '<b>' + n + '</b><span>' + label + '</span></div>';
   }
 
+  /* What was done, newest first — the chapter and the part, never
+     how well. */
   function history() {
-    var items = [];
-    S.P.sessions.forEach(function (s, i) {
-      items.push({ date: s.date, order: i, kind: 'read', title: s.title,
-        detail: [s.wpm ? s.wpm + ' words/min' : '',
-                 s.seconds ? Math.round(s.seconds) + ' s' : '',
-                 s.misreads ? s.misreads + ' mix-up' + (s.misreads > 1 ? 's' : '') : 'no mix-ups']
-                .filter(Boolean).join(' · ') });
-    });
-    S.P.writings.slice().reverse().forEach(function (w, i) {
-      items.push({ date: w.date, order: i, kind: 'write', title: w.text,
-        detail: w.kind === 'dictation' ? 'Listen and write · ' + (w.score || '') :
-                w.kind === 'bank' ? 'Word bank · ' + (w.prompt || '') : 'Picture story' });
-    });
-    if (!items.length) {
-      return '<div class="empty"><p>Nothing yet. Read a story or write a sentence and it will show up here.</p></div>';
+    var rows = S.DB.rows('sessions').filter(function (s) { return s.completed; }).slice().reverse();
+    if (!rows.length) {
+      return '<div class="empty"><p>Nothing yet. Choose a world and start your first chapter!</p></div>';
     }
-    items.sort(function (a, b) { return (a.date < b.date ? 1 : a.date > b.date ? -1 : b.order - a.order); });
-    return '<div class="hist">' + items.slice(0, 40).map(function (it) {
-      return '<div class="hist-row tone-' + (it.kind === 'read' ? 'violet' : 'rose') + '">' +
-        '<span class="hist-ico">' + S.Pictures.icon(it.kind === 'read' ? 'book' : 'pencil', 18) + '</span>' +
-        '<div class="hist-main"><b>' + S.esc(it.title) + '</b><span>' + S.esc(it.detail) + '</span></div>' +
-        '<span class="hist-date">' + S.esc(S.niceDate(it.date)) + '</span>' +
+    return '<div class="hist">' + rows.slice(0, 40).map(function (s) {
+      var w = S.world(s.world);
+      var read = s.mode === 'read';
+      var title = w ? w.title + ' · Chapter ' + s.level : (read ? 'Reading' : 'Writing practice');
+      return '<div class="hist-row tone-' + (read ? 'violet' : 'rose') + '">' +
+        '<span class="hist-ico">' + S.Pictures.icon(read ? 'book' : 'pencil', 18) + '</span>' +
+        '<div class="hist-main"><b>' + S.esc(title) + '</b><span>' + (read ? 'Read it aloud' : 'Wrote it') + '</span></div>' +
+        '<span class="hist-date">' + S.esc(S.niceDate(String(s.started_at).slice(0, 10))) + '</span>' +
       '</div>';
     }).join('') + '</div>';
   }

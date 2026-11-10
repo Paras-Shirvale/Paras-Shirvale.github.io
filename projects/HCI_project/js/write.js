@@ -60,42 +60,44 @@
   S.openWriteActivity = function (which) {
     mode = which;
     if (which !== 'bank' && S.closeBank) S.closeBank(true);
+    if (which === 'picture') S.DB.startSession({ world: 'practice', mode: 'write' });
+    /* writing a chapter belongs to Worlds, not to Practice */
+    S.$$('.tab').forEach(function (t) {
+      var on = t.dataset.go === (which === 'dictation' ? 'home' : 'write');
+      if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+    });
     S.paintWrite();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  S.resetWriteMode = function () {
+    if (mode === 'picture' || mode === 'bank') S.DB.endSession();
+    if (mode === 'dictation' && S.closeDictation) S.closeDictation();
+    mode = null;
+  };
+
   S.closeWriteActivity = function () {
     S.stopSaying();
+    if (mode === 'picture' || mode === 'bank') S.DB.endSession();
     if (S.closeBank) S.closeBank(true);
     if (S.closeDictation) S.closeDictation();
     mode = null;
     S.paintWrite();
   };
 
-  /* One card per letter family, each with its two exercises. */
+  /* Word banks, one per world, named by the world — never by letters. */
   function paintFamilies() {
     var host = S.$('#writeFamList');
     if (!host) return;
-    var dd = S.P.dictationDone || {}, bd = S.P.bankDone || {};
-    host.innerHTML = S.FAMILIES.map(function (f) {
-      var d = dd[f.id], b = bd['bank-' + f.id];
-      return '<div class="fam-card tone-rose">' +
-        '<div class="fam-top">' + S.familyTiles(f) +
-          (d ? '<span class="badge badge-done">' + d.right + '/' + d.total + ' words</span>' : '') +
-        '</div>' +
-        '<h3>' + S.esc(f.title) + '</h3>' +
-        '<p class="fam-blurb">' + S.esc(f.blurb) + '</p>' +
-        '<div class="fam-stories">' +
-          '<button class="story-btn" data-dictation="' + f.id + '">' +
-            '<span class="story-ico">' + S.Pictures.icon('speaker', 16) + '</span>' +
-            '<span class="story-t"><b>Listen and write</b><small>' + f.dictation.length + ' sentences to write</small></span>' +
-            '<span class="story-go">→</span></button>' +
-          '<button class="story-btn" data-bank="' + f.id + '">' +
-            '<span class="story-ico">' + S.Pictures.icon('stack', 16) + '</span>' +
-            '<span class="story-t"><b>Word bank</b><small>' + (b ? b + ' sentence' + (b > 1 ? 's' : '') + ' made' : 'Build your own sentence') + '</small></span>' +
-            '<span class="story-go">→</span></button>' +
-        '</div>' +
-      '</div>';
+    var bd = S.P.bankDone || {};
+    host.innerHTML = S.WORLDS.map(function (w) {
+      var b = bd['bank-' + w.id];
+      return '<button class="lib-card bank-card tone-' + w.tone + '" data-bank="' + w.id + '">' +
+        '<span class="bank-art">' + S.worldArt(w) + '</span>' +
+        '<h3>' + S.esc(w.title) + ' words</h3>' +
+        '<p>Build sentences from the ' + S.esc(w.title) + ' word bank.</p>' +
+        '<span class="lib-foot">' + (b ? b + ' sentence' + (b > 1 ? 's' : '') + ' made' : 'Start building') + '</span>' +
+      '</button>';
     }).join('');
   }
 
@@ -131,6 +133,10 @@
     var step = rung[field];
     var host = S.$('[data-help="' + field + '"]');
     host.hidden = false;
+    /* every rung shown is a row in help_events (rung 2 is logged
+       when the child picks which kind of clue they want) */
+    if (step !== 2) logHelp(field, ['prompt', 'cue', 'choice', 'supply'][step - 1],
+                             step === 1 ? 'visual' : step === 3 ? 'choice' : 'visual');
 
     /* Every rung can be SEEN and HEARD. The child chooses which —
        the words are on screen, and a speaker button reads them. */
@@ -189,6 +195,7 @@
     S.$$('[data-help="' + field + '"] [data-clue]').forEach(function (b) {
       b.dataset.on = b.dataset.clue === kind ? '1' : '';
     });
+    logHelp(field, 'cue', kind === 'picture' ? 'visual' : 'audio');
     if (kind === 'picture') {
       host.innerHTML = '<span class="cue-pic"></span>' +
         '<span class="rung-line">' + S.esc(ladder.cue.audio) + hearBtn(ladder.cue.audio) + '</span>';
@@ -206,7 +213,20 @@
     return '<div class="rung">' +
       '<span class="rung-n">' + count + '</span>' +
       '<div class="rung-body"><b>' + title + '</b><div>' + body + '</div></div>' +
+      '<button class="notnow" data-notnow>Not now</button>' +
     '</div>';
+  }
+
+  /* help rows: written when the field is used (resolved), "Not now"
+     (dismissed), or the session ends (unused) */
+  var helpOpen = {};
+  function logHelp(field, rungName, cueType) {
+    (helpOpen[field] = helpOpen[field] || []).push(
+      S.DB.help({ rung: rungName, cue_type: cueType, word: field, confusion_class: 'none' }));
+  }
+  function settleHelp(field, how) {
+    (helpOpen[field] || []).forEach(function (h) { h[how](); });
+    helpOpen[field] = [];
   }
 
   /** Record which rung finally got them writing. */
@@ -255,8 +275,9 @@
     if (!s) { S.toast('Write something first'); return; }
 
     Object.keys(FIELD_ID).forEach(function (f) {
-      if (S.$('#' + FIELD_ID[f]).value.trim()) creditLadder(f);
+      if (S.$('#' + FIELD_ID[f]).value.trim()) { creditLadder(f); settleHelp(f, 'resolve'); }
     });
+    S.DB.submission({ mode: 'write', word_count: S.wordCount(s), sentence_text: s, accuracy_pct: null });
 
     S.P.writings.unshift({ date: S.today(), prompt: current().q, text: s, kind: 'picture' });
     S.P.writings = S.P.writings.slice(0, 40);
@@ -355,6 +376,17 @@
 
       var stuck = e.target.closest('[data-stuck]');
       if (stuck) { climb(stuck.dataset.stuck); return; }
+
+      var nn = e.target.closest('[data-notnow]');
+      if (nn) {
+        var fieldEl = nn.closest('[data-field]');
+        if (fieldEl) {
+          settleHelp(fieldEl.dataset.field, 'dismiss');
+          var hb = fieldEl.querySelector('.field-help');
+          hb.hidden = true; hb.innerHTML = '';
+        }
+        return;
+      }
 
       var clue = e.target.closest('[data-clue]');
       if (clue) { showClue(clue.closest('[data-field]').dataset.field, clue.dataset.clue); return; }

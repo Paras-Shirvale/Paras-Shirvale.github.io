@@ -61,10 +61,12 @@
       helpOpen: null,
       questions: null,
       answered: 0,
-      order: null
+      order: null,
+      rungs: {},         /* token index -> how far up the help ladder */
+      pending: {}        /* token index -> a misread waiting 2s for a self-correction */
     };
+    R.session = S.DB.startSession({ world: src.world, level: src.level, mode: 'read' });
 
-    S.$('#readLibrary').hidden = true;
     S.$('#readWork').hidden = false;
     S.$('#readDone').hidden = true;
     S.$('#readWork .reader-grid').hidden = false;
@@ -100,15 +102,18 @@
   S.closePassage = function () {
     S.stopReading();
     stopReadAlong();
-    if (R && R.rec) { R.rec.discard(); R.rec = null; }
+    var world = R && R.src.world;
+    if (R) {
+      settlePending();
+      if (R.rec) { R.rec.discard(); R.rec = null; }
+      if (!R.finished) S.DB.endSession({ completed: false });
+    }
     R = null;
     S.$('#readWork').hidden = true;
-    S.$('#readLibrary').hidden = false;
-    S.paintLibrary();
-    S.paintScreening();
+    if (world) S.openWorld(world); else S.go('home');
   };
 
-  S.paintLibraryIfIdle = function () { if (!R) { S.paintLibrary(); S.paintScreening(); } };
+  S.paintLibraryIfIdle = function () {};
 
   function renderProse() {
     var host = S.$('#prose');
@@ -254,6 +259,17 @@
             tok.el.classList.remove('at');
             tok.el.classList.add('done');
           }
+          /* said wrongly, then said right within 2 seconds: the child
+             caught it themselves */
+          if (R.pending[j]) {
+            var skippedIt = tok && tok.el.classList.contains('skipped');
+            settleOne(j, !skippedIt && Date.now() - R.pending[j].at <= 2000);
+          }
+        }
+        /* how long this one word took, for words with a target pair */
+        if (ev.to - ev.from === 1 && lastAdvance) {
+          var just = R.tokens[ev.from];
+          if (just) S.DB.timing(just.clean, Date.now() - lastAdvance, { prefer: R.src.world });
         }
         R.idx = ev.to;
         if (R.lead < R.idx) R.lead = R.idx;
@@ -286,6 +302,7 @@
   function handleMisread(ev) {
     var analysis = S.Analysis.analyseMisread(ev.heard, ev.expected);
     if (!analysis) return;
+    var idx = R.tokens.indexOf(ev.token);
 
     S.Analysis.recordMisread(analysis, {
       sentence: R.sentences[ev.token.si] || '',
@@ -294,20 +311,32 @@
     R.misreads.push(analysis);
     R.tricky[ev.expected] = true;
 
-    ev.token.el.classList.add('missaid');
-
-    /* say what went wrong, in words a child can use */
-    if (analysis.kind === 'letter-confusion' && analysis.pairs.length) {
-      var p = analysis.pairs[0];
-      S.railSay('Careful — that one has a "' + p.want + '", not a "' + p.got + '". ' +
-                'Look at it again.');
-    } else if (analysis.kind === 'word-reversal') {
-      S.railSay('Close! That word is the other way round: "' + ev.expected + '".');
-    } else {
-      S.railSay('Nearly — the word is "' + ev.expected + '". Have another go.');
+    /* Not logged yet: if the child says it right within 2 seconds,
+       that is a self-correction, and it is logged as one. */
+    if (idx > -1 && !R.pending[idx]) {
+      R.pending[idx] = {
+        analysis: analysis, at: Date.now(), pause: Date.now() - lastAdvance,
+        timer: setTimeout(function () { settleOne(idx, false); }, 2000)
+      };
     }
 
+    /* a gentle nudge — no "wrong", no letters named */
+    S.railSay('Have another look at "' + ev.expected + '".');
     S.save();
+  }
+
+  function settleOne(idx, corrected) {
+    var p = R && R.pending[idx];
+    if (!p) return;
+    clearTimeout(p.timer);
+    delete R.pending[idx];
+    S.DB.confusion(p.analysis, { pause_ms: p.pause, self_corrected: corrected,
+                                 prefer: R.src.world, mode: 'read' });
+  }
+
+  function settlePending() {
+    if (!R) return;
+    Object.keys(R.pending).forEach(function (k) { settleOne(+k, false); });
   }
 
   /* The lit word is the one being spoken right now — the provisional
@@ -445,37 +474,73 @@
 
   /* ── the cue engine ─────────────────────────────────── */
 
+  /* ── the help ladder: prompt → cue → choice → supply ──────
+     Each time the child stalls on the same word, Spark gives a
+     little more. Every card has "Not now", which closes it and is
+     recorded — a cue that is often dismissed is arriving at the
+     wrong moment, and the teacher should know.
+
+       prompt  look closely — the word's shape, letters coloured
+       cue     the kind of help that works best for this child:
+               a picture, hearing it, or its parts
+       choice  "Is it dog or bog?" — the word and its letter twin
+       supply  Spark says the word                             */
   function offerHelp(token, verdict) {
+    var idx = R.tokens.indexOf(token);
+    var step = (R.rungs[idx] || 0) + 1;
+    var twin = S.twinOf(token.clean, R.src.world);
+    if (step === 3 && !twin) step = 4;
+    step = Math.min(4, step);
+    R.rungs[idx] = step;
+
+    /* a card still open from an earlier rung is replaced, not lost */
+    if (R.helpOpen && R.helpOpen.h) R.helpOpen.h.close();
+
+    var rung = ['prompt', 'cue', 'choice', 'supply'][step - 1];
     var kind = S.cueRank()[0];
-    R.helpOpen = { word: token.clean, cue: kind, at: Date.now() };
-    S.P.cue[kind].shown++;
-    S.save();
-
     var word = token.raw.replace(/[^A-Za-z'-]/g, '');
-    var phrase = { picture: 'a picture', sound: 'me say it', parts: 'the parts' }[kind];
+    var cueType = { prompt: 'visual', cue: kind, choice: 'choice', supply: 'audio' }[rung];
 
-    /* what Spark says depends on why it thinks they stopped */
-    var opening;
-    if (verdict && verdict.type === 'decoding') {
-      opening = 'You\'ve started it — let me help you finish. ';
-    } else if (verdict && verdict.type === 'word-specific') {
-      opening = 'This one caught you before. ';
-    } else if (verdict && verdict.type === 'complex-word') {
-      opening = 'That\'s a long one. ';
+    var h = S.DB.help({ rung: rung, cue_type: cueType, word: token.clean, prefer: R.src.world });
+    R.helpOpen = { word: token.clean, cue: kind, at: Date.now(), h: h, rung: rung };
+    if (rung === 'cue') { S.P.cue[kind].shown++; S.save(); }
+
+    var opts = {
+      mode: rung,
+      onNotNow: function () {
+        h.dismiss();
+        if (R) R.helpOpen = null;
+        S.railSay('Okay. Keep going when you\'re ready.');
+      }
+    };
+    if (rung === 'prompt') {
+      S.railSay('Take your time. Look closely at the letters in this word.');
+      S.openWordCard(token.el, token.raw, null, opts);
+    } else if (rung === 'cue') {
+      var phrase = { picture: 'a picture', sound: 'me say it', parts: 'the parts' }[kind];
+      S.railSay('Here\'s ' + phrase + ' to help.');
+      S.openWordCard(token.el, token.raw, kind, opts);
+    } else if (rung === 'choice') {
+      S.railSay('Which word is it?');
+      opts.choices = S.shuffle([word, twin.replace(/[^A-Za-z'-]/g, '')]);
+      opts.answer = word;
+      opts.onPick = function (picked) {
+        if (S.norm(picked) === S.norm(word)) { S.say(word); h.resolve(); if (R) R.helpOpen = null; S.closeWordCard(); S.railSay('Yes! Keep going.'); }
+        else { S.say('Listen: ' + word); }
+      };
+      S.openWordCard(token.el, token.raw, null, opts);
     } else {
-      opening = 'Take your time. ';
+      S.railSay('This word is "' + word + '".');
+      S.openWordCard(token.el, token.raw, 'sound', opts);
     }
-
-    S.railSay(opening + 'Here\'s ' + phrase + ' for "' + word + '".');
-    S.openWordCard(token.el, token.raw, kind);
     S.markFavouredTool();
 
-    /* If they read on, resolveHelp() closes it. If they simply stop
-       looking at it, close it anyway after a while — a cue left on
-       screen becomes clutter the child has to clear. */
+    /* a cue nobody looks at is closed after a while */
     clearTimeout(R.cueTimer);
     R.cueTimer = setTimeout(function () {
       if (R && R.helpOpen && R.helpOpen.word === token.clean) {
+        R.helpOpen.h.close();
+        R.helpOpen = null;
         S.closeWordCard();
       }
     }, 14000);
@@ -485,17 +550,14 @@
     if (!R || !R.helpOpen) return;
     var h = R.helpOpen;
     if (worked) {
-      S.P.cue[h.cue].worked++;
+      if (h.rung === 'cue') S.P.cue[h.cue].worked++;
       var rec = S.P.words[h.word];
       if (rec) rec.helped = (rec.helped || 0) + 1;
-    }
+      if (h.h) h.h.resolve();
+    } else if (h.h) h.h.close();
     R.helpOpen = null;
     S.save();
     S.markFavouredTool();
-
-    /* The cue has done its job — take it away. Leaving it open reads
-       as "you still haven't got this", and a child should not have to
-       dismiss their own help before carrying on. */
     S.closeWordCard();
     S.railSay(worked ? 'Good. Keep going.' : 'Keep going.');
   }
@@ -531,9 +593,7 @@
 
     var ms = R.elapsed + (R.startedAt ? Date.now() - R.startedAt : 0);
     var minutes = ms / 60000;
-    var wpm = (read > 4 && minutes > 0.08) ? Math.round(read / minutes) : null;
-    R.wpm = wpm;
-    S.$('#statWpm').textContent = wpm == null ? '—' : wpm;
+    R.wpm = (read > 4 && minutes > 0.08) ? Math.round(read / minutes) : null;
   }
 
   /* ── finishing ──────────────────────────────────────── */
@@ -584,14 +644,20 @@
       };
     }
 
+    settlePending();
+    if (R.helpOpen) resolveHelp(false);
+    S.DB.submission({ mode: 'read', word_count: words, sentence_text: R.src.title,
+      accuracy_pct: words ? (words - R.misreads.length) / words * 100 : null });
+    R.endInfo = { words: words, wpm: wpm };
+    /* with a recording, the session stays open until Whisper has listened */
+    if (!(S.modelListening() && R.rec)) S.DB.endSession(R.endInfo);
+    if (R.src.world) S.chapterPartDone(R.src.world, R.src.level, 'read');
+
     S.bumpStreak();
     S.award(10, 'Finished the reading');
     S.save();
     markStepsDone();
-
-    S.railSay(wpm
-      ? 'You read ' + words + ' words at about ' + wpm + ' words a minute.'
-      : 'Nicely done.');
+    S.railSay('Nicely done.');
 
     /* The letter check is about the letters. Questions about plot
        would be beside the point, so it ends here. */
@@ -616,9 +682,7 @@
      swapped — each with the word it happened on. */
   function showDone(session) {
     var src = R.src;
-    var fam = S.familyOfStory(src.id);
-    var mix = session.mixups || [];
-    var secs = session.seconds || 0;
+    var w = src.world && S.world(src.world);
 
     S.$('#readWork .reader-grid').hidden = true;
     S.$('#readWork .work-head').hidden = true;
@@ -628,62 +692,24 @@
       '<section class="card done-card">' +
         '<span class="done-mascot">' + S.mascot(90, 'happy') + '</span>' +
         '<h1>You read “' + S.esc(src.title) + '”!</h1>' +
-        '<div class="done-stats">' +
-          '<div class="stat-tile tone-violet"><span class="st-ico">' + S.Pictures.icon('clock', 20) + '</span>' +
-            '<b data-done="time">' + (secs ? fmtTime(secs) : '—') + '</b><span>reading time</span></div>' +
-          '<div class="stat-tile tone-moss"><span class="st-ico">' + S.Pictures.icon('book', 20) + '</span>' +
-            '<b data-done="wpm">' + (session.wpm || '—') + '</b><span>words a minute</span></div>' +
-          '<div class="stat-tile tone-amber"><span class="st-ico">' + S.Pictures.icon('pause', 20) + '</span>' +
-            '<b data-done="pauses">' + session.stalls + '</b><span>tricky pauses</span></div>' +
-          '<div class="stat-tile tone-rose"><span class="st-ico">' + S.Pictures.icon('parts', 20) + '</span>' +
-            '<b data-done="mix">' + mix.length + '</b><span>letter mix-ups</span></div>' +
-        '</div>' +
-        '<div class="done-detail" data-done="detail">' + detailHTML(session) + '</div>' +
-        '<p class="done-model" data-done="model">' +
-          (S.modelListening() && R.rec ? '<span class="pic-wait sm"></span> Spark is listening to your reading again, more carefully…' : '') +
-        '</p>' +
+        '<p class="done-words">' + S.Pictures.icon('book', 18) + ' ' + session.words + ' words read</p>' +
+        (w ? '<p class="sub">Now write part of the chapter to finish it.</p>' : '') +
         '<div class="toolbar" style="justify-content:center;margin:16px 0 0">' +
           '<button class="btn" id="doneAgain">' + S.Pictures.icon('refresh', 16) + ' Read it again</button>' +
-          (nextStory(src.id) ? '<button class="btn btn-primary" id="doneNext">Next story →</button>' : '') +
-          '<button class="btn" id="doneLib">All stories</button>' +
+          (w ? '<button class="btn btn-primary" id="doneNext">Now write it →</button>' : '') +
+          '<button class="btn" id="doneLib">' + (w ? 'Back to the world' : 'Done') + '</button>' +
         '</div>' +
       '</section>';
 
     S.$('#doneAgain').addEventListener('click', function () { S.openPassage(src); });
     S.$('#doneLib').addEventListener('click', S.closePassage);
     var nx = S.$('#doneNext');
-    if (nx) nx.addEventListener('click', function () { S.openPassage(nextStory(src.id)); });
-    if (fam) S.say('Well done! You read ' + src.title + '.');
-  }
-
-  function fmtTime(secs) {
-    secs = Math.round(secs);
-    return secs < 60 ? secs + 's' : Math.floor(secs / 60) + 'm ' + (secs % 60) + 's';
-  }
-
-  function detailHTML(session) {
-    var mix = session.mixups || [];
-    var parts = [];
-    if (mix.length) {
-      parts.push('<p><b>Letters that got swapped</b></p><div class="done-chips">' + mix.map(function (m) {
-        return '<span class="mix-chip"><s>' + S.esc(m.said) + '</s> → <b>' + S.esc(m.word) + '</b>' +
-          (m.pairs && m.pairs.length ? ' <i>' + S.esc(S.Analysis.pairLabel(m.pairs[0])) + '</i>' : '') + '</span>';
-      }).join('') + '</div>');
-    }
-    if ((session.pauseWords || []).length) {
-      parts.push('<p><b>Words you stopped on</b></p><div class="done-chips">' +
-        session.pauseWords.map(function (w) { return '<button class="mix-chip" data-say="' + S.esc(w) + '">' + S.esc(w) + '</button>'; }).join('') +
-        '</div>');
-    }
-    if (!parts.length) parts.push('<p class="done-clean">No mix-ups and no tricky pauses. Smooth reading!</p>');
-    return parts.join('');
-  }
-
-  function nextStory(id) {
-    var all = [];
-    S.FAMILIES.forEach(function (f) { f.stories.forEach(function (st) { all.push(Object.assign({ screening: true, level: null, pairs: f.pairs, family: f.id, about: f.blurb }, st)); }); });
-    var i = all.map(function (x) { return x.id; }).indexOf(id);
-    return i > -1 && i < all.length - 1 ? all[i + 1] : null;
+    if (nx) nx.addEventListener('click', function () {
+      var wid = src.world, lvl = src.level;
+      S.closePassage();
+      S.nextChapterStep(wid, lvl);
+    });
+    S.say('Well done! You read ' + src.title + '.');
   }
 
   /* ── the second listen, with Whisper ─────────────────────
@@ -694,7 +720,6 @@
     var r = R;
     if (!r || !r.rec) return;
     var rec = r.rec; r.rec = null;
-    var note = S.$('[data-done="model"]');
     try {
       var blob = await rec.stop();
       if (!blob || blob.size < 2000) throw new Error('too-short');
@@ -703,7 +728,6 @@
 
       var already = {};
       (session.mixups || []).forEach(function (m) { already[m.word] = 1; });
-      var added = 0;
       cmp.misreads.forEach(function (m) {
         if (already[m.expected]) return;
         already[m.expected] = 1;
@@ -711,41 +735,19 @@
         S.Analysis.recordMisread(m.analysis, {
           source: 'reading', sentence: r.sentences[tok ? tok.si : 0] || '', passage: r.src.title
         });
+        S.DB.confusion(m.analysis, { detected_by: 'model', prefer: r.src.world, mode: 'read' });
         session.mixups.push({ word: m.expected, said: m.heard,
           pairs: (m.analysis.pairs || []).map(function (p) { return p.key; }), model: true });
-        added++;
       });
+      /* exact pause lengths and word times from the model */
+      cmp.pauses.forEach(function (p) { S.DB.timing(p.word, p.seconds * 1000, { prefer: r.src.world }); });
       if (cmp.seconds) session.seconds = Math.round(cmp.seconds);
-      if (cmp.wpm) session.wpm = cmp.wpm;
+      if (cmp.wpm) { session.wpm = cmp.wpm; if (r.endInfo) r.endInfo.wpm = cmp.wpm; }
       session.misreads = session.mixups.length;
-      session.modelPauses = cmp.pauses.map(function (p) { return { word: p.word, s: p.seconds }; });
       session.model = true;
-
-      /* the letter check record follows the better evidence too */
-      if (r.src.screening && S.P.screening[r.src.id]) {
-        var caught = {};
-        (S.P.screening[r.src.id].pairs || []).forEach(function (k) { caught[k] = 1; });
-        cmp.misreads.forEach(function (m) {
-          (m.analysis.pairs || []).forEach(function (p) { if ((r.src.pairs || []).indexOf(p.key) > -1) caught[p.key] = 1; });
-        });
-        S.P.screening[r.src.id].pairs = Object.keys(caught);
-      }
       S.save();
-
-      if (!S.$('#readDone') || S.$('#readDone').hidden) return;
-      var set = function (k, v) { var el = S.$('[data-done="' + k + '"]'); if (el) el.innerHTML = v; };
-      set('time', session.seconds ? fmtTime(session.seconds) : '—');
-      set('wpm', session.wpm || '—');
-      set('mix', session.mixups.length);
-      set('detail', detailHTML(session) + (session.modelPauses.length
-        ? '<p><b>Longest pauses</b></p><div class="done-chips">' + session.modelPauses.slice(0, 6).map(function (p) {
-            return '<span class="mix-chip">before <b>' + S.esc(p.word) + '</b> · ' + p.s + 's</span>';
-          }).join('') + '</div>' : ''));
-      if (note) note.innerHTML = S.Pictures.icon('check', 16) + ' Checked carefully' +
-        (added ? ' — found ' + added + ' more mix-up' + (added > 1 ? 's' : '') + '.' : '. Nothing else to add.');
-    } catch (e) {
-      if (note) note.textContent = '';
-    }
+    } catch (e) { /* the live results stand on their own */ }
+    if (S.DB.session() === r.session) S.DB.endSession(r.endInfo);
   }
 
   /* ── listening to Spark read ────────────────────────────
@@ -838,6 +840,8 @@
      microphone, which no automated test has. */
   S._armStall = armStall;
   S._stillTrying = stillTrying;
+  S._readerFeed = function (results) { if (R && !R.aligner) { R.aligner = S.makeAligner(R.tokens); } onResults(results); };
+  S._offerHelp = function (i) { offerHelp(R.tokens[i], null); };
 
   /* ── is this still the same reader? ─────────────────────
      The whole profile is only meaningful if the voice it was built
@@ -1043,66 +1047,6 @@
   /* crude but honest: drop the subordinate clause */
   function plainly(s) {
     return String(s).replace(/,[^,]*,/g, ' ').replace(/\s+/g, ' ').trim();
-  }
-
-  /* ── library: the letter families ──────────────────────
-     One card per family. Each shows its letters, how many of its
-     stories are done, and — once Spark has found anything — the
-     letters that caught this child, so the card itself says where
-     the work is. */
-  S.paintLibrary = function () {
-    var host = S.$('#famList');
-    if (!host) return;
-    var letters = S.P.letters || {};
-
-    host.innerHTML = S.FAMILIES.map(function (f) {
-      var done = f.stories.filter(function (st) { return S.P.doneSteps[st.id] && S.P.doneSteps[st.id].read; }).length;
-      var hits = f.pairs.reduce(function (n, k) { return n + ((letters[k] && letters[k].count) || 0); }, 0);
-      return '<div class="fam-card tone-violet">' +
-        '<div class="fam-top">' + S.familyTiles(f) +
-          (hits ? '<span class="badge badge-warn">' + hits + ' mix-up' + (hits > 1 ? 's' : '') + '</span>'
-                : done === f.stories.length ? '<span class="badge badge-done">✓ Done</span>' : '') +
-        '</div>' +
-        '<h3>' + S.esc(f.title) + '</h3>' +
-        '<p class="fam-blurb">' + S.esc(f.blurb) + '</p>' +
-        '<div class="fam-stories">' + f.stories.map(function (st) {
-          var read = S.P.doneSteps[st.id] && S.P.doneSteps[st.id].read;
-          return '<button class="story-btn' + (read ? ' read' : '') + '" data-story="' + st.id + '">' +
-            '<span class="story-ico">' + S.Pictures.icon(read ? 'check' : 'book', 16) + '</span>' +
-            '<span class="story-t"><b>' + S.esc(st.title) + '</b><small>' + S.esc(st.blurb) + '</small></span>' +
-            '<span class="story-go">→</span>' +
-          '</button>';
-        }).join('') + '</div>' +
-      '</div>';
-    }).join('');
-
-    S.$$('[data-story]', host).forEach(function (b) {
-      b.addEventListener('click', function () {
-        var f = S.familyOfStory(b.dataset.story);
-        var st = f.stories.filter(function (x) { return x.id === b.dataset.story; })[0];
-        S.openPassage(Object.assign({ screening: true, level: null, pairs: f.pairs, family: f.id, about: f.blurb }, st));
-      });
-    });
-    paintScreeningReport();
-  };
-
-  S.paintScreening = function () { paintScreeningReport(); };
-
-  /* What the stories have found so far, in one line per letter pair. */
-  function paintScreeningReport() {
-    var host = S.$('#screenReport');
-    if (!host) return;
-    var troubles = S.Analysis.letterTroubles(1);
-    if (!troubles.length) { host.innerHTML = ''; return; }
-    host.innerHTML =
-      '<div class="screen-report">' +
-        '<b>Letters Spark has noticed</b>' +
-        '<ul class="found-list">' + troubles.slice(0, 5).map(function (t) {
-          return '<li><span class="lt-pair sm">' + S.esc(t.label) + '</span>' +
-            '<span class="found-words">' + t.count + '× · on ' +
-            t.examples.slice(0, 3).map(function (w) { return '<b>' + S.esc(w) + '</b>'; }).join(', ') + '</span></li>';
-        }).join('') + '</ul>' +
-      '</div>';
   }
 
   /* ── wiring ─────────────────────────────────────────── */

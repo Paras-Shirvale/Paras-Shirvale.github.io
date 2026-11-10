@@ -11,8 +11,9 @@
     S.$$('.view').forEach(function (v) { v.hidden = (v.id !== 'v-' + name); });
     var btnP = S.$('#btnProfile');
     if (btnP) btnP.dataset.on = name === 'profile' ? '1' : '';
+    var tabFor = { world: 'home', read: 'home' }[name] || name;
     S.$$('.tab').forEach(function (t) {
-      if (t.dataset.go === name) t.setAttribute('aria-current', 'page');
+      if (t.dataset.go === tabFor) t.setAttribute('aria-current', 'page');
       else t.removeAttribute('aria-current');
     });
 
@@ -23,6 +24,7 @@
     if (name === 'read')     S.paintLibraryIfIdle && S.paintLibraryIfIdle();
     if (name === 'write')    S.paintWrite && S.paintWrite();
     if (name === 'profile')  S.paintProfile && S.paintProfile();
+    if (name === 'world')    S.paintWorld && S.paintWorld();
     /* arriving at Progress always lands on the summary, not on the
        detail list somebody left open last time */
     if (name === 'progress') {
@@ -155,21 +157,45 @@
 
   /* ── word card ──────────────────────────────────────── */
   var cardWord = '';
+  var cardOpts = null;
 
   /**
    * Show help for a word. `focus` says which kind of help to lead
    * with — the cue engine decides that, not this function.
+   *
+   * opts.mode — when the help ladder opened it:
+   *   prompt  just the word's shape, letters coloured: look closely
+   *   cue     the full card (picture, sound, parts)
+   *   choice  two words to pick from — the word and its letter twin
+   *   supply  the word, said aloud
+   * opts.onNotNow — shows "Not now"; called if the child taps it.
    */
-  S.openWordCard = function (anchorEl, raw, focus) {
+  S.openWordCard = function (anchorEl, raw, focus, opts) {
     cardWord = raw;
+    cardOpts = opts || null;
     var card  = S.$('#wordcard');
+    card.dataset.mode = (opts && opts.mode) || 'tap';
+    S.$('#wcNotNow').hidden = !(opts && opts.onNotNow);
+    var choiceHost = S.$('#wcChoice');
+    choiceHost.innerHTML = '';
+    if (opts && opts.mode === 'choice' && opts.choices) {
+      choiceHost.innerHTML = '<p class="wc-ask">Which word is it?</p><div class="wc-opts">' +
+        opts.choices.map(function (c) {
+          return '<button class="wc-opt" data-pick="' + S.esc(c) + '">' + S.esc(c) + '</button>';
+        }).join('') + '</div>';
+      S.$$('[data-pick]', choiceHost).forEach(function (b) {
+        b.addEventListener('click', function () { if (opts.onPick) opts.onPick(b.dataset.pick); });
+      });
+    }
     var clean = S.norm(raw);
     var shown = String(raw).replace(/[^A-Za-z'-]/g, '');
 
     S.$('#wcWord').textContent = shown || raw;
     /* the coloured shape of the word, with flippable letters marked */
-    S.$('#wcShape').innerHTML = S.Pictures.hasFlippy(shown)
-      ? S.Pictures.wordVisual(shown) + '<span class="wc-shape-note">coloured letters are easy to mix up</span>'
+    var prompt = opts && opts.mode === 'prompt';
+    S.$('#wcShape').innerHTML = (S.Pictures.hasFlippy(shown) || prompt)
+      ? S.Pictures.wordVisual(shown) + '<span class="wc-shape-note">' +
+        (prompt ? 'Look closely at each letter. Try the first sound.' : 'Look closely at the coloured letters.') + '</span>'
       : '';
 
     var ph = S.phonetic(raw);
@@ -190,7 +216,7 @@
     S.Pictures.render(picEl, shown || raw).then(function (found) {
       /* no picture: the picture box already shows the word's shape,
          so don't show it twice */
-      if (!found && S.norm(cardWord) === clean) S.$('#wcShape').innerHTML = '';
+      if (!found && S.norm(cardWord) === clean && !prompt) S.$('#wcShape').innerHTML = '';
     });
 
     S.$('#wcMean').textContent = '';
@@ -246,11 +272,20 @@
   S.closeWordCard = function () {
     var c = S.$('#wordcard');
     if (c) c.dataset.open = '';
+    cardOpts = null;
   };
+
+  /* "Not now", or the ✕ on a card the help ladder opened: a dismissal */
+  function notNow() {
+    var o = cardOpts;
+    S.closeWordCard();
+    if (o && o.onNotNow) o.onNotNow();
+  }
 
   /* ── wiring that belongs to the shell ───────────────── */
   S.wireShell = function () {
-    S.$('#wcClose').addEventListener('click', S.closeWordCard);
+    S.$('#wcClose').addEventListener('click', notNow);
+    S.$('#wcNotNow').addEventListener('click', notNow);
 
     S.$('#wcSay').addEventListener('click', function () {
       S.say(cardWord);
@@ -276,7 +311,13 @@
     /* one delegated click handler for the whole app */
     document.addEventListener('click', function (e) {
       var goBtn = e.target.closest('[data-go]');
-      if (goBtn) { e.preventDefault(); S.go(goBtn.dataset.go); return; }
+      if (goBtn) {
+        e.preventDefault();
+        /* the Practice tab always opens on its list */
+        if (goBtn.classList.contains('tab') && goBtn.dataset.go === 'write' && S.closeWriteActivity) S.resetWriteMode();
+        S.go(goBtn.dataset.go);
+        return;
+      }
 
       var word = e.target.closest('.w');
       if (word) {

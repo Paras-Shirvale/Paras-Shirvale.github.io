@@ -512,7 +512,12 @@
         note: 'Pick a voice, let Spark learn yours',      go: S.openVoiceSettings },
       { icon: 'home',    label: 'My profile',
         note: 'Your picture, name and history',
-        go: function () { S.go('profile'); } }
+        go: function () { S.go('profile'); } },
+      /* the grown-ups' dashboard is its own page with its own login,
+         so nothing diagnostic ever appears on the child's screen */
+      { icon: 'lock',    label: 'For grown-ups',
+        note: 'Teacher and parent dashboard (needs a login)',
+        go: function () { location.href = 'teacher.html'; } }
     ];
 
     S.sheet(

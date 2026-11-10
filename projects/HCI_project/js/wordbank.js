@@ -61,6 +61,7 @@
     if (!bank) return;
     heard = false; lastValue = ''; tapped = 0; typedWords = 0;
     S.openWriteActivity('bank');
+    S.DB.startSession({ world: 'practice', mode: 'write' });
     paintBank();
   }
 
@@ -90,8 +91,8 @@
     host.innerHTML =
       '<button class="btn btn-sm" data-write-back>&larr; All writing</button>' +
       '<div class="bank-head">' +
-        S.familyTiles(S.family(bank.family), 'md') +
-        '<div><h1 class="work-title">Word bank · ' + S.esc(bank.title) + '</h1>' +
+        '<span class="dict-art">' + S.worldArt(S.world(bank.family)) + '</span>' +
+        '<div><h1 class="work-title">' + S.esc(bank.title) + ' words</h1>' +
         '<p class="sub" style="margin:0">Tap a word to add it.</p></div>' +
         '<button class="icon-sq" data-say="Tap a word to add it to your sentence. ' +
           'Tap the speaker to just hear it. Then listen to your sentence." aria-label="Hear how this works">' +
@@ -383,6 +384,7 @@
                            tapped: tapped, typed: typedWords });
     S.P.writings = S.P.writings.slice(0, 40);
     done()[bank.id] = (done()[bank.id] || 0) + 1;
+    S.DB.submission({ mode: 'write', word_count: words(text).length, sentence_text: text, accuracy_pct: null });
     S.save();
     S.award(5, 'Made a sentence');
     input().value = '';

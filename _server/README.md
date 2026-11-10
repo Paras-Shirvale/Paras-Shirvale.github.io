@@ -43,6 +43,34 @@ This folder starts with `_`, so GitHub Pages does **not** publish it.
 7. Commit and push. Ask Spark now talks to the model directly — no key prompt,
    no model picker.
 
+## Study database (Supabase)
+
+Every session, letter mix-up, word timing, cue card and finished sentence is
+logged as a row (`projects/HCI_project/js/db.js`). Rows always stay on the
+device; with Supabase set up they are also collected centrally, and the
+grown-ups' dashboard (`teacher.html`) can show every child, from any device.
+
+1. Create a free project at **https://supabase.com**.
+2. **SQL Editor → New query**, paste [`supabase-schema.sql`](supabase-schema.sql), **Run**.
+   This creates the six tables, the security rules, and the trigger that
+   rebuilds `confusion_profile` after every session.
+3. **Authentication → Providers → Email**: turn off "Allow new users to sign up".
+   Then **Authentication → Users → Add user** for each teacher / parent / researcher.
+4. **Project Settings → API**: copy the Project URL and the `anon` public key into
+   `projects/HCI_project/js/config.js`:
+
+   ```js
+   SUPABASE_URL: 'https://<project>.supabase.co',
+   SUPABASE_ANON_KEY: 'eyJ...',
+   ```
+
+The anon key is safe to publish: the rules let it **insert** rows only — it
+cannot read, change or delete anything. Reading needs a teacher login.
+
+Without Supabase, the dashboard still works for the data on that one device,
+behind a PIN. Either way, **Export** on the dashboard downloads the raw tables
+as CSV or JSON for analysis.
+
 ## Natural voice (optional)
 
 Without it, Spark uses the best voice the browser has (Edge's "Natural" voices
