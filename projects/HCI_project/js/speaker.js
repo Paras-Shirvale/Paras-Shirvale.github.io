@@ -37,6 +37,9 @@
   var recent = [];            /* rolling window after enrolment */
   var onChange = null;
   var flagged = false;
+  /* In calibration the voice print is only fixed when the WHOLE
+     paragraph has been read — never after the first second. */
+  var calibrating = false;
 
   /* Only voiced frames count, and those are roughly half of speech,
      so these numbers are smaller than they look in wall-clock terms.
@@ -143,6 +146,7 @@
 
     if (!baseline) {
       enrol.push(point);
+      if (calibrating) { report(); return; }
       if (enrol.length >= ENROL_SAMPLES) {
         baseline = {
           f0: median(enrol.map(function (p) { return p.f0; })),
@@ -199,11 +203,13 @@
     },
 
     /** Start listening to the sound of the voice (not the words). */
-    start: async function (callback) {
-      if (!S.P.settings.voiceCheck) return false;
+    start: async function (callback, opts) {
+      opts = opts || {};
+      if (!S.P.settings.voiceCheck && !opts.calibrate) return false;
       if (!this.supported()) return false;
       if (ctx) return true;
 
+      calibrating = !!opts.calibrate;
       onChange = callback;
       flagged = false;
       baseline = null;
@@ -241,6 +247,7 @@
       if (ctx) { try { ctx.close(); } catch (e) {} ctx = null; }
       analyser = null;
       onChange = null;
+      calibrating = false;
     },
 
     /** For the UI: still learning the voice, watching, or flagged. */
@@ -271,6 +278,24 @@
     relearn: function () {
       baseline = null; enrol = []; recent = []; flagged = false; live = null;
       report();
+    },
+
+    /** How many voiced moments have been heard so far. */
+    voicedSamples: function () { return enrol.length; },
+
+    /**
+     * End a calibration: build the voice print from everything heard
+     * while the paragraph was read. Returns it, or null if too little
+     * voice came through to be trusted.
+     */
+    finishCalibration: function () {
+      calibrating = false;
+      if (enrol.length < 20) return null;
+      baseline = {
+        f0: median(enrol.map(function (p) { return p.f0; })),
+        cen: median(enrol.map(function (p) { return p.cen; }))
+      };
+      return { hz: Math.round(baseline.f0), samples: enrol.length };
     },
 
     /** Accept the current voice as correct and carry on. */

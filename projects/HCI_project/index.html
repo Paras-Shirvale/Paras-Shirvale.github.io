@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="css/layout.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/spark2.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23E09200'/%3E%3Cpath d='M12 4l1.8 5.2L19 11l-4.4 1.8L12 18l-1.8-5.2L5.2 11l5-1.5z' fill='%232A1F00'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -29,12 +30,12 @@
       <button class="tab" data-go="home" aria-current="page"><span class="i tab-ico" data-icon="home" data-icon-size="20"></span><span class="tab-txt">Home</span></button>
       <button class="tab" data-go="read"><span class="i tab-ico" data-icon="book" data-icon-size="20"></span><span class="tab-txt">Read</span></button>
       <button class="tab" data-go="write"><span class="i tab-ico" data-icon="pencil" data-icon-size="20"></span><span class="tab-txt">Write</span></button>
-      <button class="tab" data-go="homework"><span class="i tab-ico" data-icon="stack" data-icon-size="20"></span><span class="tab-txt">Homework</span></button>
       <button class="tab" data-go="progress"><span class="i tab-ico" data-icon="trophy" data-icon-size="20"></span><span class="tab-txt">Progress</span></button>
     </nav>
 
     <div class="topbar-end">
-      <span class="sparks-chip" title="Sparks you have earned"><span class="i" data-icon="spark" data-icon-size="30"></span>&nbsp;<span id="sparkCount">0</span></span>
+      <span class="sparks-chip" title="Sparks you have earned"><span class="i" data-icon="spark" data-icon-size="20"></span>&nbsp;<span id="sparkCount">0</span></span>
+      <button class="avatar-btn" id="btnProfile" data-go="profile" aria-label="My profile"><span id="topAvatar"></span></button>
       <button class="icon-sq" id="btnMenu" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><span class="i" data-icon="menu" data-icon-size="18"></span></button>
     </div>
   </div>
@@ -44,35 +45,38 @@
 
 <!-- ══ HOME ═════════════════════════════════════════════════════ -->
 <section class="view" id="v-home">
-  <div class="hero">
-    <p class="eyebrow">A little practice, your own pace</p>
-    <h1 id="hiName">Hello</h1>
-    <p class="lede">What would you like to do today?</p>
+  <div class="hero hero-home">
+    <span class="hero-avatar" id="homeAvatar"></span>
+    <div>
+      <p class="eyebrow">A little practice, your own pace</p>
+      <h1 id="hiName">Hello</h1>
+      <p class="lede">What would you like to do today?</p>
+    </div>
   </div>
 
   <div class="noticed" id="noticedBox">
     <span class="noticed-ico"><span class="i" data-icon="spark" data-icon-size="18"></span></span>
-    <p id="noticed">Read something aloud and Spark will start learning what helps you most.</p>
+    <p id="noticed">Read a story aloud and Spark will start spotting which letters catch you.</p>
   </div>
 
   <div class="doors">
     <button class="door door-read" data-go="read">
       <span class="door-ico" data-pic="book"></span>
       <h3>Read</h3>
-      <p>A story in small steps, with help whenever you want it</p>
+      <p>Stories full of tricky letters. Spark listens.</p>
       <span class="door-go">Start reading →</span>
     </button>
     <button class="door door-write" data-go="write">
       <span class="door-ico" data-pic="flower"></span>
       <h3>Write</h3>
-      <p>Picture stories and word bank sentences</p>
+      <p>Listen and write, or build a sentence.</p>
       <span class="door-go">Start writing →</span>
     </button>
-    <button class="door door-hw" data-go="homework">
+    <button class="door door-prog" data-go="progress">
       <span class="door-ico" data-pic="star"></span>
-      <h3>Homework</h3>
-      <p>Add a worksheet and get help with it</p>
-      <span class="door-go">Open homework →</span>
+      <h3>Progress</h3>
+      <p>Your medals, and the letters to watch.</p>
+      <span class="door-go">See progress →</span>
     </button>
   </div>
 
@@ -96,33 +100,17 @@
 <!-- ══ READ ═════════════════════════════════════════════════════ -->
 <section class="view" id="v-read" hidden>
 
-  <!-- library -->
+  <!-- library: one card per letter family -->
   <div id="readLibrary">
-    <h1>Choose something to read</h1>
-    <p class="lede">Three steps each — read it, show you understood it, then put it back in order.</p>
-
-    <!-- the letter check: short, targeted, done first -->
-    <section class="screening-block">
-      <div class="screening-head">
-        <div>
-          <h2>Letter check</h2>
-          <p class="sub">Six short sets, about five minutes. Each one is full of
-            letters that are easy to mix up, so Spark can find out early which
-            ones catch you.</p>
-        </div>
-        <div class="screening-score" id="screenScore"></div>
-      </div>
-      <div class="lib lib-screening" id="screenList"></div>
-      <div id="screenReport"></div>
-    </section>
-
-    <h2 class="lib-heading">Stories and other reading</h2>
-    <div class="lib" id="libList"></div>
+    <h1>Read a story</h1>
+    <p class="lede">Each family is full of letters that are easy to mix up. Read aloud — Spark listens.</p>
+    <div class="fam-grid" id="famList"></div>
+    <div id="screenReport"></div>
   </div>
 
   <!-- one passage -->
   <div id="readWork" hidden>
-    <button class="btn btn-sm" id="backToLib">← All readings</button>
+    <button class="btn btn-sm" id="backToLib">← All stories</button>
 
     <div class="work-head">
       <h1 id="pTitle">—</h1>
@@ -134,6 +122,9 @@
       <button class="step" role="tab" data-step="understand" aria-selected="false"><span class="step-n">2</span>Understand</button>
       <button class="step" role="tab" data-step="order"      aria-selected="false"><span class="step-n">3</span>Order</button>
     </div>
+
+    <!-- what Spark noticed, once a story is finished -->
+    <div id="readDone" hidden></div>
 
     <div class="reader-grid">
       <div class="reader-main">
@@ -187,7 +178,6 @@
           <button class="tool" data-tool="sound"><i><span class="i" data-icon="speaker" data-icon-size="18"></span></i><span>Hear it</span></button>
           <button class="tool" data-tool="parts"><i><span class="i" data-icon="parts" data-icon-size="18"></span></i><span>Parts</span></button>
           <button class="tool" data-tool="explain"><i><span class="i" data-icon="idea" data-icon-size="18"></span></i><span>Explain</span></button>
-          <button class="tool tool-wide" data-tool="ask"><i><span class="i" data-icon="spark" data-icon-size="18"></span></i><span>Ask Spark about this</span></button>
         </div>
       </aside>
     </div>
@@ -199,24 +189,14 @@
 
   <!-- pick an activity -->
   <div id="writeLibrary">
-    <h1>Choose a writing activity</h1>
-    <p class="lede">You do the writing. Spark reads it back so you can hear it.</p>
+    <h1>Write</h1>
+    <p class="lede">Pick a letter family. Listen and write, or build a sentence from a word bank.</p>
+    <div class="fam-grid" id="writeFamList"></div>
 
-    <h2 class="lib-heading">Picture story</h2>
+    <h2 class="lib-heading" style="margin-top:26px">Picture story</h2>
     <div class="lib" id="writePictureCard" style="margin-bottom:22px"></div>
 
-    <section class="screening-block">
-      <div class="screening-head">
-        <div>
-          <h2>Word bank sentences</h2>
-          <p class="sub">Tap or type words to make a sentence. Spark says each one.</p>
-        </div>
-        <div class="screening-score" id="bankScore"></div>
-      </div>
-      <div class="lib lib-screening" id="bankList"></div>
-    </section>
-
-    <section class="card" style="margin-top:20px">
+    <section class="card">
       <h2>Things you've written</h2>
       <div data-saved-list></div>
     </section>
@@ -302,106 +282,28 @@
 
   <!-- activity 2: word bank sentences (filled by wordbank.js) -->
   <div id="writeBank" hidden></div>
-</section>
 
-<!-- ══ HOMEWORK ═════════════════════════════════════════════════ -->
-<section class="view" id="v-homework" hidden>
-  <div id="hwHome">
-    <h1>Homework</h1>
-    <p class="lede">Add a worksheet and Spark helps you read it and answer it.</p>
-
-    <div class="hw-tabs" role="tablist">
-      <button class="hw-tab" role="tab" data-hw="teacher" aria-selected="true"><span class="i" data-icon="clip" data-icon-size="18"></span> My worksheets</button>
-      <button class="hw-tab" role="tab" data-hw="spark"   aria-selected="false"><span class="i" data-icon="spark" data-icon-size="18"></span> Practice from Spark</button>
-    </div>
-
-    <div id="hwTeacher">
-      <div class="drop" id="dropZone">
-        <span class="drop-ico"><span class="i" data-icon="clip" data-icon-size="18"></span></span>
-        <div class="drop-text">
-          <b>Add your worksheet</b>
-          <p class="sub">PDF, photo or text file. Drop it here or choose one.</p>
-        </div>
-        <input type="file" id="fileIn" accept=".pdf,application/pdf,image/*,.txt,.md,text/plain,text/markdown" hidden>
-        <button class="btn btn-sm btn-primary" id="btnPick">Choose file</button>
-        <button class="btn btn-sm" id="btnPaste">Paste text</button>
-      </div>
-      <div id="hwLoading" hidden></div>
-      <div id="teacherList"></div>
-    </div>
-
-    <div id="hwSpark" hidden></div>
-  </div>
-
-  <!-- one worksheet, with help (filled by homework.js) -->
-  <div id="hwWork" hidden></div>
+  <!-- activity 3: listen and write (filled by dictation.js) -->
+  <div id="writeDictation" hidden></div>
 </section>
 
 <!-- ══ PROGRESS ═════════════════════════════════════════════════ -->
 <section class="view" id="v-progress" hidden>
-  <h1>Your progress</h1>
-  <p class="lede">Everything here is measured from your own reading. Nothing is made up.</p>
-
-  <div class="kpis">
-    <div class="kpi"><b id="kSparks">0</b><span>sparks</span></div>
-    <div class="kpi"><b id="kSessions">0</b><span>readings done</span></div>
-    <div class="kpi"><b id="kWpm">—</b><span>best words/min</span></div>
-    <div class="kpi"><b id="kStreak">0</b><span>day streak</span></div>
-  </div>
+  <div id="progMain"></div>
 
   <!-- the drill-down: every difficulty, in full -->
   <div id="reviewPanel" hidden>
     <button class="btn btn-sm" id="btnReviewBack">← Back to progress</button>
-    <h2 style="margin:16px 0 4px">Every difficulty, in full</h2>
-    <p class="sub">Each moment Spark judged to be a real difficulty — the word,
-      the sentence it was in, and what happened.</p>
+    <h2 style="margin:16px 0 4px">Every difficulty</h2>
+    <p class="sub">The word, the sentence it was in, and what happened.</p>
     <div class="review-filters" id="reviewFilters"></div>
     <div id="reviewList"></div>
   </div>
+</section>
 
-  <div class="prog-grid" id="progGrid">
-    <section class="card">
-      <h2>Reading speed</h2>
-      <p class="sub">Words per minute, each time you read aloud.</p>
-      <div class="chart-box" id="chartBox"></div>
-    </section>
-
-    <section class="card">
-      <h2>What helps you most</h2>
-      <p class="sub">How often each kind of help got you moving again.</p>
-      <div id="cueBars"></div>
-      <p class="note" id="cueNote"></p>
-    </section>
-
-    <section class="card">
-      <h2>Why you stopped</h2>
-      <p class="sub">Everyone pauses while reading. Spark separates the ordinary
-        pauses from the ones that mean a word was hard — only the second kind
-        becomes homework.</p>
-      <div id="pauseSplit"></div>
-      <button class="btn btn-sm btn-block" id="btnReview" style="margin-top:14px">
-        See every one →
-      </button>
-    </section>
-
-    <section class="card">
-      <h2>Letters getting mixed up</h2>
-      <p class="sub">Pairs Spark saw you swap while reading aloud.</p>
-      <div id="letterList"></div>
-    </section>
-
-    <section class="card">
-      <h2>Words to practise</h2>
-      <p class="sub">Words you paused on more than once. Tap one to hear its parts.</p>
-      <div id="trickyList"></div>
-    </section>
-
-    <section class="card">
-      <h2>Your readings</h2>
-      <p class="sub">The last few times you read aloud.</p>
-      <div id="sessionList"></div>
-    </section>
-  </div>
+<!-- ══ PROFILE ══════════════════════════════════════════════════ -->
+<section class="view" id="v-profile" hidden>
+  <div id="profileMain"></div>
 </section>
 
 </main>
@@ -421,24 +323,6 @@
   </div>
 </div>
 <div id="hovertip" aria-hidden="true"></div>
-
-<!-- ══ CHAT ═════════════════════════════════════════════════════ -->
-<button id="fab" aria-label="Ask Spark"><span class="i" data-icon="spark" data-icon-size="18"></span> <span class="fab-txt">Ask Spark</span></button>
-
-<div id="chat" role="dialog" aria-label="Ask Spark">
-  <div class="chat-top">
-    <span class="chat-face"><span class="i" data-icon="spark" data-icon-size="18"></span></span>
-    <div class="chat-id"><b>Spark</b><small id="chatCtx">here to help</small></div>
-    <button class="icon-sq" id="chatClose" aria-label="Close">✕</button>
-  </div>
-  <div class="chat-body" id="chatBody"></div>
-  <div class="chips" id="chatChips"></div>
-  <div class="chat-foot">
-    <input class="inp" id="chatIn" placeholder="Ask me anything…" autocomplete="off">
-    <button class="mic chat-mic" id="chatMic" aria-label="Speak"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
-    <button class="send" id="chatSend" aria-label="Send"><span class="i" data-icon="send" data-icon-size="18"></span></button>
-  </div>
-</div>
 
 <!-- ══ SHEET + TOAST ════════════════════════════════════════════ -->
 <div class="scrim" id="scrim"><div class="sheet" id="sheet"></div></div>
@@ -547,16 +431,19 @@
 <script src="js/align.js"></script>
 <script src="js/speech.js"></script>
 <script src="js/speaker.js"></script>
+<script src="js/listen.js"></script>
+<script src="js/spell.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/content.js"></script>
+<script src="js/families.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/exercises.js"></script>
 <script src="js/reader.js"></script>
 <script src="js/write.js"></script>
 <script src="js/wordbank.js"></script>
-<script src="js/homework.js"></script>
+<script src="js/dictation.js"></script>
 <script src="js/progress.js"></script>
-<script src="js/chat.js"></script>
+<script src="js/profile.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/app.js"></script>
 

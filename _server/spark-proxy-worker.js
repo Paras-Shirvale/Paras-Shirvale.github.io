@@ -1,9 +1,19 @@
 /* ============================================================
-   spark-proxy-worker.js — Cloudflare Worker for Spark's "Ask Spark"
+   spark-proxy-worker.js — Cloudflare Worker for Spark's models
 
-   Holds the API key as a Cloudflare SECRET and forwards chat
-   requests to the model provider. The key is never sent to the
-   browser and is not in any file on the website.
+   Holds the API keys as Cloudflare SECRETS and forwards requests
+   to the model providers. No key is ever sent to the browser.
+
+   Three routes:
+     POST /            text model (word meanings, word parts,
+                       spelling explanations) — Groq Llama 3.3 70B
+     POST /transcribe  speech-to-text — Groq Whisper large-v3, with
+                       a time for every word. Used to double-check
+                       what the child actually said while reading.
+                       Uses the same GROQ_API_KEY.
+     POST /tts         natural voice — OpenAI gpt-4o-mini-tts.
+                       Optional: only on if OPENAI_API_KEY is set;
+                       otherwise the app uses the browser's voices.
 
    Setup: see _server/README.md
 
@@ -15,6 +25,9 @@
    Optional:
      AI_PROVIDER     groq | openrouter | cerebras | mistral   (default groq)
      AI_MODEL        force one model; otherwise tries the list below
+     WHISPER_MODEL   default whisper-large-v3
+     OPENAI_API_KEY  (Secret) turns on the natural voice at /tts
+     TTS_MODEL       default gpt-4o-mini-tts
    ============================================================ */
 
 const PROVIDERS = {
@@ -67,6 +80,78 @@ function fail(message, status, origin) {
   });
 }
 
+/* ── speech to text: Whisper on Groq ──────────────────── */
+const MAX_AUDIO = 10 * 1024 * 1024;
+
+async function transcribe(request, env, origin) {
+  if (!env.GROQ_API_KEY) return fail('The server has no GROQ_API_KEY secret set.', 500, origin);
+  let form;
+  try { form = await request.formData(); } catch { return fail('Send the audio as form data.', 400, origin); }
+  const file = form.get('file');
+  if (!file || typeof file === 'string') return fail('No audio was sent.', 400, origin);
+  if (file.size > MAX_AUDIO) return fail('That recording is too long.', 413, origin);
+
+  const models = env.WHISPER_MODEL ? [env.WHISPER_MODEL] : ['whisper-large-v3', 'whisper-large-v3-turbo'];
+  let last = 502;
+  for (const model of models) {
+    const up = new FormData();
+    up.append('file', file, file.name || 'reading.webm');
+    up.append('model', model);
+    up.append('response_format', 'verbose_json');
+    up.append('timestamp_granularities[]', 'word');
+    up.append('language', 'en');
+    up.append('temperature', '0');
+    /* No prompt on purpose: giving Whisper the story would bias it
+       towards hearing the right words — the opposite of the aim. */
+    const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST', headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` }, body: up,
+    });
+    if (r.ok) {
+      const data = await r.json();
+      const words = (data.words || []).map((w) => ({ word: w.word, start: w.start, end: w.end }));
+      return new Response(JSON.stringify({ text: data.text || '', words, model }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...cors(origin) },
+      });
+    }
+    last = r.status;
+    if (r.status !== 404 && r.status !== 400) break;
+  }
+  if (last === 429) return fail('Too many requests right now.', 429, origin);
+  return fail(`The speech model replied ${last}.`, 502, origin);
+}
+
+/* ── text to speech: a natural, lively voice ──────────── */
+const TTS_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'fable', 'nova', 'onyx', 'sage', 'shimmer', 'verse'];
+const TTS_STYLE =
+  'You are reading aloud to a 9 to 12 year old who is learning to read. ' +
+  'Sound warm, bright and enthusiastic, like a favourite teacher. ' +
+  'Pronounce every word clearly and correctly, at a calm pace. ' +
+  'If the text is a single word or one part of a word, say just that, clearly.';
+
+async function tts(request, env, origin) {
+  if (!env.OPENAI_API_KEY) return fail('No voice model is set up.', 501, origin);
+  let body;
+  try { body = await request.json(); } catch { return fail('Unreadable request.', 400, origin); }
+  const text = String(body.text || '').slice(0, 1500);
+  if (!text.trim()) return fail('No text.', 400, origin);
+  const voice = TTS_VOICES.includes(body.voice) ? body.voice : 'coral';
+
+  const r = await fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.OPENAI_API_KEY}` },
+    body: JSON.stringify({
+      model: env.TTS_MODEL || 'gpt-4o-mini-tts',
+      voice, input: text, instructions: TTS_STYLE, response_format: 'mp3',
+    }),
+  });
+  if (!r.ok) return fail(`The voice model replied ${r.status}.`, 502, origin);
+  return new Response(r.body, {
+    status: 200,
+    headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=604800', ...cors(origin) },
+  });
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin') || '';
@@ -80,6 +165,10 @@ export default {
       return new Response(null, { status: 204, headers: cors(origin) });
     }
     if (request.method !== 'POST') return fail('Send a POST request.', 405, origin);
+
+    const path = new URL(request.url).pathname.replace(/\/+$/, '');
+    if (path === '/transcribe') return transcribe(request, env, origin);
+    if (path === '/tts') return tts(request, env, origin);
 
     const provider = String(env.AI_PROVIDER || 'groq').toLowerCase();
     const spec = PROVIDERS[provider];

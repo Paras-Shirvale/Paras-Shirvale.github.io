@@ -60,6 +60,7 @@
   S.paintHome = function () {
     S.$('#hiName').textContent = S.P.name ? 'Hello, ' + S.P.name : 'Hello';
     S.$('#sparkCount').textContent = S.P.sparks;
+    S.paintAvatars();
     S.paintScene();
     paintObservation();
     paintToday();
@@ -70,32 +71,28 @@
   function paintObservation() {
     var el = S.$('#noticed');
     var sessions = S.P.sessions;
+    var top = S.Analysis.letterTroubles(1)[0];
     var fav = S.favourite();
-    var waiting = S.trickyWords();
-    var paced = sessions.filter(function (s) { return s.wpm; });
-
-    var labels = {
-      picture: 'Pictures', sound: 'Hearing words out loud', parts: 'Breaking words into parts'
-    };
+    var labels = { picture: 'Pictures', sound: 'Hearing words out loud', parts: 'Breaking words into parts' };
+    var familiesLeft = S.FAMILIES.filter(function (f) {
+      return !f.stories.some(function (st) { return S.P.doneSteps[st.id] && S.P.doneSteps[st.id].read; });
+    });
 
     var msg;
-    if (!sessions.length) {
-      msg = '<b>Let\'s start.</b> Read something aloud and I\'ll begin learning what helps you most.';
-    } else if (fav && waiting.length) {
-      msg = '<b>' + labels[fav] + ' help you most</b>, so I\'ll offer that first. ' +
-            'You have ' + waiting.length + ' word' + (waiting.length > 1 ? 's' : '') +
-            ' waiting in Homework.';
+    if (!sessions.length && !S.P.writings.length) {
+      msg = '<b>Let\'s start!</b> Read a story aloud and Spark will start spotting which letters are tricky.';
+    } else if (top) {
+      var f = S.familyOfPair(top.key);
+      msg = '<b>' + S.esc(top.label) + '</b> is the one to watch — it came up ' + top.count +
+            ' time' + (top.count > 1 ? 's' : '') + '.' +
+            (f ? ' Try the <b>' + S.esc(f.title) + '</b> stories and writing.' : '');
     } else if (fav) {
-      msg = '<b>' + labels[fav] + ' help you most</b> — I\'ll offer that first from now on.';
-    } else if (waiting.length) {
-      msg = 'You paused on ' + waiting.length + ' word' + (waiting.length > 1 ? 's' : '') +
-            ' last time. They\'re ready to practise in Homework.';
-    } else if (paced.length) {
-      msg = 'Your last reading was <b>' + paced[paced.length - 1].wpm +
-            ' words a minute</b>. Keep going.';
+      msg = '<b>' + labels[fav] + ' help you most</b> — Spark will offer that first.';
+    } else if (familiesLeft.length) {
+      msg = 'No letter mix-ups so far. <b>' + familiesLeft.length + ' letter famil' +
+            (familiesLeft.length > 1 ? 'ies' : 'y') + '</b> still to try.';
     } else {
-      msg = '<b>Nice start.</b> Next time, read aloud with the microphone ' +
-            'and I\'ll track your speed too.';
+      msg = '<b>You\'ve tried every letter family!</b> Keep going to collect more medals.';
     }
     el.innerHTML = msg;
   }
@@ -104,9 +101,8 @@
     var d = S.today();
     var readToday     = S.P.sessions.filter(function (s) { return s.date === d; }).length;
     var wroteToday    = S.P.writings.filter(function (w) { return w.date === d; }).length;
-    var practisedToday = Object.keys(S.P.practised)
-      .filter(function (w) { return S.P.practised[w] === d; }).length;
-    var waiting = S.trickyWords().length;
+    var dictToday = Object.keys(S.P.dictationDone || {})
+      .filter(function (k) { return S.P.dictationDone[k].date === d; }).length;
 
     function row(done, label, sub) {
       return '<div class="today-row" data-done="' + (done ? '1' : '') + '">' +
@@ -116,13 +112,12 @@
     }
 
     S.$('#todayList').innerHTML =
-      row(readToday > 0, 'Read something',
+      row(readToday > 0, 'Read a story',
           readToday ? readToday + ' done today' : 'Not yet today') +
       row(wroteToday > 0, 'Write a sentence',
           wroteToday ? wroteToday + ' written today' : 'Not yet today') +
-      row(practisedToday > 0, 'Practise a tricky word',
-          practisedToday ? practisedToday + ' practised today'
-                         : (waiting ? waiting + ' waiting for you' : 'Nothing waiting yet'));
+      row(dictToday > 0, 'Listen and write',
+          dictToday ? dictToday + ' done today' : 'Not yet today');
   }
 
   /** Any element marked data-pic gets its drawn illustration. */
@@ -149,103 +144,6 @@
     }).observe(document.body, { childList: true, subtree: true });
   }
 
-  /* ── first run ──────────────────────────────────────── */
-  /* ── setting up ─────────────────────────────────────────
-     Two questions, and both are used. The name goes into what Spark
-     says. The age sets which reading levels are offered first and is
-     recorded alongside the letter check, because a mix-up that is
-     ordinary at eight is worth a closer look at thirteen.
-
-     Nothing is sent anywhere — there is no account and no server.
-     "Account" here means a profile in this browser. */
-  function firstRun() {
-    S.sheet(
-      '<div style="text-align:center;margin-bottom:8px">' +
-        '<span class="i" data-icon="spark" data-icon-size="38"></span></div>' +
-      '<h2 style="text-align:center">Hello, I\'m Spark</h2>' +
-      '<p class="sub" style="text-align:center">I read with you and learn what ' +
-      'helps you most. Three quick things first.</p>' +
-
-      '<label class="set-label" for="nameIn">What should I call you?</label>' +
-      '<input class="inp" id="nameIn" placeholder="your first name" maxlength="20" ' +
-        'autocomplete="given-name" style="margin-bottom:16px">' +
-
-      '<label class="set-label">How old are you?</label>' +
-      '<div class="age-grid" id="ageGrid">' +
-        [8, 9, 10, 11, 12, 13, 14, 15].map(function (n) {
-          return '<button class="age-btn" data-age="' + n + '">' + n + '</button>';
-        }).join('') +
-      '</div>' +
-
-      /* The font question, settled the only way it can honestly be
-         settled: by the child reading the same line in both and
-         saying which is easier. The research does not back one
-         answer here (see README), so Spark does not pretend it does
-         — it asks, and it remembers. */
-      '<label class="set-label" style="margin-top:18px">Which is easier to read?</label>' +
-      '<div class="font-try">' +
-        '<button class="font-card" data-font="dyslexic">' +
-          '<span class="font-demo fd-dys">The quick brown fox jumped over the lazy dog.</span>' +
-          '<span class="font-name">This one</span>' +
-        '</button>' +
-        '<button class="font-card" data-font="plain">' +
-          '<span class="font-demo fd-plain">The quick brown fox jumped over the lazy dog.</span>' +
-          '<span class="font-name">This one</span>' +
-        '</button>' +
-      '</div>' +
-      '<p class="sub" style="margin:7px 0 0">Either is fine. Pick the one your eyes like. ' +
-      'You can swap any time in Settings.</p>' +
-
-      '<button class="btn btn-primary btn-lg btn-block" id="nameGo" style="margin-top:18px">' +
-        'Let\'s start</button>' +
-      '<p class="sub" style="text-align:center;margin:13px 0 0">' +
-      'Everything stays on this device. Nothing is sent anywhere.</p>',
-
-      function () {
-        var age = null;
-        var font = null;
-
-        S.$$('[data-age]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            age = Number(b.dataset.age);
-            S.$$('[data-age]').forEach(function (x) { x.dataset.on = x === b ? '1' : ''; });
-          });
-        });
-
-        /* Picking a sample switches the whole sheet to that font at
-           once, so the choice is made on the real thing rather than
-           on two small swatches. */
-        S.$$('[data-font]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            font = b.dataset.font;
-            S.$$('[data-font]').forEach(function (x) { x.dataset.on = x === b ? '1' : ''; });
-            document.documentElement.setAttribute('data-font', font);
-          });
-        });
-
-        function done() {
-          S.P.name = S.$('#nameIn').value.trim().slice(0, 20);
-          S.P.age = age;
-          if (font) S.P.settings.font = font;
-          S.P.started = S.today();
-          /* a younger reader starts with the shorter passages */
-          if (age && age <= 9) S.P.settings.size = 'large';
-          S.save();
-          S.applySettings();
-          S.closeSheet();
-          S.paintHome();
-          if (S.paintLibrary) { S.paintLibrary(); S.paintScreening(); }
-        }
-
-        S.$('#nameGo').addEventListener('click', done);
-        S.$('#nameIn').addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') done();
-        });
-        setTimeout(function () { S.$('#nameIn').focus(); }, 120);
-      }
-    );
-  }
-
   /* ── boot ───────────────────────────────────────────── */
   function boot() {
     S.applySettings();
@@ -253,8 +151,6 @@
     S.wireShell();
     S.wireReader();
     S.wireWrite();
-    S.wireHomework();
-    S.wireChat();
     S.wireSettings();
     S.wireProgress();
     paintDoorPictures();
@@ -268,9 +164,11 @@
 
     /* open whichever section the address bar asks for */
     var hash = (location.hash || '').replace('#', '');
-    if (['home', 'read', 'write', 'homework', 'progress'].indexOf(hash) > -1) S.go(hash);
+    if (['home', 'read', 'write', 'progress', 'profile'].indexOf(hash) > -1) S.go(hash);
 
-    if (!S.P.name && !S.P.sessions.length) setTimeout(firstRun, 400);
+    if (!S.P.name && !S.P.sessions.length) setTimeout(S.firstRun, 400);
+    else if (!S.P.avatar) { S.P.avatar = 'owl'; S.save(); S.paintAvatars(); }
+    S.checkMedals();
 
     /* the chart is drawn to pixel size, so it needs redrawing on resize */
     var resizeTimer = null;

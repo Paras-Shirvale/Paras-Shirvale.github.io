@@ -42,6 +42,9 @@ window.Spark = window.Spark || {};
     return {
       name: '',
       age: null,
+      avatar: '',       /* fox | owl | bear | bunny | cat | panda */
+      medals: {},       /* medal id -> date earned */
+      dictationDone: {},/* family id -> { date, right, total, mixed } */
       started: S.today(),
 
       /* results of the letter check, by passage id */
@@ -157,6 +160,7 @@ window.Spark = window.Spark || {};
     if (el) el.textContent = S.P.sparks;
     S.toast('<span class="i" data-icon="spark" data-icon-size="18"></span> +' + n + ' — ' + why);
     if (S.paintScene) S.paintScene();
+    if (S.checkMedals) S.checkMedals();
   };
 
   S.bumpStreak = function () {

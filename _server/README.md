@@ -1,9 +1,18 @@
 # Spark AI proxy (Cloudflare Worker)
 
-This small server keeps the API key for **Ask Spark** secret. The website
-(`projects/HCI_project/`) sends chat messages to this Worker; the Worker adds
-the key and forwards them to the model provider. The key never appears in the
+This small server keeps Spark's API keys secret. The website
+(`projects/HCI_project/`) sends requests to this Worker; the Worker adds the
+key and forwards them to the model provider. No key ever appears in the
 website's files, so visitors can't find it.
+
+| Route         | Model                               | Used for                                         | Key               |
+|---------------|-------------------------------------|--------------------------------------------------|-------------------|
+| `/`           | Groq — Llama 3.3 70B                | word meanings, word parts, spelling explanations | `GROQ_API_KEY`    |
+| `/transcribe` | Groq — Whisper large-v3             | double-checking what the child read aloud        | `GROQ_API_KEY`    |
+| `/tts`        | OpenAI — gpt-4o-mini-tts (optional) | a natural, lively reading voice                  | `OPENAI_API_KEY`  |
+
+**After changing the Worker code, paste it into Cloudflare again and Deploy** —
+the website only gets the new routes once the Worker is redeployed.
 
 This folder starts with `_`, so GitHub Pages does **not** publish it.
 
@@ -33,6 +42,14 @@ This folder starts with `_`, so GitHub Pages does **not** publish it.
 
 7. Commit and push. Ask Spark now talks to the model directly — no key prompt,
    no model picker.
+
+## Natural voice (optional)
+
+Without it, Spark uses the best voice the browser has (Edge's "Natural" voices
+are good; Chrome's Google voices are fine). For a consistently lively,
+correctly-pronounced voice everywhere, add a Secret `OPENAI_API_KEY`
+(platform.openai.com — paid, but a few cents covers many hours of reading).
+Spark detects it automatically; nothing in the website needs changing.
 
 ## Notes
 

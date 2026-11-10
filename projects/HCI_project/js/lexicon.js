@@ -128,9 +128,114 @@
     return splitOne(stem).concat([end]);
   }
 
+  /* ── compound words ─────────────────────────────────────
+     The vowel rules split "lighthouse" as ligh-thouse, which no
+     teacher would ever say. A word made of two real words splits
+     between them first: light-house, sun-light, birth-day. */
+  var KNOWN = null;
+  var COMMON_WORDS =
+    'light house sun day birth time some thing any where every one body no ' +
+    'for get to gether in side out door up stairs down base ball foot snow man ' +
+    'rain bow fire fly butter cup board pan cake bed room bath tooth brush hair ' +
+    'cut sea shell star fish gold class mate play ground home work school book ' +
+    'shelf note pad grand mother father land mark hand bag back pack news paper ' +
+    'week end note moon tea pot pop corn milk shake sand castle water fall melon ' +
+    'drop dragon black white berry straw blue green red head lamp air plane ship ' +
+    'wreck rock tree top hill side way road path farm yard dog cat house boat ' +
+    'post box letter lunch break fast night mare jelly bean pig tail pony shop ' +
+    'keeper tooth paste wind mill sail ear ring eye ball hedge hog sheep grass ' +
+    'hopper bee hive honey bird nest sky scraper over under cover table spoon';
+  function known() {
+    if (KNOWN) return KNOWN;
+    KNOWN = {};
+    COMMON_WORDS.split(/\s+/).forEach(function (w) { KNOWN[w] = 1; });
+    (S.FAMILIES || []).forEach(function (f) {
+      f.stories.forEach(function (st) {
+        st.text.split(/\s+/).forEach(function (w) { var n = S.norm(w); if (n.length > 2) KNOWN[n] = 1; });
+      });
+    });
+    return KNOWN;
+  }
+  function compound(raw) {
+    var w = raw.toLowerCase(), k = known();
+    if (w.length < 6 || k[w] && w.length < 7) return null;
+    for (var i = 3; i <= w.length - 3; i++) {
+      if (k[w.slice(0, i)] && k[w.slice(i)]) return [raw.slice(0, i), raw.slice(i)];
+    }
+    return null;
+  }
+
+  /* ── parts that SOUND right ─────────────────────────────
+     Parts from the AI helper, when connected: each with a "say"
+     spelling a speech engine pronounces correctly ("ta" → "tay"
+     in table). Cached in this browser, so each word is asked
+     about once. The local rules are the fallback. */
+  var PARTS_KEY = 'spark.parts.v1';
+  var partsCache = {};
+  try { partsCache = JSON.parse(localStorage.getItem(PARTS_KEY) || '{}'); } catch (e) {}
+  function keepParts() { try { localStorage.setItem(PARTS_KEY, JSON.stringify(partsCache)); } catch (e) {} }
+
+  function validParts(word, parts) {
+    return Array.isArray(parts) && parts.length &&
+      parts.every(function (p) { return p && p.text && p.say; }) &&
+      parts.map(function (p) { return p.text; }).join('').toLowerCase() === word.toLowerCase();
+  }
+
+  /** Ask the AI helper for several words at once, and cache them. */
+  S.prepareParts = async function (words) {
+    if (!S.AI || !S.AI.ready) return;
+    var todo = [];
+    (words || []).forEach(function (w) {
+      var n = S.norm(w).replace(/'/g, '');
+      if (n.length >= 4 && !partsCache[n] && todo.indexOf(n) < 0 && localParts(n).length > 1) todo.push(n);
+    });
+    if (!todo.length) return;
+    todo = todo.slice(0, 40);
+    try {
+      var data = await S.AI.askJSON(
+        'For each English word below, split it into its spoken syllables for a child learning to read. ' +
+        'For each syllable give "say": a spelling a text-to-speech voice will pronounce exactly the way ' +
+        'that syllable sounds inside the word. Examples: lighthouse → [{"text":"light","say":"light"},' +
+        '{"text":"house","say":"house"}]; table → [{"text":"ta","say":"tay"},{"text":"ble","say":"bull"}]; ' +
+        'water → [{"text":"wa","say":"waw"},{"text":"ter","say":"ter"}]. ' +
+        'The "text" parts joined together MUST spell the word exactly. ' +
+        'Reply with only JSON: an object mapping each word to its array.\nWords: ' + todo.join(', '),
+        { maxTokens: 1400, temperature: 0.1 });
+      Object.keys(data || {}).forEach(function (w) {
+        var n = S.norm(w);
+        if (validParts(n, data[w])) partsCache[n] = data[w];
+      });
+      keepParts();
+    } catch (e) { /* the local rules still work */ }
+  };
+
+  function localParts(raw) {
+    var c = compound(raw);
+    if (c) return c.reduce(function (all, piece) { return all.concat(splitOne(piece)); }, []);
+    return withSuffix(raw) || splitOne(raw);
+  }
+
+  /** Resolves [{text, say}] — the best parts available for a word. */
+  S.partsFor = async function (word) {
+    var n = S.norm(word).replace(/'/g, '');
+    if (!n) return [];
+    if (!partsCache[n]) await S.prepareParts([n]);
+    if (partsCache[n]) return partsCache[n];
+    return localParts(n).map(function (p) { return { text: p, say: p }; });
+  };
+
   S.syllables = function (word) {
     var raw = String(word == null ? '' : word).replace(/^[^A-Za-z'-]+|[^A-Za-z'-]+$/g, '');
     if (!raw) return [String(word == null ? '' : word)];
+
+    /* what the AI helper worked out, if it has seen this word */
+    var cached = partsCache[S.norm(raw).replace(/'/g, '')];
+    if (cached && raw.indexOf('-') < 0) {
+      var at = 0;
+      return cached.map(function (p) { var t = raw.substr(at, p.text.length); at += p.text.length; return t; });
+    }
+    var comp = raw.indexOf('-') < 0 && compound(raw);
+    if (comp) return comp.reduce(function (all, piece) { return all.concat(splitOne(piece)); }, []);
 
     if (raw.indexOf('-') > -1) {
       var bits = raw.split('-'), out = [];

@@ -43,11 +43,14 @@
     S.$('#writeLibrary').hidden = mode !== null;
     S.$('#writePicture').hidden = mode !== 'picture';
     S.$('#writeBank').hidden    = mode !== 'bank';
+    S.$('#writeDictation').hidden = mode !== 'dictation';
 
     if (mode === null) paintWriteLibrary();
     if (mode === 'picture') {
       var p = current();
-      S.Pictures.render(S.$('#writePic'), p.pic);
+      /* one composed scene, so everything the questions ask about
+         is actually in the picture */
+      S.$('#writePic').innerHTML = S.Pictures.scene(p.scene);
       S.$('#writeQ').textContent = p.q;
       build();
     }
@@ -64,16 +67,45 @@
   S.closeWriteActivity = function () {
     S.stopSaying();
     if (S.closeBank) S.closeBank(true);
+    if (S.closeDictation) S.closeDictation();
     mode = null;
     S.paintWrite();
   };
 
+  /* One card per letter family, each with its two exercises. */
+  function paintFamilies() {
+    var host = S.$('#writeFamList');
+    if (!host) return;
+    var dd = S.P.dictationDone || {}, bd = S.P.bankDone || {};
+    host.innerHTML = S.FAMILIES.map(function (f) {
+      var d = dd[f.id], b = bd['bank-' + f.id];
+      return '<div class="fam-card tone-rose">' +
+        '<div class="fam-top">' + S.familyTiles(f) +
+          (d ? '<span class="badge badge-done">' + d.right + '/' + d.total + ' words</span>' : '') +
+        '</div>' +
+        '<h3>' + S.esc(f.title) + '</h3>' +
+        '<p class="fam-blurb">' + S.esc(f.blurb) + '</p>' +
+        '<div class="fam-stories">' +
+          '<button class="story-btn" data-dictation="' + f.id + '">' +
+            '<span class="story-ico">' + S.Pictures.icon('speaker', 16) + '</span>' +
+            '<span class="story-t"><b>Listen and write</b><small>' + f.dictation.length + ' sentences to write</small></span>' +
+            '<span class="story-go">→</span></button>' +
+          '<button class="story-btn" data-bank="' + f.id + '">' +
+            '<span class="story-ico">' + S.Pictures.icon('stack', 16) + '</span>' +
+            '<span class="story-t"><b>Word bank</b><small>' + (b ? b + ' sentence' + (b > 1 ? 's' : '') + ' made' : 'Build your own sentence') + '</small></span>' +
+            '<span class="story-go">→</span></button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
   function paintWriteLibrary() {
-    var done = S.P.writings.filter(function (w) { return w.kind !== 'bank'; }).length;
+    paintFamilies();
+    var done = S.P.writings.filter(function (w) { return w.kind === 'picture'; }).length;
     S.$('#writePictureCard').innerHTML =
       '<button class="lib-card" data-write-open="picture">' +
         '<div class="lib-top">' +
-          '<span class="lib-pic">' + S.Pictures.drawn('lighthouse', 40) + '</span>' +
+          '<span class="lib-pic scene-thumb">' + S.Pictures.scene(S.PROMPTS[0].scene) + '</span>' +
           '<span class="badge' + (done ? ' badge-done' : '') + '">' +
             (done ? done + ' written' : 'Picture') + '</span>' +
         '</div>' +
@@ -81,7 +113,6 @@
         '<p>Look at a picture. Build a sentence in 3 pieces.</p>' +
         '<span class="lib-foot">Who? · Doing? · Where?</span>' +
       '</button>';
-    if (S.paintBankList) S.paintBankList();
   }
 
   function resetLadders() {
@@ -254,178 +285,56 @@
     }).join('');
   }
 
-  /* ── checking spelling, with reasons ────────────────── */
-
-  /* Misspellings common enough in children's writing to be worth
-     catching without a model. Each carries the reason, because a
-     correction that does not explain itself teaches nothing. */
-  var COMMON = {
-    teh: ['the', 'The letters are t-h-e. "h" comes before "e".'],
-    hte: ['the', 'The letters are t-h-e.'],
-    adn: ['and', 'The letters are a-n-d.'],
-    taht: ['that', 'The letters are t-h-a-t.'],
-    wiht: ['with', 'The "t" goes last: w-i-t-h.'],
-    thier: ['their', 'This one is "i" before "e": t-h-e-i-r.'],
-    freind: ['friend', 'Remember: a friend is there to the "end".'],
-    freinds: ['friends', 'Remember: a friend is there to the "end".'],
-    beleive: ['believe', 'There is a "lie" in the middle of believe.'],
-    recieve: ['receive', 'After "c" it is e-i: rec-ei-ve.'],
-    becuase: ['because', 'Big Elephants Can Always Understand Small Elephants.'],
-    becase: ['because', 'Big Elephants Can Always Understand Small Elephants.'],
-    becuse: ['because', 'Big Elephants Can Always Understand Small Elephants.'],
-    wich: ['which', 'It starts w-h: "which".'],
-    whent: ['went', 'No "h" in went.'],
-    sed: ['said', 'This one does not follow the sounds: s-a-i-d.'],
-    ses: ['says', 'Another odd one: s-a-y-s.'],
-    cud: ['could', 'could, would, should all end the same way: o-u-l-d.'],
-    wud: ['would', 'could, would, should all end the same way: o-u-l-d.'],
-    shud: ['should', 'could, would, should all end the same way: o-u-l-d.'],
-    thay: ['they', 'It ends with "ey": t-h-e-y.'],
-    ther: ['there', 'There needs an "e" at the end.'],
-    wen: ['when', 'Question words start w-h: when, what, where.'],
-    wat: ['what', 'Question words start w-h: when, what, where.'],
-    wher: ['where', 'Question words start w-h: when, what, where.'],
-    nite: ['night', 'This one uses "igh": n-igh-t.'],
-    lite: ['light', 'This one uses "igh": l-igh-t.'],
-    thru: ['through', 'The long way round: t-h-r-o-u-g-h.'],
-    alot: ['a lot', '"A lot" is two separate words.'],
-    happend: ['happened', 'It needs the "e": happen + ed.'],
-    probaly: ['probably', 'There is a "b" before the "ly": proba-b-ly.'],
-    rember: ['remember', 'There are two "m" sounds: re-mem-ber.'],
-    sumthing: ['something', 'It is "some" + "thing".'],
-    togther: ['together', 'to-get-her. The word "get" is inside it.'],
-    tomorow: ['tomorrow', 'One "m", two "r"s: to-mor-row.'],
-    seperate: ['separate', 'There is "a rat" in sep-a-rat-e.'],
-    wierd: ['weird', 'This one breaks the rule: w-e-i-r-d.'],
-    writting: ['writing', 'Only one "t" in writing.'],
-    didnt: ["didn't", 'The apostrophe stands for the missing "o" in not.'],
-    dont: ["don't", 'The apostrophe stands for the missing "o" in not.'],
-    cant: ["can't", 'The apostrophe stands for the missing "no" in cannot.'],
-    im: ["I'm", '"I\'m" is short for "I am", with a capital I.'],
-    ive: ["I've", '"I\'ve" is short for "I have", with a capital I.'],
-    u: ['you', 'Write the whole word: y-o-u.'],
-    ur: ['your', 'Write the whole word: y-o-u-r.'],
-    plz: ['please', 'Write the whole word: p-l-e-a-s-e.']
-  };
-
-  /* The mechanical rules and the word list — no model needed. */
-  function localChecks(s) {
-    var fixes = [];
-    var out = s;
-
-    /* known misspellings first, so later rules see corrected words */
-    out = out.replace(/\b[A-Za-z']+\b/g, function (word) {
-      var hit = COMMON[word.toLowerCase()];
-      if (!hit) return word;
-      var replacement = hit[0];
-      /* keep the child's capitalisation */
-      if (/^[A-Z]/.test(word)) {
-        replacement = replacement.charAt(0).toUpperCase() + replacement.slice(1);
-      }
-      fixes.push({ from: word, to: replacement, why: hit[1] });
-      return replacement;
-    });
-
-    if (/^[a-z]/.test(out)) {
-      fixes.push({ from: out.split(' ')[0], to: out.charAt(0).toUpperCase() + out.split(' ')[0].slice(1),
-                   why: 'A sentence starts with a capital letter.' });
-      out = out.charAt(0).toUpperCase() + out.slice(1);
-    }
-    if (!/[.!?]$/.test(out.trim())) {
-      fixes.push({ from: '…' + out.trim().slice(-6), to: '…' + out.trim().slice(-6) + '.',
-                   why: 'A sentence needs a full stop at the end.' });
-      out = out.trim() + '.';
-    }
-    if (/\bi\b/.test(out)) {
-      fixes.push({ from: 'i', to: 'I', why: '"I" is always a capital letter.' });
-      out = out.replace(/\bi\b/g, 'I');
-    }
-    if (/  +/.test(out)) {
-      fixes.push({ from: 'two spaces', to: 'one space', why: 'Only one space between words.' });
-      out = out.replace(/  +/g, ' ');
-    }
-    return { corrected: out, fixes: fixes };
-  }
-
+  /* ── checking spelling and grammar ─────────────────────
+     A full spelling and grammar checker (spell.js). Shows WHAT
+     changed and WHY, word by word, so the correction teaches. */
   async function checkSpelling() {
     var s = build();
     if (!s) { S.toast('Write something first'); return; }
 
     var btn = S.$('#btnTidy');
-    var label = btn.textContent;
+    var label = btn.innerHTML;
     btn.disabled = true;
     btn.textContent = 'Checking…';
 
-    var result = localChecks(s);
-
-    /* an AI helper catches the actual spelling, which rules cannot */
-    if (S.AI.ready) {
-      try {
-        var data = await S.AI.askJSON(
-          'A child aged 9-14 with dyslexia wrote this sentence:\n\n"' + s + '"\n\n' +
-          'Fix ONLY spelling, capital letters and punctuation. Keep their words, ' +
-          'their word order and their voice. Do not make it longer or more grown-up.\n' +
-          'Reply with only JSON:\n' +
-          '{"corrected":string,"changes":[{"from":string,"to":string,"why":string}]}\n' +
-          '"changes" lists each thing you fixed. "why" is ONE short friendly sentence ' +
-          'a child understands, explaining the rule — for example ' +
-          '"\\"friend\\" has the i before the e." ' +
-          'If nothing needed fixing, return the sentence unchanged and an empty changes list.',
-          { maxTokens: 420, temperature: 0.2 }
-        );
-        if (data && data.corrected) {
-          result = { corrected: data.corrected,
-                     fixes: Array.isArray(data.changes) ? data.changes : [] };
-        }
-      } catch (e) { /* keep the local result */ }
-    }
-
+    var result = await S.checkWriting(s, { where: 'Picture story' });
     tidied = result.corrected;
     var out = S.$('#sentOut');
     out.textContent = tidied;
     out.classList.remove('placeholder');
 
-    paintFixes(result.fixes, s === tidied);
-
+    paintFixes(result.fixes, result.full);
     btn.disabled = false;
-    btn.textContent = label;
+    btn.innerHTML = label;
   }
 
-  function paintFixes(fixes, unchanged) {
-    var host = S.$('#fixList');
-
-    /* Be exact about what was actually checked. Claiming "all spelled
-       correctly" after checking only capital letters would be a lie,
-       and a child would believe it. */
+  S.paintFixes = paintFixes;
+  function paintFixes(fixes, full, hostSel) {
+    var host = S.$(hostSel || '#fixList');
     if (!fixes.length) {
-      host.innerHTML = '<div class="fix-none">' +
-        (S.AI.ready
-          ? '✓ Nothing to fix — that all looks right.'
-          : '✓ Capital letters and full stops are right.') +
-        (!S.AI.ready
-          ? '<p class="sub" style="margin:6px 0 0">Spark checked capitals, full stops ' +
-            'and the words it knows. For a full spelling check, set up an AI helper ' +
-            'in Settings.</p>'
-          : '') +
+      host.innerHTML = '<div class="fix-none">✓ No mistakes found — well done!' +
+        (full ? '' : '<p class="sub" style="margin:6px 0 0">Only a quick check ran — Spark is offline.</p>') +
       '</div>';
+      S.say('No mistakes found. Well done!');
       return;
     }
-
+    var LABEL = { spelling: 'Spelling', grammar: 'Grammar', capital: 'Capital letter', punctuation: 'Full stop' };
     host.innerHTML =
-      '<p class="eyebrow" style="margin:14px 0 8px">What changed</p>' +
+      '<p class="eyebrow" style="margin:14px 0 8px">' + fixes.length + ' thing' + (fixes.length > 1 ? 's' : '') + ' to fix</p>' +
       fixes.map(function (f) {
-        return '<div class="fix">' +
+        return '<div class="fix fix-' + (f.kind || 'spelling') + '">' +
+          '<span class="fix-kind">' + (LABEL[f.kind] || 'Fix') + '</span>' +
           '<div class="fix-swap">' +
             '<span class="was">' + S.esc(f.from) + '</span>' +
             '<span class="arrow">→</span>' +
             '<span class="now">' + S.esc(f.to) + '</span>' +
+            '<button class="icon-xs" data-say="' + S.esc(f.to + '. ' + (f.why || '')) + '" aria-label="Hear why">' +
+              '<span class="i" data-icon="speaker" data-icon-size="15"></span></button>' +
           '</div>' +
           '<p class="fix-why">' + S.esc(f.why || '') + '</p>' +
         '</div>';
       }).join('') +
-      (!S.AI.ready ? '<p class="sub" style="margin:10px 0 0">Spark checked capitals, ' +
-        'full stops and the words it knows. For a full spelling check, set up an ' +
-        'AI helper in Settings.</p>' : '');
+      (full ? '' : '<p class="sub" style="margin:10px 0 0">Only a quick check ran — Spark is offline.</p>');
   }
 
   /* ── wiring ─────────────────────────────────────────── */
@@ -438,6 +347,10 @@
     S.$('#v-write').addEventListener('click', function (e) {
       var open = e.target.closest('[data-write-open]');
       if (open) { S.openWriteActivity(open.dataset.writeOpen); return; }
+      var dict = e.target.closest('[data-dictation]');
+      if (dict) { S.openDictation(dict.dataset.dictation); return; }
+      var bankBtn = e.target.closest('#writeFamList [data-bank]');
+      if (bankBtn) { S.openBank(bankBtn.dataset.bank); return; }
       if (e.target.closest('[data-write-back]')) { S.closeWriteActivity(); return; }
 
       var stuck = e.target.closest('[data-stuck]');

@@ -201,6 +201,52 @@
           '<circle cx="33" cy="32" r="3"/></g>'
   };
 
+  /* Pieces only used inside composed scenes. */
+  var SCENE_ONLY = {
+    /* the cat from above, curled up, eyes shut */
+    catnap: '<ellipse cx="24" cy="31" rx="15" ry="9" fill="#E8894A"/>' +
+            '<circle cx="14" cy="26" r="8" fill="#F09C5C"/>' +
+            '<path d="M8 21 L7 14 L12 18 Z" fill="#E8894A"/>' +
+            '<path d="M19 20 L21 13 L15 17 Z" fill="#E8894A"/>' +
+            '<path d="M10 26 q2 2 4 0 M15 26 q2 2 4 0" stroke="#2B2118" stroke-width="1.4" fill="none" stroke-linecap="round"/>' +
+            '<path d="M38 33 q7 -1 5 -9" stroke="#E8894A" stroke-width="4" fill="none" stroke-linecap="round"/>',
+    zzz: '<g fill="none" stroke="#5B4BD6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
+         '<path d="M6 34 h10 l-10 10 h10"/><path d="M22 18 h8 l-8 8 h8"/><path d="M34 6 h6 l-6 6 h6"/></g>',
+    whoosh: '<g stroke="#8E8778" stroke-width="3" stroke-linecap="round">' +
+            '<path d="M4 16 h28"/><path d="M10 26 h30"/><path d="M4 36 h24"/></g>',
+    snowflakes: '<g fill="#FFFFFF" opacity=".9"><circle cx="10" cy="8" r="1.6"/><circle cx="34" cy="20" r="1.2"/>' +
+                '<circle cx="60" cy="10" r="1.8"/><circle cx="88" cy="24" r="1.3"/><circle cx="118" cy="9" r="1.7"/>' +
+                '<circle cx="146" cy="22" r="1.4"/><circle cx="20" cy="40" r="1.2"/><circle cx="130" cy="44" r="1.5"/>' +
+                '<circle cx="76" cy="38" r="1.1"/><circle cx="104" cy="52" r="1.3"/></g>'
+  };
+
+  var SCENE_BG = {
+    room:       '<rect width="160" height="100" fill="#F3E3C7"/><rect y="74" width="160" height="26" fill="#C9A47A"/>' +
+                '<rect x="12" y="12" width="30" height="24" rx="2" fill="#9FD0EC" stroke="#8B5E3C" stroke-width="2.5"/>',
+    'night-sea':'<rect width="160" height="100" fill="#1E3059"/><rect y="70" width="160" height="30" fill="#2B6E8C"/>' +
+                '<path d="M0 74 q10 -5 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 v6 H0z" fill="#3C87A6"/>',
+    night:      '<rect width="160" height="100" fill="#1E3059"/><rect y="86" width="160" height="14" fill="#3A4D6B"/>',
+    garden:     '<rect width="160" height="100" fill="#CFE8F7"/><rect y="78" width="160" height="22" fill="#6CBF6A"/>',
+    pitch:      '<rect width="160" height="100" fill="#CFE8F7"/><rect y="64" width="160" height="36" fill="#4FB06D"/>' +
+                '<path d="M0 82 h160" stroke="#fff" stroke-width="1.5" opacity=".7"/>',
+    snow:       '<rect width="160" height="100" fill="#AFC3D6"/><path d="M0 78 q40 -10 80 0 t80 0 V100 H0z" fill="#F7FAFD"/>'
+  };
+
+  /**
+   * A whole scene built from several drawings, so a picture can show
+   * a cat ON a sofa, or a boat PASSING a lighthouse — whatever the
+   * questions about it ask.
+   */
+  P.scene = function (scene) {
+    if (!scene) return '';
+    var body = (SCENE_BG[scene.bg] || '') + scene.parts.map(function (p) {
+      var d = SCENE_ONLY[p.k] || DRAWN[p.k] || '';
+      if (p.k === 'snowflakes') return d;
+      return '<g transform="translate(' + p.x + ' ' + p.y + ') scale(' + (p.s || 1) + ')">' + d + '</g>';
+    }).join('');
+    return '<svg class="pic scene" viewBox="0 0 160 100" role="img" aria-label="picture">' + body + '</svg>';
+  };
+
   /* Words that map onto a drawing we already have. */
   var ALIASES = {
     couch: 'sofa', sunny: 'sun', sunlight: 'sun', clouds: 'cloud',
@@ -278,6 +324,9 @@
     trophy:  '<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3"/>' +
              '<path d="M17 6h3v1a3 3 0 0 1-3 3"/><path d="M12 14v4"/><path d="M8.5 21h7"/>',
     home:    '<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',
+    lock:    '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    clock:   '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    pause:   '<path d="M9 5v14M15 5v14"/>',
     list:    '<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/>' +
              '<circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
     updown:  '<path d="M8 7l-3-3-3 3"/><path d="M5 4v16"/>' +

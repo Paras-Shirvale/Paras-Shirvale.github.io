@@ -37,68 +37,12 @@
     { key: 'glue',     label: 'Little words', say: 'Little words' }
   ];
 
-  var BANKS = [
-    {
-      id: 'bank-bd', title: 'b and d', pic: 'dog', blurb: 'Ben, his dog and a bed.',
-      starters: ['The big dog', 'Ben had a', 'My dad', 'One day'],
-      who:      ['Ben', 'the dog', 'my dad', 'a bird', 'the baby'],
-      doing:    ['dug', 'barked', 'bounced', 'dived', 'dashed', 'grabbed', 'had'],
-      what:     ['a bed', 'a ball', 'a bone', 'some bread', 'a box'],
-      where:    ['by the door', 'in the dirt', 'under the bed', 'down the road'],
-      describe: ['big', 'brown', 'bad', 'bright', 'dirty'],
-      glue:     ['the', 'a', 'and', 'was', 'is', 'his', '.', '!']
-    },
-    {
-      id: 'bank-pq', title: 'p and q', pic: 'boat', blurb: 'A puppy at the pond.',
-      starters: ['The puppy', 'Pip put', 'A quiet duck', 'Quickly,'],
-      who:      ['Pip', 'the puppy', 'a duck', 'the queen', 'my pal'],
-      doing:    ['paddled', 'picked up', 'quacked', 'played', 'peeped', 'pushed'],
-      what:     ['a pebble', 'a pear', 'some pizza', 'a present', 'a paper plane'],
-      where:    ['in the pond', 'at the park', 'past the pool', 'up the path'],
-      describe: ['quick', 'quiet', 'pink', 'happy', 'puzzled'],
-      glue:     ['the', 'a', 'and', 'was', 'with', 'her', '.', '?']
-    },
-    {
-      id: 'bank-mw', title: 'm and w', pic: 'mountain', blurb: 'Wind on the mountain.',
-      starters: ['The wind', 'Mum went', 'We walked', 'In the morning'],
-      who:      ['Mum', 'we', 'the man', 'a worm', 'my mate'],
-      doing:    ['walked', 'woke up', 'made', 'watched', 'waved', 'melted'],
-      what:     ['a warm hat', 'some water', 'a map', 'the moon', 'a window'],
-      where:    ['up the mountain', 'at the window', 'in the woods', 'down the wet road'],
-      describe: ['warm', 'wet', 'windy', 'muddy', 'little'],
-      glue:     ['the', 'a', 'and', 'went', 'was', 'into', '.', '!']
-    },
-    {
-      id: 'bank-animals', title: 'Animals', pic: 'cat', blurb: 'Cats, fish, birds and bees.',
-      starters: ['The cat', 'A little bird', 'My pet', 'I saw a'],
-      who:      ['the cat', 'a fish', 'the bee', 'a bird', 'my dog'],
-      doing:    ['jumped', 'swam', 'flew', 'ate', 'slept', 'chased'],
-      what:     ['a mouse', 'some seeds', 'a flower', 'its tail', 'a stick'],
-      where:    ['in the garden', 'in the sea', 'up a tree', 'on the sofa'],
-      describe: ['fluffy', 'tiny', 'fast', 'sleepy', 'striped'],
-      glue:     ['the', 'a', 'and', 'then', 'was', 'very', '.', '!']
-    },
-    {
-      id: 'bank-weather', title: 'Weather', pic: 'rain', blurb: 'Sun, rain, snow and storms.',
-      starters: ['Today it is', 'The sun', 'Last night', 'When it rains'],
-      who:      ['the sun', 'the rain', 'the wind', 'the snow', 'we'],
-      doing:    ['shone', 'poured', 'blew', 'fell', 'got wet', 'played'],
-      what:     ['an umbrella', 'my coat', 'a snowman', 'a rainbow', 'puddles'],
-      where:    ['outside', 'on the roof', 'over the hill', 'in the sky'],
-      describe: ['sunny', 'cold', 'grey', 'stormy', 'bright'],
-      glue:     ['it', 'is', 'was', 'the', 'and', 'so', '.', '!']
-    },
-    {
-      id: 'bank-day', title: 'My day', pic: 'house', blurb: 'Home, school and friends.',
-      starters: ['This morning I', 'At school we', 'After lunch', 'My friend'],
-      who:      ['I', 'my friend', 'my teacher', 'my mum', 'we'],
-      doing:    ['ate', 'read', 'played', 'went', 'laughed', 'made'],
-      what:     ['breakfast', 'a book', 'football', 'a picture', 'my homework'],
-      where:    ['at home', 'at school', 'in the park', 'in my room'],
-      describe: ['fun', 'funny', 'tired', 'happy', 'busy'],
-      glue:     ['the', 'a', 'and', 'then', 'with', 'because', '.', '!']
-    }
-  ];
+  /* One bank per letter family (families.js), so the words the
+     child builds with are full of the letters being watched. */
+  var BANKS = S.FAMILIES.map(function (f) {
+    return Object.assign({ id: 'bank-' + f.id, family: f.id, title: f.title, pic: f.pic,
+                           blurb: f.blurb }, f.bank);
+  });
   S.BANKS = BANKS;
 
   var bank = null;          /* the set open right now */
@@ -109,38 +53,9 @@
 
   function done() { return (S.P.bankDone = S.P.bankDone || {}); }
 
-  /* ── the list of sets, on the Write page ─────────────── */
-  S.paintBankList = function () {
-    var host = S.$('#bankList');
-    if (!host) return;
-    var record = done();
-    var n = 0;
-
-    host.innerHTML = BANKS.map(function (b) {
-      var count = record[b.id] || 0;
-      if (count) n++;
-      return '<button class="lib-card screen-card" data-bank="' + b.id + '">' +
-        '<div class="lib-top">' +
-          '<span class="lib-pic">' + S.Pictures.drawn(b.pic, 34) + '</span>' +
-          '<span class="badge' + (count ? ' badge-done' : '') + '">' +
-            (count ? count + ' made' : 'Words') + '</span>' +
-        '</div>' +
-        '<h3>' + S.esc(b.title) + '</h3>' +
-        '<p>' + S.esc(b.blurb) + '</p>' +
-      '</button>';
-    }).join('');
-
-    S.$$('[data-bank]', host).forEach(function (btn) {
-      btn.addEventListener('click', function () { openBank(btn.dataset.bank); });
-    });
-
-    var score = S.$('#bankScore');
-    if (score) {
-      score.innerHTML = n ? '<b>' + n + ' of ' + BANKS.length + '</b><span>tried</span>' : '';
-    }
-  };
-
   /* ── opening a set ───────────────────────────────────── */
+  S.openBank = function (familyId) { openBank('bank-' + familyId); };
+
   function openBank(id) {
     bank = BANKS.filter(function (b) { return b.id === id; })[0];
     if (!bank) return;
@@ -175,8 +90,8 @@
     host.innerHTML =
       '<button class="btn btn-sm" data-write-back>&larr; All writing</button>' +
       '<div class="bank-head">' +
-        '<span class="lib-pic">' + S.Pictures.drawn(bank.pic, 44) + '</span>' +
-        '<div><h1 class="work-title">' + S.esc(bank.title) + '</h1>' +
+        S.familyTiles(S.family(bank.family), 'md') +
+        '<div><h1 class="work-title">Word bank · ' + S.esc(bank.title) + '</h1>' +
         '<p class="sub" style="margin:0">Tap a word to add it.</p></div>' +
         '<button class="icon-sq" data-say="Tap a word to add it to your sentence. ' +
           'Tap the speaker to just hear it. Then listen to your sentence." aria-label="Hear how this works">' +
@@ -228,7 +143,9 @@
                 S.Pictures.icon('speaker', 18) + ' Hear my sentence</button>' +
               '<button class="btn btn-sm" id="bankUndo">Undo word</button>' +
               '<button class="btn btn-sm" id="bankClear">Clear</button>' +
+              '<button class="btn btn-sm" id="bankSpell">✓ Check spelling</button>' +
             '</div>' +
+            '<div id="bankFix"></div>' +
             '<div class="bank-check" id="bankCheck" hidden>' +
               '<p class="bank-check-q">Is that what you meant? ' +
                 '<button class="icon-xs" data-say="Is that what you meant to say?" aria-label="Hear">' +
@@ -391,6 +308,7 @@
 
   function changed() {
     if (heard) { heard = false; S.$('#bankCheck').hidden = true; }
+    var fx = S.$('#bankFix'); if (fx) fx.innerHTML = '';
     stopRead();
     update();
   }
@@ -550,6 +468,27 @@
       box.focus();
     });
     S.$('#bankYes').addEventListener('click', save);
+    S.$('#bankSpell').addEventListener('click', async function () {
+      var b = S.$('#bankSpell');
+      var text = box.value.trim();
+      if (!text) { S.toast('Add some words first'); return; }
+      b.disabled = true; b.textContent = 'Checking…';
+      var r = await S.checkWriting(text, { where: 'Word bank: ' + bank.title });
+      S.paintFixes(r.fixes, r.full, '#bankFix');
+      if (r.fixes.length) {
+        var fix = document.createElement('button');
+        fix.className = 'btn btn-sm btn-primary';
+        fix.style.marginTop = '8px';
+        fix.textContent = 'Use the fixed sentence';
+        fix.addEventListener('click', function () {
+          box.value = r.corrected + ' '; lastValue = box.value; changed();
+          S.$('#bankFix').innerHTML = '';
+          S.say(r.corrected);
+        });
+        S.$('#bankFix').appendChild(fix);
+      }
+      b.disabled = false; b.textContent = '✓ Check spelling';
+    });
     S.$('#bankNo').addEventListener('click', function () {
       heard = false;
       S.$('#bankCheck').hidden = true;

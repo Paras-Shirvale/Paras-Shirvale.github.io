@@ -36,7 +36,8 @@
   var CONFUSABLE = [
     ['b', 'd'], ['p', 'q'], ['b', 'p'], ['d', 'q'], ['d', 'g'],
     ['m', 'w'], ['n', 'u'], ['i', 'j'], ['f', 't'], ['v', 'w'],
-    ['a', 'o'], ['e', 'a'], ['i', 'e'], ['s', 'z'], ['h', 'n']
+    ['a', 'o'], ['e', 'a'], ['i', 'e'], ['s', 'z'], ['h', 'n'],
+    ['c', 's'], ['g', 'j'], ['c', 'k'], ['f', 'v'], ['o', 'u']
   ];
 
   var PAIR_LABEL = {};
@@ -306,9 +307,10 @@
   A.recordMisread = function (analysis, context) {
     if (!analysis) return;
     S.P.misreads = S.P.misreads || [];
+    var source = (context && context.source) || 'reading';
     S.P.misreads.push({
       date: S.today(), heard: analysis.heard,
-      expected: analysis.expected, kind: analysis.kind
+      expected: analysis.expected, kind: analysis.kind, source: source
     });
     if (S.P.misreads.length > 300) S.P.misreads = S.P.misreads.slice(-300);
 
@@ -316,7 +318,8 @@
     S.P.events.push({
       at: Date.now(),
       date: S.today(),
-      kind: 'misread',
+      kind: source === 'writing' ? 'spelling' : 'misread',
+      source: source,
       type: analysis.kind,
       word: analysis.expected,
       said: analysis.heard,
@@ -331,6 +334,9 @@
     analysis.pairs.forEach(function (p) {
       var rec = S.P.letters[p.key] || (S.P.letters[p.key] = { count: 0, examples: [] });
       rec.count++;
+      /* where it showed up: aloud, or on the page */
+      if (source === 'writing') rec.write = (rec.write || 0) + 1;
+      else rec.read = (rec.read || 0) + 1;
       if (rec.examples.length < 6 &&
           rec.examples.indexOf(analysis.expected) === -1) {
         rec.examples.push(analysis.expected);

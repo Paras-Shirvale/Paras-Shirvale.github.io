@@ -87,11 +87,11 @@
           });
         });
 
-        S.$$('[data-font]').forEach(function (b) {
+        S.$$('button[data-font]').forEach(function (b) {
           b.addEventListener('click', function () {
             S.P.settings.font = b.dataset.font;
             S.save(); S.applySettings();
-            press('[data-font]', b);
+            press('button[data-font]', b);
           });
         });
 
@@ -114,18 +114,10 @@
     S.$$(sel).forEach(function (x) { x.setAttribute('aria-pressed', String(x === active)); });
   }
 
-  /* ── Spark's voice, and who is reading ──────────────── */
-  /* ── voices, and who is reading ─────────────────────────
-     Two separate things, both about voices, so they live together.
-
-     The calibration used to be a meter with numbers on it, which
-     told a child nothing and gave them no reason to take part. It
-     is now a short reading task with a clear outcome: read this
-     sentence, and Spark tells you it has learned your voice.    */
   S.openVoiceSettings = function () {
     var st = S.P.settings;
-    var variety = S.voiceVariety ? S.voiceVariety() : { distinct: 4 };
     var line = S.CALIBRATION[Math.floor(Math.random() * S.CALIBRATION.length)];
+    var cloudOn = S.cloudVoiceState && S.cloudVoiceState() === 'on';
 
     S.sheet(
       '<h2>Voices</h2>' +
@@ -136,28 +128,23 @@
           var v = S.VOICES[key];
           return '<button class="voice-card" data-voice="' + key + '"' +
             (st.voice === key ? ' data-on="1"' : '') + '>' +
+            '<span class="voice-face">' + S.avatarSVG(voiceAvatar(key), 40) + '</span>' +
             '<b>' + v.label + '</b>' +
             '<span class="voice-sub">' + v.who + '</span>' +
           '</button>';
         }).join('') +
       '</div>' +
+      '<p class="srow-note" style="margin-top:8px">' +
+        (cloudOn ? 'Using Spark\'s natural voice.'
+                 : 'Using: ' + S.esc(S.voiceName(st.voice || 'woman') || 'this computer\'s voice')) +
+      '</p>' +
 
-      (variety.distinct < 2
-        ? '<p class="sub" style="margin-top:12px">This computer has one English ' +
-          'voice installed, so these differ by pitch rather than sounding like ' +
-          'four people. Installing more system voices gives a bigger difference.</p>'
-        : '') +
-
-      /* Named speeds, not a bare slider. A slider gives a child a
-         position on a track with no idea what it means, and no way
-         to get back to the one that worked. */
       '<div class="srow" style="margin-top:14px"><label>Speaking speed</label>' +
         '<div class="seg">' +
-          [['slow', 0.75, 'Slow'], ['normal', 0.95, 'Normal'], ['brisk', 1.15, 'Brisk']]
+          [['slow', 0.8, 'Slow'], ['normal', 0.95, 'Normal'], ['brisk', 1.12, 'Quick']]
             .map(function (o) {
               var on = Math.abs((st.rate || 0.95) - o[1]) < 0.06;
-              return '<button data-rate="' + o[1] + '" aria-pressed="' + on + '">' +
-                     o[2] + '</button>';
+              return '<button data-rate="' + o[1] + '" aria-pressed="' + on + '">' + o[2] + '</button>';
             }).join('') +
         '</div>' +
         '<p class="srow-note">How fast Spark talks.</p></div>' +
@@ -166,42 +153,22 @@
       '<div class="calib" id="calib">' +
         '<div class="calib-head">' +
           '<h3>Let Spark learn your voice</h3>' +
-          '<p>Then if someone else reads for you, Spark will notice — so what ' +
-            'it learns stays about <b>you</b>.</p>' +
+          '<p>Read the whole paragraph out loud. Spark listens to all of it.</p>' +
         '</div>' +
-
-        '<div class="calib-stage" data-stage="intro">' +
-          '<p class="calib-line">' + S.esc(line) + '</p>' +
-          '<div class="toolbar" style="margin:0">' +
-            '<button class="btn btn-primary" id="calibGo">' +
-              '<span class="i" data-icon="mic" data-icon-size="18"></span> ' +
-              'Read this out loud</button>' +
-            '<button class="btn btn-sm" id="calibHear">' +
-              '<span class="i" data-icon="speaker" data-icon-size="18"></span> ' +
-              'Hear it first</button>' +
-          '</div>' +
-          (S.P.voicePrint
-            ? '<p class="calib-known">Spark already knows your voice, from ' +
-              S.esc(S.P.voicePrint.date) + '. Read it again to update.</p>'
-            : '') +
-        '</div>' +
-
-        '<div class="calib-stage" data-stage="listening" hidden>' +
-          '<p class="calib-line big">' + S.esc(line) + '</p>' +
-          '<div class="calib-level"><i id="calibBar"></i></div>' +
-          '<p class="calib-status" id="calibStatus">Go ahead — read it out loud.</p>' +
-          '<button class="btn btn-sm" id="calibStop">Stop</button>' +
-        '</div>' +
-
-        '<div class="calib-stage" data-stage="done" hidden>' +
-          '<div class="calib-done">' +
-            '<span class="i" data-icon="check" data-icon-size="30"></span>' +
-            '<div>' +
-              '<b id="calibDoneTitle">That is your voice</b>' +
-              '<p id="calibDoneText"></p>' +
-            '</div>' +
-          '</div>' +
-          '<button class="btn btn-sm" id="calibAgain">Do it again</button>' +
+        '<p class="calib-para" id="calibPara">' +
+          line.split(/\s+/).map(function (w, i) {
+            return '<span class="cw" data-cw="' + i + '">' + S.esc(w) + '</span>';
+          }).join(' ') +
+        '</p>' +
+        '<div class="calib-level"><i id="calibBar"></i></div>' +
+        '<p class="calib-status" id="calibStatus">' +
+          (S.P.voicePrint ? 'Spark already knows your voice, from ' + S.esc(S.niceDate(S.P.voicePrint.date)) +
+                            '. Read again to update it.' : 'Press start, then read at your own speed.') +
+        '</p>' +
+        '<div class="toolbar" style="margin:0">' +
+          '<button class="btn btn-primary" id="calibGo">' + S.Pictures.icon('mic', 18) + ' Start reading</button>' +
+          '<button class="btn" id="calibHear">' + S.Pictures.icon('speaker', 18) + ' Hear it first</button>' +
+          '<button class="btn" id="calibDone" hidden>I\'ve finished ✓</button>' +
         '</div>' +
       '</div>' +
 
@@ -224,117 +191,151 @@
           b.addEventListener('click', function () {
             S.P.settings.rate = Number(b.dataset.rate);
             S.save();
-            S.$$('[data-rate]').forEach(function (x) {
-              x.setAttribute('aria-pressed', String(x === b));
-            });
-            S.say('This is how fast I will read.');   /* hear it at once */
+            S.$$('[data-rate]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+            S.say('This is how fast I will read.');
           });
         });
 
         wireCalibration(line);
 
-        S.$('#vBack').addEventListener('click', function () {
-          stopCalibration();
-          S.openMenu();
-        });
+        S.$('#vBack').addEventListener('click', function () { stopCalibration(); S.openMenu(); });
+        S.$$('[data-close]').forEach(function (b) { b.addEventListener('click', function () { stopCalibration(); }); });
       }
     );
   };
 
-  /* ── the calibration activity ───────────────────────── */
-  var calibTimer = null;
-
-  function calibStage(name) {
-    S.$$('.calib-stage').forEach(function (el) {
-      el.hidden = el.dataset.stage !== name;
-    });
+  function voiceAvatar(key) {
+    return { woman: 'owl', man: 'bear', girl: 'bunny', boy: 'fox' }[key] || 'owl';
   }
 
+  /* ── the calibration activity ───────────────────────────
+     The old version fixed the voice print after about a second of
+     speech and declared "that is your voice" while the child was
+     still on the first line. Now:
+
+       · the voice is sampled for the WHOLE paragraph
+       · speech recognition follows along, lighting each word as it
+         is read, so the child can see Spark is really listening
+       · it only finishes when (nearly) every word has been read,
+         or the child says they have finished and has read most of it
+       · it refuses to finish on too little voice, and says why  */
+  var calib = null;
+
   function wireCalibration(line) {
-    var go = S.$('#calibGo');
-    if (!go) return;
+    var words = line.split(/\s+/).map(function (w) { return S.norm(w); });
 
     if (!S.voiceCheck.supported()) {
-      S.$('#calib').innerHTML =
-        '<div class="calib-head"><h3>Let Spark learn your voice</h3>' +
-        '<p>This needs a microphone. Chrome or Edge, opened through ' +
-        'start.bat, can do it.</p></div>';
+      S.$('#calibStatus').textContent = 'This needs a microphone. Chrome or Edge can do it.';
+      S.$('#calibGo').disabled = true;
       return;
     }
 
     S.$('#calibHear').addEventListener('click', function () { S.say(line); });
-    S.$('#calibStop').addEventListener('click', stopCalibration);
-    S.$('#calibAgain').addEventListener('click', function () { calibStage('intro'); });
+    S.$('#calibDone').addEventListener('click', function () { tryFinish(true); });
 
-    go.addEventListener('click', async function () {
-      var wasOff = !S.P.settings.voiceCheck;
-      if (wasOff) S.P.settings.voiceCheck = true;
-      S.voiceCheck.relearn();
-      var ok = await S.voiceCheck.start(function () {});
-      if (wasOff) S.P.settings.voiceCheck = false;
+    S.$('#calibGo').addEventListener('click', async function () {
+      if (calib) { stopCalibration(); return; }
+      S.stopSaying();
+      S.voiceCheck.stop();
+      var ok = await S.voiceCheck.start(function () {}, { calibrate: true });
+      if (!ok) { status('I could not open the microphone. Allow it in the address bar?'); return; }
 
-      if (!ok) {
-        S.$('#calibStatus').textContent =
-          'I could not open the microphone. Allow it in the address bar?';
-        calibStage('listening');
-        return;
+      calib = { words: words, upTo: 0, started: Date.now(), mic: null, timer: null };
+      S.$$('#calibPara .cw').forEach(function (e) { e.classList.remove('done'); });
+      S.$('#calibGo').innerHTML = S.Pictures.icon('stop', 18) + ' Stop';
+      S.$('#calibDone').hidden = false;
+      status('Go ahead — read the whole paragraph out loud.');
+
+      /* follow the words, where the browser can */
+      if (!S.micProblem()) {
+        calib.mic = S.listenContinuous(onHeard, function () { calib && (calib.mic = null); });
       }
-
-      calibStage('listening');
-      S.voiceCheck.watch(onCalibTick);
-
-      /* a hard stop, so it cannot sit listening forever */
-      clearTimeout(calibTimer);
-      calibTimer = setTimeout(function () {
-        var live = S.voiceCheck.live();
-        if (!live.enrolled) {
-          S.$('#calibStatus').textContent =
-            'I did not hear enough. Try again, a bit louder?';
-        }
-      }, 25000);
+      calib.timer = setInterval(tick, 300);
     });
   }
 
-  function onCalibTick(live) {
-    var bar = S.$('#calibBar');
-    var status = S.$('#calibStatus');
-    if (!bar) return;
-
-    if (!live.enrolled) {
-      bar.style.width = Math.round(live.progress * 100) + '%';
-      bar.dataset.state = 'learning';
-      status.textContent = live.progress > 0.08
-        ? 'I can hear you — keep going.'
-        : 'Go ahead — read it out loud.';
-      return;
+  /* Line up everything heard so far against the paragraph. */
+  function onHeard(results) {
+    if (!calib) return;
+    var heard = [];
+    for (var i = 0; i < results.length; i++) {
+      heard = heard.concat(String(results[i][0].transcript).split(/\s+/).map(S.norm).filter(Boolean));
     }
-
-    /* enough voice captured: keep it and say so */
-    bar.style.width = '100%';
-    bar.dataset.state = 'done';
-
-    S.P.voicePrint = { date: S.today(), hz: live.baselineHz };
-    S.save();
-
-    var hz = live.baselineHz;
-    var band = hz > 250 ? 'a bright, high voice'
-             : hz > 190 ? 'a fairly high voice'
-             : hz > 150 ? 'a middle voice'
-                        : 'a low voice';
-
-    S.$('#calibDoneTitle').textContent = 'Got it — that is your voice';
-    S.$('#calibDoneText').textContent =
-      'Spark heard ' + band + '. If a different voice starts reading, it will ' +
-      'say so, so your progress stays yours.';
-
-    stopCalibration(true);
-    calibStage('done');
+    var at = 0;
+    heard.forEach(function (h) {
+      for (var k = at; k < Math.min(at + 4, calib.words.length); k++) {
+        if (S.soundsLike(h, calib.words[k]) || h === calib.words[k]) { at = k + 1; break; }
+      }
+    });
+    if (at > calib.upTo) calib.upTo = at;
   }
 
-  function stopCalibration(keepStage) {
-    clearTimeout(calibTimer);
+  function tick() {
+    if (!calib) return;
+    var n = calib.words.length;
+    var secs = (Date.now() - calib.started) / 1000;
+    /* no speech recognition here: go by time instead */
+    if (!calib.mic) calib.upTo = Math.max(calib.upTo, Math.min(n, Math.floor(secs / 0.42)));
+
+    S.$$('#calibPara .cw').forEach(function (e) {
+      e.classList.toggle('done', +e.dataset.cw < calib.upTo);
+    });
+    var bar = S.$('#calibBar');
+    if (bar) { bar.style.width = Math.round(calib.upTo / n * 100) + '%'; bar.dataset.state = 'learning'; }
+
+    if (calib.upTo >= n - 1 && !calib.ending) {
+      calib.ending = true;
+      status('Nearly there…');
+      setTimeout(function () { tryFinish(false); }, 1200);   /* let the last word land */
+    } else if (!calib.ending && calib.upTo > 0) {
+      status('I can hear you — keep going. ' + Math.round(calib.upTo / n * 100) + '% read.');
+    }
+    if (secs > 180) tryFinish(true);
+  }
+
+  function tryFinish(asked) {
+    if (!calib) return;
+    var n = calib.words.length;
+    if (asked && calib.upTo < n * 0.6 && calib.mic) {
+      status('Keep going — you\'re ' + Math.round(calib.upTo / n * 100) + '% through. Read to the end.');
+      return;
+    }
+    var print = S.voiceCheck.finishCalibration();
+    var readTo = calib.upTo;
+    stopCalibration(true);
+
+    if (!print) {
+      status('I didn\'t hear enough of your voice. Try again, a little closer to the microphone.');
+      return;
+    }
+    S.P.voicePrint = { date: S.today(), hz: print.hz, words: readTo };
+    S.save();
+
+    var hz = print.hz;
+    var band = hz > 250 ? 'a bright, high voice' : hz > 190 ? 'a fairly high voice'
+             : hz > 150 ? 'a middle voice' : 'a low voice';
+    var bar = S.$('#calibBar');
+    if (bar) { bar.style.width = '100%'; bar.dataset.state = 'done'; }
+    S.$$('#calibPara .cw').forEach(function (e) { e.classList.add('done'); });
+    status('✓ Got it — that is your voice. Spark heard ' + band +
+           ' across the whole paragraph. If someone else reads, Spark will notice.');
+    S.award(3, 'Taught Spark your voice');
+  }
+
+  function status(t) { var el = S.$('#calibStatus'); if (el) el.textContent = t; }
+
+  function stopCalibration(keepText) {
+    if (calib) {
+      clearInterval(calib.timer);
+      if (calib.mic) calib.mic.stop();
+      calib = null;
+    }
     if (S.voiceCheck) { S.voiceCheck.unwatch(); S.voiceCheck.stop(); }
-    if (!keepStage && S.$('#calibGo')) calibStage('intro');
+    var go = S.$('#calibGo');
+    if (go) go.innerHTML = S.Pictures.icon('mic', 18) + ' ' + (keepText ? 'Read it again' : 'Start reading');
+    var done = S.$('#calibDone');
+    if (done) done.hidden = true;
+    if (!keepText) status('Press start, then read at your own speed.');
   }
 
   /* ── reset ──────────────────────────────────────────── */
@@ -464,8 +465,7 @@
                       (r.tried.length > 2 ? 's were' : ' was') + ' retired.)';
             }
             report(note, true);
-            S.paintAIStatus();
-            S.resetChat();
+            if (S.paintAIStatus) S.paintAIStatus();
           } catch (e) {
             report(e.message || 'That did not work.', false);
           }
@@ -479,7 +479,7 @@
             S.P.ai.key = '';
             S.P.ai.model = '';
             if (S.$('#aiKey')) S.$('#aiKey').value = '';
-            S.save(); S.AI.refresh(); S.paintAIStatus();
+            S.save(); S.AI.refresh();
             report('Cleared. Back to whatever js/config.js says.', true);
           });
         }
@@ -508,11 +508,11 @@
     var items = [
       { icon: 'book',    label: 'Reading settings',
         note: 'Text size, spacing, letter shapes, theme', go: S.openSettings },
-      { icon: 'mic',     label: 'Voices and calibration',
+      { icon: 'mic',     label: 'Voices',
         note: 'Pick a voice, let Spark learn yours',      go: S.openVoiceSettings },
-      { icon: 'trophy',  label: 'Your progress',
-        note: 'What Spark has noticed so far',
-        go: function () { S.go('progress'); } }
+      { icon: 'home',    label: 'My profile',
+        note: 'Your picture, name and history',
+        go: function () { S.go('profile'); } }
     ];
 
     S.sheet(

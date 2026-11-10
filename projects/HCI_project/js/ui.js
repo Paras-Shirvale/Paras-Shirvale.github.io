@@ -9,6 +9,8 @@
   /* ── navigation ─────────────────────────────────────── */
   S.go = function (name) {
     S.$$('.view').forEach(function (v) { v.hidden = (v.id !== 'v-' + name); });
+    var btnP = S.$('#btnProfile');
+    if (btnP) btnP.dataset.on = name === 'profile' ? '1' : '';
     S.$$('.tab').forEach(function (t) {
       if (t.dataset.go === name) t.setAttribute('aria-current', 'page');
       else t.removeAttribute('aria-current');
@@ -20,7 +22,7 @@
     if (name === 'home')     S.paintHome && S.paintHome();
     if (name === 'read')     S.paintLibraryIfIdle && S.paintLibraryIfIdle();
     if (name === 'write')    S.paintWrite && S.paintWrite();
-    if (name === 'homework') S.paintHomework && S.paintHomework();
+    if (name === 'profile')  S.paintProfile && S.paintProfile();
     /* arriving at Progress always lands on the summary, not on the
        detail list somebody left open last time */
     if (name === 'progress') {
@@ -175,6 +177,13 @@
 
     S.$('#wcSyls').innerHTML = S.syllables(shown)
       .map(function (s) { return '<span class="syl">' + S.esc(s) + '</span>'; }).join('');
+    /* better parts may arrive from the AI helper — redraw them if so */
+    S.partsFor(shown).then(function (parts) {
+      if (S.norm(cardWord) !== clean || !parts.length) return;
+      S.$('#wcSyls').innerHTML = parts.map(function (p) {
+        return '<span class="syl">' + S.esc(p.text) + '</span>';
+      }).join('');
+    });
 
     var picEl = S.$('#wcPic');
     picEl.style.display = 'grid';
