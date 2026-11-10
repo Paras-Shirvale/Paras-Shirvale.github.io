@@ -12,9 +12,9 @@
    That is why Homework starts empty. It cannot exist before the
    reading does, and it changes every time the child reads.
 
-   The second tab is the teacher's: a file or pasted text, which
-   opens in the same reader with the same help and generates its
-   own questions.
+   The worksheets tab is homework help: a PDF, photo or text file
+   opens here, inside Homework, with every word tappable, every
+   line hearable, and an answer box under each question.
    ============================================================ */
 
 (function (S) {
@@ -64,8 +64,10 @@
           'Read aloud with the microphone. Spark works out which pauses are real ' +
           'difficulty and which are just normal phrasing, then builds practice from ' +
           'the real ones.</p>' +
-          '<button class="btn btn-primary" data-go="read" style="margin-top:15px">' +
-            'Go and read something</button>' +
+          '<div class="toolbar" style="justify-content:center;margin:15px 0 0">' +
+            '<button class="btn btn-primary" data-go="read">Read something</button>' +
+            '<button class="btn" data-hwtab="teacher">Add a worksheet instead</button>' +
+          '</div>' +
         '</div></div>';
       return;
     }
@@ -510,39 +512,215 @@
     setTimeout(paintSparkHomework, 1700);
   }
 
-  /* ── what the teacher sent ──────────────────────────── */
+  /* ══ worksheets ════════════════════════════════════════
+     Homework help, not more reading practice. A worksheet is
+     uploaded — a PDF, a photo of the page, or a text file — and
+     opens right here with the same help the reader has:
+
+       · every word can be tapped for its picture, its sound and
+         its parts, and hovered for a quick look
+       · every line has its own speaker; the whole sheet can be
+         read aloud with each word lit as it is said
+       · anything that looks like a question gets an answer box
+         underneath, which can be typed into or spoken into, and
+         the answer can be heard back
+
+     PDFs have their text pulled out in the browser. Photos and
+     scanned PDFs are read with OCR. Both libraries are loaded
+     only when such a file is added, so nothing extra is fetched
+     for anyone who never uses them. Nothing is uploaded anywhere:
+     the file is read on this device.                          */
+
+  var PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  var PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  var TESSERACT = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js';
+
+  /* The original file, for "Show the page". Kept for this visit
+     only — a PDF is far too big for the browser's saved profile. */
+  var originals = {};
+
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (document.querySelector('script[src="' + src + '"]')) { resolve(); return; }
+      var el = document.createElement('script');
+      el.src = src;
+      el.onload = resolve;
+      el.onerror = function () { reject(new Error('Could not load ' + src)); };
+      document.head.appendChild(el);
+    });
+  }
+
+  function loading(msg) {
+    var el = S.$('#hwLoading');
+    if (!el) return;
+    if (!msg) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    el.innerHTML = '<div class="hw-loading"><span class="pic-wait"></span><span>' + S.esc(msg) + '</span></div>';
+  }
+
+  /* ── getting text out of a file ──────────────────────── */
+  async function pdfText(buffer) {
+    await loadScript(PDFJS);
+    var lib = window.pdfjsLib;
+    lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+    var pdf = await lib.getDocument({ data: buffer.slice(0) }).promise;
+    var pages = [];
+    for (var n = 1; n <= Math.min(pdf.numPages, 20); n++) {
+      loading('Reading page ' + n + ' of ' + pdf.numPages + '…');
+      var page = await pdf.getPage(n);
+      var content = await page.getTextContent();
+      /* rebuild lines from where each piece of text sits */
+      var lines = [], lastY = null, line = '';
+      content.items.forEach(function (it) {
+        var y = Math.round(it.transform[5]);
+        if (lastY !== null && Math.abs(y - lastY) > 3 && line.trim()) {
+          lines.push(line); line = '';
+        }
+        line += it.str;
+        if (it.hasEOL) { lines.push(line); line = ''; }
+        lastY = y;
+      });
+      if (line.trim()) lines.push(line);
+      pages.push(lines.join('\n'));
+    }
+    return { pdf: pdf, text: pages.join('\n\n') };
+  }
+
+  async function ocr(images) {
+    await loadScript(TESSERACT);
+    var out = [];
+    for (var i = 0; i < images.length; i++) {
+      var res = await window.Tesseract.recognize(images[i], 'eng', {
+        logger: function (m) {
+          if (m.status === 'recognizing text') {
+            loading('Reading the words' + (images.length > 1 ? ' on page ' + (i + 1) : '') +
+                    '… ' + Math.round((m.progress || 0) * 100) + '%');
+          } else if (m.status) {
+            loading('Getting ready to read the picture…');
+          }
+        }
+      });
+      out.push(res.data.text);
+    }
+    return out.join('\n\n');
+  }
+
+  async function pdfPageImages(pdf, max) {
+    var imgs = [];
+    for (var n = 1; n <= Math.min(pdf.numPages, max); n++) {
+      var page = await pdf.getPage(n);
+      var vp = page.getViewport({ scale: 2 });
+      var canvas = document.createElement('canvas');
+      canvas.width = vp.width; canvas.height = vp.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      imgs.push(canvas);
+    }
+    return imgs;
+  }
+
+  /** Tidy extracted text into lines, joining lines a PDF broke mid-sentence. */
+  function tidyLines(text) {
+    var raw = String(text || '').replace(/\r/g, '').split('\n')
+      .map(function (l) { return l.replace(/[ \t ]+/g, ' ').trim(); });
+    var out = [];
+    raw.forEach(function (l) {
+      if (!l) { if (out.length && out[out.length - 1] !== '') out.push(''); return; }
+      var prev = out[out.length - 1];
+      if (prev && !/[.?!:;]$/.test(prev) && /^[a-z]/.test(l) && !isQuestionLine(l)) {
+        out[out.length - 1] = prev + ' ' + l;
+      } else {
+        out.push(l);
+      }
+    });
+    return out.join('\n').replace(/\n{2,}/g, '\n\n').trim();
+  }
+
+  async function readFile(file) {
+    if (!file) return;
+    var name = file.name.replace(/\.[^.]+$/, '') || 'Worksheet';
+    var isPdf = /pdf$/i.test(file.type) || /\.pdf$/i.test(file.name);
+    var isImage = /^image\//.test(file.type);
+
+    try {
+      if (isPdf) {
+        loading('Opening the PDF…');
+        var buffer = await file.arrayBuffer();
+        var got = await pdfText(buffer);
+        var text = got.text;
+        /* a scanned worksheet has pictures of words, not text */
+        if (S.wordCount(text) < 8) {
+          loading('This PDF is a scan — reading the words from the picture…');
+          text = await ocr(await pdfPageImages(got.pdf, 4));
+        }
+        var id = addTeacherText(name, text, 'pdf');
+        if (id) originals[id] = { kind: 'pdf', pdf: got.pdf };
+      } else if (isImage) {
+        loading('Getting ready to read the picture…');
+        var url = URL.createObjectURL(file);
+        var words = await ocr([url]);
+        var id2 = addTeacherText(name, words, 'image');
+        if (id2) originals[id2] = { kind: 'image', url: url };
+      } else {
+        var plain = await file.text();
+        addTeacherText(name, plain, 'text');
+      }
+    } catch (e) {
+      S.toast(navigator.onLine === false
+        ? 'Reading PDFs and photos needs the internet the first time.'
+        : 'Couldn\'t read that file. Try another, or paste the text.');
+    }
+    loading('');
+  }
+
+  function addTeacherText(name, text, type) {
+    var clean = tidyLines(text);
+    if (S.wordCount(clean) < 4) { S.toast('I couldn\'t find words in that file'); return null; }
+    var id = 'ws' + Date.now().toString(36);
+    S.P.teacher.unshift({ id: id, name: name || 'Worksheet', text: clean.slice(0, 20000),
+                          date: S.today(), type: type || 'text', answers: {} });
+    S.save();
+    paintTeacher();
+    S.toast('Added — opening it now');
+    setTimeout(function () { openWorksheet(0); }, 350);
+    return id;
+  }
+
+  /* ── the list ────────────────────────────────────────── */
+  var TYPE_ICON = { pdf: 'book', image: 'picture', text: 'list' };
+
   function paintTeacher() {
     var host = S.$('#teacherList');
     if (!S.P.teacher.length) {
-      host.innerHTML = '<div class="empty"><p>Nothing from your teacher yet. ' +
-        'Add a file above and it becomes something you can read with all of Spark\'s help.</p></div>';
+      host.innerHTML = '<div class="empty"><p>No worksheets yet. Add one above — ' +
+        'Spark will read it with you and help you answer it.</p></div>';
       return;
     }
 
     host.innerHTML = S.P.teacher.map(function (f, i) {
+      var answered = Object.keys(f.answers || {}).filter(function (k) {
+        return String(f.answers[k] || '').trim();
+      }).length;
+      var qs = blocksOf(f.text).filter(function (b) { return b.question; }).length;
       return '<div class="file-row">' +
-        '<span style="font-size:21px"><span class="i" data-icon="list" data-icon-size="18"></span></span>' +
+        '<span class="file-ico">' + S.Pictures.icon(TYPE_ICON[f.type] || 'list', 20) + '</span>' +
         '<div class="file-meta">' +
           '<b>' + S.esc(f.name) + '</b>' +
-          '<p class="sub">' + S.wordCount(f.text) + ' words · added ' + f.date + '</p>' +
+          '<p class="sub">' + S.wordCount(f.text) + ' words' +
+            (qs ? ' · ' + answered + ' of ' + qs + ' answered' : '') +
+            ' · ' + S.esc(S.niceDate(f.date)) + '</p>' +
         '</div>' +
-        '<button class="btn btn-sm btn-primary" data-open="' + i + '">Read it</button>' +
+        '<button class="btn btn-sm btn-primary" data-open="' + i + '">Open</button>' +
         '<button class="icon-sq" data-del="' + i + '" aria-label="Remove">✕</button>' +
       '</div>';
     }).join('');
 
     S.$$('[data-open]', host).forEach(function (b) {
-      b.addEventListener('click', function () {
-        var f = S.P.teacher[+b.dataset.open];
-        if (!f) return;
-        S.go('read');
-        S.openPassage({ id: 'teacher:' + f.name, level: null, pic: '',
-                        title: f.name, text: f.text });
-      });
+      b.addEventListener('click', function () { openWorksheet(+b.dataset.open); });
     });
-
     S.$$('[data-del]', host).forEach(function (b) {
       b.addEventListener('click', function () {
+        var f = S.P.teacher[+b.dataset.del];
+        if (f && f.id) delete originals[f.id];
         S.P.teacher.splice(+b.dataset.del, 1);
         S.save();
         paintTeacher();
@@ -550,34 +728,280 @@
     });
   }
 
-  function addTeacherText(name, text) {
-    var clean = String(text || '').replace(/\s+/g, ' ').trim();
-    if (S.wordCount(clean) < 8) { S.toast('That looks too short to read'); return; }
-    S.P.teacher.unshift({ name: name || 'Teacher\'s text',
-                          text: clean.slice(0, 8000), date: S.today() });
-    S.save();
-    paintTeacher();
-    S.toast('Added — tap "Read it"');
+  /* ── reading the sheet into blocks ───────────────────── */
+  var INSTRUCTION = /^(write|fill|complete|answer|explain|describe|list|name|choose|circle|underline|match|draw|tick|give|tell|sort|spell|copy|read and)\b/i;
+
+  function isQuestionLine(l) {
+    return /\?\s*$/.test(l) ||
+           /_{3,}|\.{5,}/.test(l) ||
+           /^\(?(q\s*)?\d{1,2}[.):]\s+\S/i.test(l) ||
+           /^\(?[a-h][.)]\s+\S/i.test(l) && INSTRUCTION.test(l.replace(/^\(?[a-h][.)]\s+/i, '')) ||
+           INSTRUCTION.test(l) && l.split(/\s+/).length >= 3;
   }
 
-  function readFile(file) {
-    if (!file) return;
-    var r = new FileReader();
-    r.onload  = function () { addTeacherText(file.name.replace(/\.[^.]+$/, ''), r.result); };
-    r.onerror = function () { S.toast('Couldn\'t read that file. Try a .txt file, or paste the text.'); };
-    r.readAsText(file);
+  function blocksOf(text) {
+    var lines = String(text || '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+    /* an old single-paragraph entry: split it into sentences */
+    if (lines.length === 1 && S.wordCount(lines[0]) > 30) lines = S.toSentences(lines[0]);
+    return lines.map(function (l) {
+      var heading = l.length < 60 && (/:$/.test(l) || (l === l.toUpperCase() && /[A-Z]/.test(l)));
+      return { text: l, question: !heading && isQuestionLine(l), heading: heading };
+    });
+  }
+
+  /* ── one worksheet, with help ────────────────────────── */
+  var W = null;   /* the sheet open now */
+  S.currentWorksheet = function () {
+    return W && !S.$('#v-homework').hidden ? { name: W.file.name, text: W.file.text } : null;
+  };
+
+  function openWorksheet(i) {
+    var f = S.P.teacher[i];
+    if (!f) return;
+    f.answers = f.answers || {};
+    stopSheetReading();
+    W = { file: f, blocks: blocksOf(f.text), tokens: [], reading: null };
+
+    var orig = f.id && originals[f.id];
+    var qCount = W.blocks.filter(function (b) { return b.question; }).length;
+
+    var host = S.$('#hwWork');
+    host.innerHTML =
+      '<button class="btn btn-sm" id="wsBack">&larr; My worksheets</button>' +
+      '<div class="ws-head">' +
+        '<h1>' + S.esc(f.name) + '</h1>' +
+        '<p class="sub">' + S.wordCount(f.text) + ' words' +
+          (qCount ? ' · ' + qCount + ' thing' + (qCount > 1 ? 's' : '') + ' to answer' : '') + '</p>' +
+      '</div>' +
+
+      '<div class="ws-bar">' +
+        '<button class="btn btn-primary" id="wsReadAll">' + S.Pictures.icon('speaker', 18) + ' Read it all to me</button>' +
+        (orig ? '<button class="btn" id="wsOrig">' + S.Pictures.icon('picture', 18) + ' Show the page</button>' : '') +
+        '<button class="btn" id="wsAsk">' + S.Pictures.icon('spark', 18) + ' Ask Spark</button>' +
+      '</div>' +
+
+      '<div class="ws-tips">' +
+        '<span>' + S.Pictures.icon('book', 16) + ' Tap a word for help</span>' +
+        '<span>' + S.Pictures.icon('speaker', 16) + ' Hear one line</span>' +
+        (qCount ? '<span>' + S.Pictures.icon('pencil', 16) + ' Type or ' +
+                  S.Pictures.icon('mic', 16) + ' say your answer</span>' : '') +
+      '</div>' +
+
+      '<div class="ws-orig" id="wsOrigBox" hidden></div>' +
+
+      '<div class="ws-sheet" id="wsSheet">' +
+        W.blocks.map(function (b, bi) {
+          return '<div class="ws-block' + (b.question ? ' is-q' : '') + (b.heading ? ' is-h' : '') +
+                 '" data-block="' + bi + '">' +
+            '<div class="ws-line">' +
+              '<button class="icon-sq ws-say" data-sayblock="' + bi + '" aria-label="Hear this line">' +
+                S.Pictures.icon('speaker', 18) + '</button>' +
+              '<p class="ws-text prose" data-text="' + bi + '"></p>' +
+            '</div>' +
+            (b.question
+              ? '<div class="ws-answer">' +
+                  '<label class="ws-ans-label" for="ans' + bi + '">Your answer</label>' +
+                  '<div class="ws-ans-row">' +
+                    '<textarea class="inp ws-ans" id="ans' + bi + '" data-ans="' + bi + '" rows="2" ' +
+                      'spellcheck="false">' + S.esc(f.answers[bi] || '') + '</textarea>' +
+                    '<div class="ws-ans-tools">' +
+                      '<button class="mic" data-ansmic="' + bi + '" aria-label="Say your answer">' +
+                        S.Pictures.icon('mic', 18) + '</button>' +
+                      '<button class="icon-sq" data-hearans="' + bi + '" aria-label="Hear my answer">' +
+                        S.Pictures.icon('speaker', 18) + '</button>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>'
+              : '') +
+          '</div>';
+        }).join('') +
+      '</div>';
+
+    /* words as tappable .w spans, so the word card and hover tip work */
+    W.blocks.forEach(function (b, bi) {
+      var p = host.querySelector('[data-text="' + bi + '"]');
+      b.tokens = [];
+      b.text.split(/\s+/).forEach(function (raw) {
+        if (!raw) return;
+        var span = document.createElement('span');
+        span.className = 'w';
+        span.textContent = raw;
+        var clean = S.norm(raw);
+        if (clean && S.P.words[clean] && S.P.words[clean].stalled >= 2) span.classList.add('tricky');
+        p.appendChild(span);
+        p.appendChild(document.createTextNode(' '));
+        var tok = { raw: raw, clean: clean, el: span, block: bi };
+        b.tokens.push(tok);
+        W.tokens.push(tok);
+      });
+    });
+    S.Pictures.warm(W.tokens.map(function (t) { return t.clean; }));
+
+    S.$('#hwHome').hidden = true;
+    host.hidden = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    wireWorksheet(host);
+  }
+
+  function closeWorksheet() {
+    stopSheetReading();
+    W = null;
+    S.$('#hwWork').hidden = true;
+    S.$('#hwWork').innerHTML = '';
+    S.$('#hwHome').hidden = false;
+    paintTeacher();
+  }
+  S.closeWorksheet = closeWorksheet;
+
+  function clearSaying() {
+    S.$$('#wsSheet .w.saying').forEach(function (e) { e.classList.remove('saying'); });
+    S.$$('#wsSheet .ws-block.reading').forEach(function (e) { e.classList.remove('reading'); });
+  }
+
+  function stopSheetReading() {
+    if (W && W.reading) { W.reading.stop(); W.reading = null; }
+    S.stopSaying();
+    clearSaying();
+    var b = S.$('#wsReadAll');
+    if (b) { b.innerHTML = S.Pictures.icon('speaker', 18) + ' Read it all to me'; b.dataset.active = ''; }
+  }
+
+  /** Read a list of tokens aloud, lighting each word as it is said. */
+  function readTokens(tokens, onDone) {
+    stopSheetReading();
+    if (!tokens.length) return;
+    var text = tokens.map(function (t) { return t.raw; }).join(' ');
+    W.reading = S.readAlong(text, {
+      onWord: function (i) {
+        clearSaying();
+        var t = tokens[i];
+        if (!t) return;
+        t.el.classList.add('saying');
+        var blk = t.el.closest('.ws-block');
+        if (blk) blk.classList.add('reading');
+        var r = t.el.getBoundingClientRect();
+        if (r.top < 90 || r.bottom > window.innerHeight - 90) {
+          t.el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      },
+      onEnd: function (sawWords) {
+        /* no word timing in this browser: light whole lines instead */
+        if (!sawWords && W && W.reading) {
+          var blocks = [];
+          tokens.forEach(function (t) { if (blocks.indexOf(t.block) < 0) blocks.push(t.block); });
+          S.sayEach(blocks.map(function (bi) { return W.blocks[bi].text; }), function (k) {
+            clearSaying();
+            var el = S.$('#wsSheet [data-block="' + blocks[k] + '"]');
+            if (el) el.classList.add('reading');
+          });
+          W.reading = { stop: S.stopSaying };
+          return;
+        }
+        clearSaying();
+        if (W) W.reading = null;
+        if (onDone) onDone();
+      }
+    });
+  }
+
+  function wireWorksheet(host) {
+    S.$('#wsBack').addEventListener('click', closeWorksheet);
+
+    S.$('#wsReadAll').addEventListener('click', function () {
+      var b = S.$('#wsReadAll');
+      if (b.dataset.active === '1') { stopSheetReading(); return; }
+      readTokens(W.tokens, stopSheetReading);
+      b.dataset.active = '1';
+      b.innerHTML = S.Pictures.icon('stop', 18) + ' Stop';
+    });
+
+    S.$('#wsAsk').addEventListener('click', function () {
+      S.openChat('About "' + W.file.name + '"');
+    });
+
+    var origBtn = S.$('#wsOrig');
+    if (origBtn) origBtn.addEventListener('click', toggleOriginal);
+
+    host.addEventListener('click', function (e) {
+      var line = e.target.closest('[data-sayblock]');
+      if (line) { readTokens(W.blocks[+line.dataset.sayblock].tokens); return; }
+
+      var hear = e.target.closest('[data-hearans]');
+      if (hear) {
+        var said = S.$('[data-ans="' + hear.dataset.hearans + '"]').value.trim();
+        if (said) S.say(said); else S.say('You have not written an answer yet.');
+        return;
+      }
+
+      var mic = e.target.closest('[data-ansmic]');
+      if (mic) {
+        S.dictateInto(S.$('[data-ans="' + mic.dataset.ansmic + '"]'), mic);
+      }
+    });
+
+    /* answers are saved as they are written */
+    var saveTimer = null;
+    host.addEventListener('input', function (e) {
+      var box = e.target.closest('[data-ans]');
+      if (!box || !W) return;
+      W.file.answers[box.dataset.ans] = box.value;
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(S.save, 400);
+    });
+
+    /* finishing an answer earns a spark, once per question */
+    host.addEventListener('change', function (e) {
+      var box = e.target.closest('[data-ans]');
+      if (!box || !W) return;
+      W.file.answered = W.file.answered || {};
+      if (box.value.trim().split(/\s+/).length >= 2 && !W.file.answered[box.dataset.ans]) {
+        W.file.answered[box.dataset.ans] = 1;
+        S.save();
+        S.award(2, 'Answered a question');
+      }
+    });
+  }
+
+  /* The original page, beside the helped version, for anything
+     the text alone cannot carry — a diagram, a table, a picture. */
+  async function toggleOriginal() {
+    var box = S.$('#wsOrigBox');
+    var btn = S.$('#wsOrig');
+    if (!box.hidden) {
+      box.hidden = true;
+      btn.innerHTML = S.Pictures.icon('picture', 18) + ' Show the page';
+      return;
+    }
+    box.hidden = false;
+    btn.innerHTML = S.Pictures.icon('close', 18) + ' Hide the page';
+    if (box.dataset.filled === '1') return;
+
+    var orig = originals[W.file.id];
+    if (!orig) { box.innerHTML = '<p class="sub">The page is only kept until you close Spark.</p>'; return; }
+
+    if (orig.kind === 'image') {
+      box.innerHTML = '<img src="' + orig.url + '" alt="The worksheet page">';
+    } else {
+      box.innerHTML = '<div class="hw-loading"><span class="pic-wait"></span><span>Drawing the page…</span></div>';
+      try {
+        var pages = await pdfPageImages(orig.pdf, 10);
+        box.innerHTML = '';
+        pages.forEach(function (c) { box.appendChild(c); });
+      } catch (e) {
+        box.innerHTML = '<p class="sub">Couldn\'t draw that page.</p>';
+      }
+    }
+    box.dataset.filled = '1';
   }
 
   /* ── wiring ─────────────────────────────────────────── */
   S.wireHomework = function () {
     S.$$('.hw-tab').forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        S.$$('.hw-tab').forEach(function (t) {
-          t.setAttribute('aria-selected', String(t === tab));
-        });
-        S.$('#hwSpark').hidden   = tab.dataset.hw !== 'spark';
-        S.$('#hwTeacher').hidden = tab.dataset.hw !== 'teacher';
-      });
+      tab.addEventListener('click', function () { showHwTab(tab.dataset.hw); });
+    });
+    S.$('#hwSpark').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-hwtab]');
+      if (b) showHwTab(b.dataset.hwtab);
     });
 
     S.$('#btnPick').addEventListener('click', function () { S.$('#fileIn').click(); });
@@ -599,23 +1023,34 @@
 
     S.$('#btnPaste').addEventListener('click', function () {
       S.sheet(
-        '<h2>Paste the text</h2>' +
-        '<p class="sub">Copy it from the worksheet, email or website and paste it here.</p>' +
+        '<h2>Paste the worksheet</h2>' +
+        '<p class="sub">Copy it from the email or website and paste it here.</p>' +
         '<input class="inp" id="pName" placeholder="What is it called?" style="margin-bottom:10px">' +
-        '<textarea class="inp" id="pText" placeholder="Paste the passage here…"></textarea>' +
+        '<textarea class="inp" id="pText" placeholder="Paste the worksheet here…"></textarea>' +
         '<div class="toolbar" style="margin:16px 0 0">' +
           '<button class="btn btn-primary" id="pSave">Add it</button>' +
           '<button class="btn" data-close>Cancel</button>' +
         '</div>',
         function () {
           S.$('#pSave').addEventListener('click', function () {
-            addTeacherText(S.$('#pName').value.trim() || 'Teacher\'s text', S.$('#pText').value);
+            var t = S.$('#pText').value;
+            var n = S.$('#pName').value.trim() || 'Worksheet';
             S.closeSheet();
+            addTeacherText(n, t, 'text');
           });
           setTimeout(function () { S.$('#pText').focus(); }, 100);
         }
       );
     });
   };
+
+  function showHwTab(which) {
+    S.$$('.hw-tab').forEach(function (t) {
+      t.setAttribute('aria-selected', String(t.dataset.hw === which));
+    });
+    S.$('#hwSpark').hidden   = which !== 'spark';
+    S.$('#hwTeacher').hidden = which !== 'teacher';
+  }
+  S.showHwTab = showHwTab;
 
 })(window.Spark);

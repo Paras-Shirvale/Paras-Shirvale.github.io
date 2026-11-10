@@ -68,6 +68,39 @@ img.pic{background:#fff;border-radius:10px;padding:4px;object-fit:contain}
 #hovertip .tip-pic{display:flex;line-height:0}
 #hovertip .tip-pic .pic{width:40px;height:40px;border-radius:6px;background:#fff}
 #hovertip .tip-parts{font-family:var(--font-read);font-size:14px;font-weight:600}
+#hovertip .tip-pic:empty{display:none}
+#hovertip .tip-shape .wv{background:var(--surface);border-radius:8px;padding:3px 7px}
+.pic-wait.sm{width:18px;height:18px;border-width:2px}
+
+/* ── the shape of a word: a visual cue for every word ── */
+.wv{
+  display:inline-flex;flex-wrap:wrap;gap:3px;align-items:baseline;
+  font-family:var(--font-read);font-weight:700;font-size:26px;line-height:1.3;
+  letter-spacing:.04em;color:var(--ink);
+}
+.wv-sm{font-size:16px;gap:2px}
+.wv-chunk{padding:1px 6px;border-radius:7px}
+.wv-c0{background:var(--violet-soft)}
+.wv-c1{background:var(--rose-soft)}
+.wv-c2{background:var(--moss-soft)}
+.wv-l{font-style:normal;border-bottom:3px solid currentColor;padding:0 1px}
+/* each easy-to-flip letter keeps one colour everywhere */
+.wv-l.lb{color:#1F6FD1}  .wv-l.ld{color:#C2381F}
+.wv-l.lp{color:#7A3FC4}  .wv-l.lq{color:#0E8A6A}
+.wv-l.lm{color:#B5640B}  .wv-l.lw{color:#0F7C99}
+.wv-l.ln{color:#A8326E}  .wv-l.lu{color:#4E7A12}
+:root[data-theme="dark"] .wv-l.lb{color:#7FB2FF}
+:root[data-theme="dark"] .wv-l.ld{color:#FF8C73}
+:root[data-theme="dark"] .wv-l.lp{color:#C49BFF}
+:root[data-theme="dark"] .wv-l.lq{color:#5FD8B6}
+:root[data-theme="dark"] .wv-l.lm{color:#F5B25E}
+:root[data-theme="dark"] .wv-l.lw{color:#6FD0EA}
+:root[data-theme="dark"] .wv-l.ln{color:#F28CC0}
+:root[data-theme="dark"] .wv-l.lu{color:#A6D869}
+.wc-shape{margin:2px 0 11px}
+.wc-shape:empty{display:none}
+.wc-shape .wv{font-size:22px}
+.wc-shape-note{display:block;font-size:11.5px;color:var(--ink-2);margin-top:4px}
 
 /* ── chat ───────────────────────────────────────────── */
 #fab{
@@ -115,6 +148,15 @@ img.pic{background:#fff;border-radius:10px;padding:4px;object-fit:contain}
 .bub.s{background:var(--surface-2);border-bottom-left-radius:5px;align-self:flex-start}
 .bub.u{background:var(--violet);color:var(--on-violet);border-bottom-right-radius:5px;align-self:flex-end}
 .bub em{color:var(--ink-2);font-style:italic}
+.bub-text{display:block}
+.bub-say{
+  display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+  padding:5px 11px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--surface);color:var(--violet);border:1px solid var(--line);
+  white-space:nowrap;
+}
+.bub-say:hover{border-color:var(--violet);background:var(--violet-soft)}
+.bub-say[data-on="1"]{background:var(--violet);color:var(--on-violet);border-color:transparent}
 
 /* three dots while the model is thinking */
 .typing{display:inline-flex;gap:4px;align-items:center;padding:2px 0}

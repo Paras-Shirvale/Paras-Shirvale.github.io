@@ -81,6 +81,9 @@
     }
 
     renderProse();
+    /* fetch pictures for the passage in the background, so every
+       word has its visual ready the moment it is hovered or tapped */
+    S.Pictures.warm(R.tokens.map(function (t) { return t.clean; }));
     S.setStep('read');
     markStepsDone();
     updateStats();

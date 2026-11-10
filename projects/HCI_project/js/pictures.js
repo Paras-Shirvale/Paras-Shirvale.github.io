@@ -424,6 +424,7 @@
     var w = S.norm(word);
     if (!w || w.length < 2) return null;
     if (S.P.settings.pictures === 'off') return null;
+    if (P.SKIP[w]) return null;
 
     if (Object.prototype.hasOwnProperty.call(cache, w)) return cache[w] || null;
 
@@ -490,8 +491,8 @@
          leaving a broken-image icon in front of a child */
       var img = el.querySelector('img');
       img.onerror = function () {
-        el.innerHTML = svg || '<span class="pic-none">no picture for this one</span>';
-        el.dataset.state = svg ? 'drawn' : 'none';
+        el.innerHTML = svg || P.wordVisual(word);
+        el.dataset.state = svg ? 'drawn' : 'shape';
       };
       el.dataset.state = hit.kind || 'photo';
       return true;
@@ -499,10 +500,89 @@
 
     if (svg) { el.innerHTML = svg; el.dataset.state = 'drawn'; return true; }
 
-    el.innerHTML = '<span class="pic-none">no picture for this one</span>';
-    el.dataset.state = 'none';
+    /* no picture exists — show the shape of the word instead, so
+       there is still something to look at */
+    el.innerHTML = opts.noShape ? '<span class="pic-none">no picture for this one</span>'
+                                : P.wordVisual(word);
+    el.dataset.state = opts.noShape ? 'none' : 'shape';
     return false;
   };
+
+  /* ── a visual for EVERY word ────────────────────────────
+     Only nouns have pictures. "was", "because", "through" never
+     will, and those are exactly the words a dyslexic reader trips
+     on. So every word also gets a visual of its own SHAPE:
+
+       · each sound chunk in its own colour, so the parts stand out
+       · the letters that are easy to flip (b d p q, m w, n u)
+         each in a fixed colour with a mark under it, so b and d
+         never look like the same letter
+
+     This is what shows when there is no picture, so no word is
+     ever left with nothing to look at. */
+  var FLIPPY = { b: 'lb', d: 'ld', p: 'lp', q: 'lq', m: 'lm', w: 'lw', n: 'ln', u: 'lu' };
+
+  P.wordVisual = function (word, opts) {
+    opts = opts || {};
+    var shown = String(word || '').replace(/[^A-Za-z'-]/g, '');
+    if (!shown) return '';
+    var parts = S.syllables(shown);
+    return '<span class="wv' + (opts.small ? ' wv-sm' : '') + '" aria-label="' + S.esc(shown) + '">' +
+      parts.map(function (part, i) {
+        return '<span class="wv-chunk wv-c' + (i % 3) + '">' +
+          part.split('').map(function (ch) {
+            var cls = FLIPPY[ch.toLowerCase()];
+            return cls ? '<i class="wv-l ' + cls + '">' + S.esc(ch) + '</i>' : S.esc(ch);
+          }).join('') +
+        '</span>';
+      }).join('') +
+    '</span>';
+  };
+
+  /** True if the word has letters that are easy to flip. */
+  P.hasFlippy = function (word) {
+    return /[bdpqmwnu]/i.test(String(word || ''));
+  };
+
+  /**
+   * Fetch pictures for a whole passage in the background, a few at
+   * a time, so hovering any word later shows its picture at once.
+   */
+  var warming = {};
+  P.warm = function (words) {
+    if (S.P.settings.pictures === 'off') return;
+    var queue = [];
+    (words || []).forEach(function (w) {
+      var n = S.norm(w);
+      if (n.length < 3 || warming[n] || drawnKey(n) ||
+          Object.prototype.hasOwnProperty.call(cache, n)) return;
+      if (P.SKIP[n]) return;
+      warming[n] = 1;
+      queue.push(n);
+    });
+    var running = 0;
+    function next() {
+      while (running < 3 && queue.length) {
+        running++;
+        P.lookup(queue.shift()).catch(function () {}).then(function () {
+          running--; next();
+        });
+      }
+    }
+    next();
+  };
+
+  /* Little words no picture can show. Looking them up only returns
+     something random and misleading, so they get the shape visual. */
+  P.SKIP = {};
+  ('the and was were are for but not you your they them their there then than ' +
+   'this that these those with from into onto what when where which who whom why how ' +
+   'have has had been being will would could should can may might must shall ' +
+   'his her him she its our out off over under very just also only some any every ' +
+   'each all both more most much many such too again once here because about after ' +
+   'before while until though through then down did does done said says one two ' +
+   'got get let put saw see own way still even ever never always often soon yet')
+    .split(' ').forEach(function (w) { P.SKIP[w] = 1; });
 
   /**
    * A picture we can show with no network wait — the drawn set, or

@@ -34,13 +34,55 @@
   function current() { return S.PROMPTS[promptIndex % S.PROMPTS.length]; }
   var FIELD_ID = { who: 'fWho', what: 'fWhat', where: 'fWhere' };
 
+  /* ── which activity is open ──────────────────────────
+     Write opens on a list of activities, the way Read opens on
+     its library. null = the list, 'picture' or 'bank'. */
+  var mode = null;
+
   S.paintWrite = function () {
-    var p = current();
-    S.Pictures.render(S.$('#writePic'), p.pic);
-    S.$('#writeQ').textContent = p.q;
+    S.$('#writeLibrary').hidden = mode !== null;
+    S.$('#writePicture').hidden = mode !== 'picture';
+    S.$('#writeBank').hidden    = mode !== 'bank';
+
+    if (mode === null) paintWriteLibrary();
+    if (mode === 'picture') {
+      var p = current();
+      S.Pictures.render(S.$('#writePic'), p.pic);
+      S.$('#writeQ').textContent = p.q;
+      build();
+    }
     paintSaved();
-    build();
   };
+
+  S.openWriteActivity = function (which) {
+    mode = which;
+    if (which !== 'bank' && S.closeBank) S.closeBank(true);
+    S.paintWrite();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  S.closeWriteActivity = function () {
+    S.stopSaying();
+    if (S.closeBank) S.closeBank(true);
+    mode = null;
+    S.paintWrite();
+  };
+
+  function paintWriteLibrary() {
+    var done = S.P.writings.filter(function (w) { return w.kind !== 'bank'; }).length;
+    S.$('#writePictureCard').innerHTML =
+      '<button class="lib-card" data-write-open="picture">' +
+        '<div class="lib-top">' +
+          '<span class="lib-pic">' + S.Pictures.drawn('lighthouse', 40) + '</span>' +
+          '<span class="badge' + (done ? ' badge-done' : '') + '">' +
+            (done ? done + ' written' : 'Picture') + '</span>' +
+        '</div>' +
+        '<h3>Say what you see</h3>' +
+        '<p>Look at a picture. Build a sentence in 3 pieces.</p>' +
+        '<span class="lib-foot">Who? · Doing? · Where?</span>' +
+      '</button>';
+    if (S.paintBankList) S.paintBankList();
+  }
 
   function resetLadders() {
     rung = { who: 0, what: 0, where: 0 };
@@ -59,45 +101,74 @@
     var host = S.$('[data-help="' + field + '"]');
     host.hidden = false;
 
+    /* Every rung can be SEEN and HEARD. The child chooses which —
+       the words are on screen, and a speaker button reads them. */
     if (step === 1) {
-      host.innerHTML = rungBox('1 of 4', 'Think about it', S.esc(ladder.prompt));
-      S.say(ladder.prompt);
+      host.innerHTML = rungBox('1 of 4', 'Think',
+        '<span class="rung-line">' + S.esc(ladder.prompt) + hearBtn(ladder.prompt) + '</span>');
 
     } else if (step === 2) {
-      /* give the kind of cue that works for this child */
-      var prefers = S.favourite();
-      var useAudio = prefers === 'sound';
-      if (useAudio) {
-        host.innerHTML = rungBox('2 of 4', 'Listen', S.esc(ladder.cue.audio) +
-          ' <button class="btn btn-sm" data-replay><span class="i" data-icon="speaker" data-icon-size="18"></span> Again</button>');
-        S.say(ladder.cue.audio);
-        S.useCue('sound');
-      } else {
-        host.innerHTML = rungBox('2 of 4', 'A clue',
-          '<span class="cue-pic"></span>' +
-          '<span>' + S.esc(ladder.cue.audio) + '</span>');
-        S.Pictures.render(host.querySelector('.cue-pic'), ladder.cue.visual);
-        S.useCue('picture');
-      }
+      /* Two kinds of clue, side by side. Whichever has worked best
+         for this child goes first, but both are always there. */
+      var fav = S.favourite();
+      var kinds = fav === 'sound' ? ['sound', 'picture'] : ['picture', 'sound'];
+      host.innerHTML = rungBox('2 of 4', 'Pick a clue',
+        '<div class="clue-pick">' +
+          kinds.map(function (k) {
+            return '<button class="clue-btn" data-clue="' + k + '">' +
+              S.Pictures.icon(k === 'picture' ? 'picture' : 'speaker', 22) +
+              '<span>' + (k === 'picture' ? 'See it' : 'Hear it') + '</span>' +
+            '</button>';
+          }).join('') +
+        '</div>' +
+        '<div class="clue-out" data-clueout></div>');
 
     } else if (step === 3) {
       host.innerHTML = rungBox('3 of 4', 'Pick one',
         '<div class="choice-row">' +
           S.shuffle(ladder.choices.slice()).map(function (c) {
-            return '<button class="choice" data-choice="' + S.esc(c) + '">' + S.esc(c) + '</button>';
+            return '<span class="choice-wrap">' +
+              '<button class="choice" data-choice="' + S.esc(c) + '">' + S.esc(c) + '</button>' +
+              hearBtn(c) +
+            '</span>';
           }).join('') +
         '</div>');
 
     } else {
       host.innerHTML = rungBox('4 of 4', 'Here it is',
-        '<b class="model-answer">' + S.esc(ladder.answer) + '</b>' +
+        '<b class="model-answer">' + S.esc(ladder.answer) + '</b>' + hearBtn(ladder.answer) +
         ' <button class="btn btn-sm" data-use="' + S.esc(ladder.answer) + '">Use this</button>');
-      S.say(ladder.answer);
       S.$('.stuck[data-stuck="' + field + '"]').disabled = true;
     }
 
     var btn = S.$('.stuck[data-stuck="' + field + '"]');
     if (btn && step < 4) btn.textContent = 'Still stuck?';
+  }
+
+  function hearBtn(text) {
+    return '<button class="icon-xs" data-say="' + S.esc(text) + '" aria-label="Hear it">' +
+      '<span class="i" data-icon="speaker" data-icon-size="18"></span></button>';
+  }
+
+  /** Show the clue the child picked: a picture, or the clue spoken. */
+  function showClue(field, kind) {
+    var ladder = current().ladder[field];
+    var host = S.$('[data-help="' + field + '"] [data-clueout]');
+    if (!host) return;
+    S.$$('[data-help="' + field + '"] [data-clue]').forEach(function (b) {
+      b.dataset.on = b.dataset.clue === kind ? '1' : '';
+    });
+    if (kind === 'picture') {
+      host.innerHTML = '<span class="cue-pic"></span>' +
+        '<span class="rung-line">' + S.esc(ladder.cue.audio) + hearBtn(ladder.cue.audio) + '</span>';
+      S.Pictures.render(host.querySelector('.cue-pic'), ladder.cue.visual);
+      S.useCue('picture');
+    } else {
+      host.innerHTML = '<span class="rung-line">' + S.esc(ladder.cue.audio) +
+        ' <button class="btn btn-sm" data-replay><span class="i" data-icon="speaker" data-icon-size="18"></span> Again</button></span>';
+      S.say(ladder.cue.audio);
+      S.useCue('sound');
+    }
   }
 
   function rungBox(count, title, body) {
@@ -156,7 +227,7 @@
       if (S.$('#' + FIELD_ID[f]).value.trim()) creditLadder(f);
     });
 
-    S.P.writings.unshift({ date: S.today(), prompt: current().q, text: s });
+    S.P.writings.unshift({ date: S.today(), prompt: current().q, text: s, kind: 'picture' });
     S.P.writings = S.P.writings.slice(0, 40);
     S.save();
 
@@ -165,8 +236,11 @@
     paintSaved();
   }
 
+  S.paintSaved = paintSaved;
   function paintSaved() {
-    var host = S.$('#savedList');
+    S.$$('[data-saved-list]').forEach(paintSavedInto);
+  }
+  function paintSavedInto(host) {
     if (!S.P.writings.length) {
       host.innerHTML = '<p class="sub" style="margin:0">Nothing saved yet. ' +
                        'Your sentences will collect here.</p>';
@@ -362,8 +436,15 @@
 
     /* the ladder, and anything the rungs offer */
     S.$('#v-write').addEventListener('click', function (e) {
+      var open = e.target.closest('[data-write-open]');
+      if (open) { S.openWriteActivity(open.dataset.writeOpen); return; }
+      if (e.target.closest('[data-write-back]')) { S.closeWriteActivity(); return; }
+
       var stuck = e.target.closest('[data-stuck]');
       if (stuck) { climb(stuck.dataset.stuck); return; }
+
+      var clue = e.target.closest('[data-clue]');
+      if (clue) { showClue(clue.closest('[data-field]').dataset.field, clue.dataset.clue); return; }
 
       var choice = e.target.closest('[data-choice]');
       if (choice) {

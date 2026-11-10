@@ -21,8 +21,7 @@
 
     S.sheet(
       '<h2>Reading settings</h2>' +
-      '<p class="sub">Change these until the words feel comfortable. ' +
-      'The sample at the bottom shows what you are choosing.</p>' +
+      '<p class="sub">Try them — the sample below changes.</p>' +
 
       '<label class="set-label">Text size</label>' +
       '<div class="size-grid">' +
@@ -46,25 +45,21 @@
           '<button data-spacing="off" aria-pressed="' + (!st.extraSpacing) + '">Off</button>' +
           '<button data-spacing="on"  aria-pressed="' + (!!st.extraSpacing) + '">On</button>' +
         '</div>' +
-        '<p class="srow-note">Extra space between letters and words. The one ' +
-        'change here with solid evidence behind it — in a 2012 study, dyslexic ' +
-        'readers were about 20% faster and made half the errors.</p></div>' +
+        '<p class="srow-note">More space between letters.</p></div>' +
 
       '<div class="srow"><label>Letter shapes</label>' +
         '<div class="seg">' +
           '<button data-font="dyslexic" aria-pressed="' + (st.font !== 'plain') + '">OpenDyslexic</button>' +
           '<button data-font="plain" aria-pressed="' + (st.font === 'plain') + '">Plain</button>' +
         '</div>' +
-        '<p class="srow-note">OpenDyslexic weights the bottom of each letter. ' +
-        'Worth trying, but be aware the trials have not found it beats a plain ' +
-        'sans-serif — use whichever this reader finds easier.</p></div>' +
+        '<p class="srow-note">Pick whichever is easier to read.</p></div>' +
 
       '<div class="srow"><label>Theme</label><div class="seg">' +
-        ['auto', 'light', 'dark'].map(function (t) {
+        ['light', 'dark', 'auto'].map(function (t) {
           return '<button data-theme-set="' + t + '" aria-pressed="' + (st.theme === t) + '">' +
             t.charAt(0).toUpperCase() + t.slice(1) + '</button>';
         }).join('') +
-      '</div></div>' +
+      '</div><p class="srow-note">Light or dark page.</p></div>' +
 
       '<div class="sample-text" id="sampleText">' +
         'The big dog dug a bed in the dirt.' +
@@ -165,8 +160,7 @@
                      o[2] + '</button>';
             }).join('') +
         '</div>' +
-        '<p class="srow-note">How fast Spark reads out loud. Slower is easier ' +
-        'to follow along with; brisk sounds more natural once you can.</p></div>' +
+        '<p class="srow-note">How fast Spark talks.</p></div>' +
 
       /* ── the calibration, as an activity ─────────────── */
       '<div class="calib" id="calib">' +

@@ -22,6 +22,7 @@
   /* ── the standing instructions ──────────────────────── */
   function instructions() {
     var R = S.currentReading();
+    var WS = S.currentWorksheet && S.currentWorksheet();
     var tricky = S.allTricky().slice(0, 8).map(function (w) { return w.word; });
     var fav = S.favourite();
 
@@ -61,7 +62,10 @@
       'say so gently and suggest someone they trust.',
       '',
       '--- what is on their screen right now ---',
-      R ? 'Reading "' + R.src.title + '":\n' + R.src.text.slice(0, 1200)
+      WS ? 'Doing their homework worksheet "' + WS.name + '":\n' + WS.text.slice(0, 2000) +
+           '\nHelp them understand the questions and work out answers themselves. ' +
+           'Explain and give hints; do not just hand over the answers.'
+      : R ? 'Reading "' + R.src.title + '":\n' + R.src.text.slice(0, 1200)
         : 'They are browsing the app, not reading anything yet.',
       tricky.length ? 'Words they have paused on before: ' + tricky.join(', ') + '.' : '',
       fav ? 'The kind of help that works best for them: ' + labelOf(fav) + '.' : ''
@@ -224,7 +228,7 @@
     body.appendChild(holder);
     scrollDown();
 
-    S.Pictures.render(holder.querySelector('.chat-pic-slot'), word)
+    S.Pictures.render(holder.querySelector('.chat-pic-slot'), word, { noShape: true })
       .then(function (found) {
         if (!found) holder.querySelector('.chat-pic-word').textContent =
           'I couldn\'t find a picture for "' + word + '".';
@@ -236,11 +240,37 @@
   function addBubble(text, who) {
     var d = document.createElement('div');
     d.className = 'bub ' + who;
-    d.textContent = text;
     var body = S.$('#chatBody');
     body.appendChild(d);
+    if (who === 's' && text) finishBubble(d, text);
+    else d.textContent = text;
     body.scrollTop = body.scrollHeight;
     return d;
+  }
+
+  /* Every answer from Spark can be heard. A child who finds reading
+     hard should not have to read the reply to their own question —
+     so each finished reply gets a button that reads it out loud. */
+  function finishBubble(bubble, text) {
+    bubble.textContent = '';
+    var words = document.createElement('span');
+    words.className = 'bub-text';
+    words.textContent = text;
+    bubble.appendChild(words);
+
+    var hear = document.createElement('button');
+    hear.className = 'bub-say';
+    hear.type = 'button';
+    hear.setAttribute('aria-label', 'Read this out loud');
+    hear.innerHTML = S.Pictures.icon('speaker', 16) + '<span>Read it to me</span>';
+    hear.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (hear.dataset.on === '1') { S.stopSaying(); hear.dataset.on = ''; return; }
+      S.$$('.bub-say[data-on="1"]').forEach(function (b) { b.dataset.on = ''; });
+      hear.dataset.on = '1';
+      S.say(text, { onEnd: function () { hear.dataset.on = ''; } });
+    });
+    bubble.appendChild(hear);
   }
 
   /* ── sending ────────────────────────────────────────── */
@@ -286,7 +316,7 @@
           scrollDown();
         }
       });
-      bubble.textContent = text;
+      finishBubble(bubble, text);
       turns.push({ role: 'assistant', content: text });
       /* keep the thread from growing without limit, but never drop
          the instructions — those are rebuilt fresh every call */
@@ -294,8 +324,10 @@
     } catch (e) {
       var friendly = S.AI.friendly(e);
       if (!friendly && !started) { bubble.remove(); }
-      else if (!started) {
-        bubble.textContent = friendly + '\n\n' + offlineAnswer(message);
+      else if (started) {
+        finishBubble(bubble, bubble.textContent);
+      } else {
+        finishBubble(bubble, friendly + '\n\n' + offlineAnswer(message));
       }
     }
 

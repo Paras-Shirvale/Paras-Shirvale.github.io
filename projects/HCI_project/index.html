@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -65,13 +65,13 @@
     <button class="door door-write" data-go="write">
       <span class="door-ico" data-pic="flower"></span>
       <h3>Write</h3>
-      <p>Say it out loud, and Spark helps you shape the sentence</p>
+      <p>Picture stories and word bank sentences</p>
       <span class="door-go">Start writing →</span>
     </button>
     <button class="door door-hw" data-go="homework">
       <span class="door-ico" data-pic="star"></span>
       <h3>Homework</h3>
-      <p>Practise your tricky words, or open what your teacher sent</p>
+      <p>Add a worksheet and get help with it</p>
       <span class="door-go">Open homework →</span>
     </button>
   </div>
@@ -196,105 +196,145 @@
 
 <!-- ══ WRITE ════════════════════════════════════════════════════ -->
 <section class="view" id="v-write" hidden>
-  <h1>Write something</h1>
-  <p class="lede">Speak it or type it. Spark helps you build it piece by piece.</p>
 
-  <div class="write-grid">
-    <div>
-      <div class="prompt-pic" id="writePic"><span class="i" data-icon="picture" data-icon-size="18"></span></div>
-      <p class="prompt-q" id="writeQ">What is happening in this picture?</p>
-      <div class="toolbar">
-        <button class="btn btn-sm" id="btnNewPrompt"><span class="i" data-icon="refresh" data-icon-size="18"></span> Different picture</button>
-        <button class="btn btn-sm" id="btnHearPrompt"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear the question</button>
-      </div>
+  <!-- pick an activity -->
+  <div id="writeLibrary">
+    <h1>Choose a writing activity</h1>
+    <p class="lede">You do the writing. Spark reads it back so you can hear it.</p>
 
-      <p class="eyebrow mt">Build it in three pieces</p>
-      <p class="sub">Have a go on your own first. Tap <b>Stuck?</b> only if you need it —
-        Spark gives a little more each time.</p>
+    <h2 class="lib-heading">Picture story</h2>
+    <div class="lib" id="writePictureCard" style="margin-bottom:22px"></div>
 
-      <div class="field" data-field="who">
-        <label for="fWho">Who or what?
-          <button class="icon-xs" data-say="Who or what is in the picture?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
-        </label>
-        <div class="field-row">
-          <input class="inp" id="fWho" autocomplete="off">
-          <button class="mic" data-micfor="fWho" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
-          <button class="btn btn-sm stuck" data-stuck="who">Stuck?</button>
+    <section class="screening-block">
+      <div class="screening-head">
+        <div>
+          <h2>Word bank sentences</h2>
+          <p class="sub">Tap or type words to make a sentence. Spark says each one.</p>
         </div>
-        <div class="field-help" data-help="who" hidden></div>
+        <div class="screening-score" id="bankScore"></div>
       </div>
+      <div class="lib lib-screening" id="bankList"></div>
+    </section>
 
-      <div class="field" data-field="what">
-        <label for="fWhat">What is happening?
-          <button class="icon-xs" data-say="What is happening?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
-        </label>
-        <div class="field-row">
-          <input class="inp" id="fWhat" autocomplete="off">
-          <button class="mic" data-micfor="fWhat" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
-          <button class="btn btn-sm stuck" data-stuck="what">Stuck?</button>
-        </div>
-        <div class="field-help" data-help="what" hidden></div>
-      </div>
-
-      <div class="field" data-field="where">
-        <label for="fWhere">Where?
-          <button class="icon-xs" data-say="Where is it happening?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
-        </label>
-        <div class="field-row">
-          <input class="inp" id="fWhere" autocomplete="off">
-          <button class="mic" data-micfor="fWhere" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
-          <button class="btn btn-sm stuck" data-stuck="where">Stuck?</button>
-        </div>
-        <div class="field-help" data-help="where" hidden></div>
-      </div>
-    </div>
-
-    <aside class="write-side">
-      <section class="card">
-        <h2>My sentence</h2>
-        <div class="sentence-out" id="sentOut">Your sentence will appear here.</div>
-        <div class="toolbar">
-          <button class="btn btn-sm" id="btnSaySent"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear it</button>
-          <button class="btn btn-sm" id="btnTidy">✓ Check my spelling</button>
-          <button class="btn btn-sm" id="btnClearSent">Clear</button>
-        </div>
-        <div id="fixList"></div>
-        <button class="btn btn-rose btn-block" id="btnSaveSent">Save it ✓</button>
-      </section>
-
-      <section class="card">
-        <h2>Things you've written</h2>
-        <div id="savedList"></div>
-      </section>
-    </aside>
+    <section class="card" style="margin-top:20px">
+      <h2>Things you've written</h2>
+      <div data-saved-list></div>
+    </section>
   </div>
+
+  <!-- activity 1: picture story -->
+  <div id="writePicture" hidden>
+    <button class="btn btn-sm" data-write-back>&larr; All writing</button>
+    <h1 class="work-title">Picture story</h1>
+
+    <div class="write-grid">
+      <div>
+        <div class="prompt-pic" id="writePic"><span class="i" data-icon="picture" data-icon-size="18"></span></div>
+        <p class="prompt-q" id="writeQ">What is happening in this picture?</p>
+        <div class="toolbar">
+          <button class="btn btn-sm" id="btnHearPrompt"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear it</button>
+          <button class="btn btn-sm" id="btnNewPrompt"><span class="i" data-icon="refresh" data-icon-size="18"></span> New picture</button>
+        </div>
+
+        <div class="piece-head">
+          <p class="eyebrow">Build it in 3 pieces</p>
+          <span class="piece-tip">Try first. <b>Stuck?</b> = help</span>
+          <button class="icon-xs" data-say="Build your sentence in three pieces. Try on your own first. Tap Stuck if you need help." aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+        </div>
+
+        <div class="field" data-field="who">
+          <label for="fWho"><span class="piece-n pn-who">1</span> Who?
+            <button class="icon-xs" data-say="Who or what is in the picture?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+          </label>
+          <div class="field-row">
+            <input class="inp" id="fWho" autocomplete="off">
+            <button class="mic" data-micfor="fWho" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
+            <button class="btn btn-sm stuck" data-stuck="who">Stuck?</button>
+          </div>
+          <div class="field-help" data-help="who" hidden></div>
+        </div>
+
+        <div class="field" data-field="what">
+          <label for="fWhat"><span class="piece-n pn-what">2</span> Doing?
+            <button class="icon-xs" data-say="What is happening?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+          </label>
+          <div class="field-row">
+            <input class="inp" id="fWhat" autocomplete="off">
+            <button class="mic" data-micfor="fWhat" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
+            <button class="btn btn-sm stuck" data-stuck="what">Stuck?</button>
+          </div>
+          <div class="field-help" data-help="what" hidden></div>
+        </div>
+
+        <div class="field" data-field="where">
+          <label for="fWhere"><span class="piece-n pn-where">3</span> Where?
+            <button class="icon-xs" data-say="Where is it happening?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+          </label>
+          <div class="field-row">
+            <input class="inp" id="fWhere" autocomplete="off">
+            <button class="mic" data-micfor="fWhere" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
+            <button class="btn btn-sm stuck" data-stuck="where">Stuck?</button>
+          </div>
+          <div class="field-help" data-help="where" hidden></div>
+        </div>
+      </div>
+
+      <aside class="write-side">
+        <section class="card">
+          <h2>My sentence</h2>
+          <div class="sentence-out" id="sentOut">Your sentence will appear here.</div>
+          <div class="toolbar">
+            <button class="btn btn-sm" id="btnSaySent"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear it</button>
+            <button class="btn btn-sm" id="btnTidy">✓ Check my spelling</button>
+            <button class="btn btn-sm" id="btnClearSent">Clear</button>
+          </div>
+          <div id="fixList"></div>
+          <button class="btn btn-rose btn-block" id="btnSaveSent">Save it ✓</button>
+        </section>
+
+        <section class="card">
+          <h2>Things you've written</h2>
+          <div data-saved-list></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <!-- activity 2: word bank sentences (filled by wordbank.js) -->
+  <div id="writeBank" hidden></div>
 </section>
 
 <!-- ══ HOMEWORK ═════════════════════════════════════════════════ -->
 <section class="view" id="v-homework" hidden>
-  <h1>Homework</h1>
-  <p class="lede">Practice Spark built from your own reading, and anything your teacher sent.</p>
+  <div id="hwHome">
+    <h1>Homework</h1>
+    <p class="lede">Add a worksheet and Spark helps you read it and answer it.</p>
 
-  <div class="hw-tabs" role="tablist">
-    <button class="hw-tab" role="tab" data-hw="spark"   aria-selected="true"><span class="i" data-icon="spark" data-icon-size="18"></span> From Spark</button>
-    <button class="hw-tab" role="tab" data-hw="teacher" aria-selected="false"><span class="i" data-icon="clip" data-icon-size="18"></span> From my teacher</button>
-  </div>
-
-  <div id="hwSpark"></div>
-
-  <div id="hwTeacher" hidden>
-    <div class="drop" id="dropZone">
-      <span class="drop-ico"><span class="i" data-icon="clip" data-icon-size="18"></span></span>
-      <div class="drop-text">
-        <b>Add what your teacher sent</b>
-        <p class="sub">Drop a .txt file here, choose one, or paste the text.</p>
-      </div>
-      <input type="file" id="fileIn" accept=".txt,.md,text/plain,text/markdown" hidden>
-      <button class="btn btn-sm" id="btnPick">Choose file</button>
-      <button class="btn btn-sm" id="btnPaste">Paste text</button>
+    <div class="hw-tabs" role="tablist">
+      <button class="hw-tab" role="tab" data-hw="teacher" aria-selected="true"><span class="i" data-icon="clip" data-icon-size="18"></span> My worksheets</button>
+      <button class="hw-tab" role="tab" data-hw="spark"   aria-selected="false"><span class="i" data-icon="spark" data-icon-size="18"></span> Practice from Spark</button>
     </div>
-    <div id="teacherList"></div>
+
+    <div id="hwTeacher">
+      <div class="drop" id="dropZone">
+        <span class="drop-ico"><span class="i" data-icon="clip" data-icon-size="18"></span></span>
+        <div class="drop-text">
+          <b>Add your worksheet</b>
+          <p class="sub">PDF, photo or text file. Drop it here or choose one.</p>
+        </div>
+        <input type="file" id="fileIn" accept=".pdf,application/pdf,image/*,.txt,.md,text/plain,text/markdown" hidden>
+        <button class="btn btn-sm btn-primary" id="btnPick">Choose file</button>
+        <button class="btn btn-sm" id="btnPaste">Paste text</button>
+      </div>
+      <div id="hwLoading" hidden></div>
+      <div id="teacherList"></div>
+    </div>
+
+    <div id="hwSpark" hidden></div>
   </div>
+
+  <!-- one worksheet, with help (filled by homework.js) -->
+  <div id="hwWork" hidden></div>
 </section>
 
 <!-- ══ PROGRESS ═════════════════════════════════════════════════ -->
@@ -370,6 +410,7 @@
 <div id="wordcard" role="dialog" aria-label="Word help">
   <button class="wc-x" id="wcClose" aria-label="Close">✕</button>
   <div class="wc-word" id="wcWord"></div>
+  <div class="wc-shape" id="wcShape"></div>
   <div class="wc-phon" id="wcPhon"></div>
   <div class="wc-syls" id="wcSyls"></div>
   <div class="wc-pic"  id="wcPic"></div>
@@ -512,6 +553,7 @@
 <script src="js/exercises.js"></script>
 <script src="js/reader.js"></script>
 <script src="js/write.js"></script>
+<script src="js/wordbank.js"></script>
 <script src="js/homework.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/chat.js"></script>

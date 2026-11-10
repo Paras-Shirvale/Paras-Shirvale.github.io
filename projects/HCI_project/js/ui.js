@@ -92,8 +92,8 @@
      1.5 or more.                                                */
   var SIZES = {
     normal: { px: 18, label: 'Normal',  space: 0.045, word: 0.17, lead: 1.65, ui: 1.00 },
-    large:  { px: 22, label: 'Large',   space: 0.060, word: 0.22, lead: 1.80, ui: 1.08 },
-    huge:   { px: 27, label: 'Largest', space: 0.075, word: 0.28, lead: 1.95, ui: 1.16 }
+    large:  { px: 26, label: 'Large',   space: 0.060, word: 0.22, lead: 1.80, ui: 1.12 },
+    huge:   { px: 36, label: 'Largest', space: 0.075, word: 0.28, lead: 1.95, ui: 1.25 }
   };
   S.SIZES = SIZES;
 
@@ -101,7 +101,7 @@
     var st = S.P.settings;
     /* older profiles stored a pixel number from the slider */
     if (typeof st.size === 'number') {
-      st.size = st.size >= 25 ? 'huge' : st.size >= 21 ? 'large' : 'normal';
+      st.size = st.size >= 30 ? 'huge' : st.size >= 22 ? 'large' : 'normal';
     }
     return SIZES[st.size] || SIZES.normal;
   }
@@ -165,6 +165,10 @@
     var shown = String(raw).replace(/[^A-Za-z'-]/g, '');
 
     S.$('#wcWord').textContent = shown || raw;
+    /* the coloured shape of the word, with flippable letters marked */
+    S.$('#wcShape').innerHTML = S.Pictures.hasFlippy(shown)
+      ? S.Pictures.wordVisual(shown) + '<span class="wc-shape-note">coloured letters are easy to mix up</span>'
+      : '';
 
     var ph = S.phonetic(raw);
     S.$('#wcPhon').textContent = ph ? 'say it: ' + ph : '';
@@ -174,7 +178,11 @@
 
     var picEl = S.$('#wcPic');
     picEl.style.display = 'grid';
-    S.Pictures.render(picEl, shown || raw);
+    S.Pictures.render(picEl, shown || raw).then(function (found) {
+      /* no picture: the picture box already shows the word's shape,
+         so don't show it twice */
+      if (!found && S.norm(cardWord) === clean) S.$('#wcShape').innerHTML = '';
+    });
 
     S.$('#wcMean').textContent = '';
     S.$('#hovertip').style.display = 'none';
@@ -316,11 +324,17 @@
            broken rather than as the word being easy. Every word can
            at least be heard. */
         var bits = [];
-        if (picture) bits.push({ cue: 'picture',
-          html: '<span class="tip-pic">' + picture + '</span>' });
-        if (parts.length > 1) bits.push({ cue: 'parts',
-          html: '<span class="tip-parts">' + S.esc(parts.join(' · ')) + '</span>' });
-        else if (phon) bits.push({ cue: 'parts',
+        /* There is ALWAYS a visual. A picture where one exists or
+           is on its way; otherwise the coloured shape of the word. */
+        var lookable = !picture && !S.Pictures.SKIP[S.norm(shown)] &&
+                       S.P.settings.pictures !== 'off';
+        bits.push({ cue: 'picture',
+          html: '<span class="tip-pic" data-tippic>' +
+                (picture || (lookable ? '<span class="pic-wait sm"></span>' : '')) +
+                '</span>' });
+        bits.push({ cue: 'shape',
+          html: '<span class="tip-shape">' + S.Pictures.wordVisual(shown, { small: true }) + '</span>' });
+        if (parts.length === 1 && phon) bits.push({ cue: 'parts',
           html: '<span class="tip-parts">' + S.esc(phon) + '</span>' });
         bits.push({ cue: 'sound',
           html: '<button class="tip-say" data-hearword="' + S.esc(shown) + '" ' +
@@ -338,9 +352,21 @@
         tip.innerHTML = bits.map(function (x) { return x.html; }).join('');
         tip.style.display = 'flex';
 
-        /* Quietly warm the cache for next time, so a word hovered
-           once has its picture ready the next time it appears. */
-        if (!picture) S.Pictures.lookup(shown);
+        /* Fetch the picture now and drop it in if the pointer is
+           still on the same word when it arrives. */
+        var slot = tip.querySelector('[data-tippic]');
+        if (!picture && !lookable && slot) slot.remove();
+        if (lookable) {
+          S.Pictures.lookup(shown).then(function (hit) {
+            var slotNow = tip.querySelector('[data-tippic]');
+            if (hoverWord !== w || !slotNow) return;
+            if (hit && hit.url) {
+              slotNow.innerHTML = S.Pictures.instant(shown, 40) || '';
+            } else {
+              slotNow.remove();
+            }
+          });
+        }
 
         var b = w.getBoundingClientRect();
         tip.style.left = S.clamp(b.left + b.width / 2 - tip.offsetWidth / 2,

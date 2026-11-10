@@ -88,8 +88,9 @@ window.Spark = window.Spark || {};
       patience: 4.5,
 
       sessions: [],     /* { date, id, title, words, wpm, stalls, tricky[], ms } */
-      writings: [],     /* { date, prompt, text } */
-      teacher: [],      /* { name, text, date } */
+      writings: [],     /* { date, prompt, text, kind } */
+      teacher: [],      /* { name, text, date, type, answers{} } */
+      themeV2: 1,
       doneSteps: {},    /* passageId -> { read, understand, order } */
       practised: {},    /* word -> date practised */
 
@@ -97,7 +98,7 @@ window.Spark = window.Spark || {};
         size: 'normal',   /* normal | large | huge */
         extraSpacing: false,  /* the evidence-backed wide-spacing mode */
         rate: 0.9,        /* speech rate */
-        theme: 'auto',
+        theme: 'light',   /* light | dark | auto (follow the device) */
         font: 'dyslexic', /* dyslexic (OpenDyslexic) | plain */
         voice: 'woman',   /* woman | man */
         voiceCheck: true, /* warn when a different voice is reading */
@@ -124,6 +125,13 @@ window.Spark = window.Spark || {};
         p.settings = Object.assign(d.settings, p.settings || {});
         p.cue      = Object.assign(d.cue, p.cue || {});
         p.ai       = Object.assign(d.ai, p.ai || {});
+        /* Light became the default. Profiles that never chose a theme
+           were sitting on 'auto', so move them over once; anyone who
+           picks Auto again afterwards keeps it. */
+        if (!p.themeV2) {
+          if (p.settings.theme === 'auto') p.settings.theme = 'light';
+          p.themeV2 = 1;
+        }
       }
     } catch (e) { /* private window, blocked storage — carry on with a blank one */ }
     return p;
