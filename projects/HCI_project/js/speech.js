@@ -28,20 +28,27 @@
      `prefer` is matched against system voice names, in order.
      `cloud` is the server voice used when /tts is available. */
   S.VOICES = {
-    woman: { label: 'Ava', who: 'bright and friendly', want: 'female', cloud: 'coral',
+    woman: { label: 'Ava', who: 'bright and friendly', want: 'female', cloud: 'coral', style: 'warm',
              prefer: ['ava', 'emma', 'jenny', 'aria', 'sonia', 'libby', 'google uk english female',
                       'google us english', 'samantha', 'serena', 'karen'],
              pitch: 1.08, rate: 1.02, sample: 'Hi! I\'m Ava. Let\'s read something fun together!' },
-    man:   { label: 'Andrew', who: 'warm and calm', want: 'male', cloud: 'ash',
+    man:   { label: 'Andrew', who: 'warm and calm', want: 'male', cloud: 'ash', style: 'steady',
              prefer: ['andrew', 'brian', 'guy', 'ryan', 'christopher', 'eric', 'thomas',
                       'google uk english male', 'daniel', 'alex'],
              pitch: 1.0, rate: 1.0, sample: 'Hello! I\'m Andrew. I can\'t wait to read with you.' },
-    girl:  { label: 'Ana', who: 'a cheerful girl', want: 'female', cloud: 'nova', child: /ana|maisie/i,
+    girl:  { label: 'Ana', who: 'a cheerful girl', want: 'female', cloud: 'nova', style: 'lively', child: /ana|maisie/i,
              prefer: ['ana', 'maisie', 'emma', 'ava', 'jenny', 'google uk english female', 'samantha'],
              pitch: 1.18, rate: 1.04, sample: 'Hiya! I\'m Ana. Reading is more fun with a friend!' },
-    boy:   { label: 'Ravi', who: 'a lively boy', want: 'male', cloud: 'verse',
+    boy:   { label: 'Ravi', who: 'a lively boy', want: 'male', cloud: 'verse', style: 'lively',
              prefer: ['brian', 'andrew', 'ryan', 'guy', 'eric', 'google uk english male', 'daniel'],
              pitch: 1.14, rate: 1.04, sample: 'Hey! I\'m Ravi. Let\'s go — this is going to be great!' }
+    ,
+    story: { label: 'Nora', who: 'a calm storyteller', want: 'female', cloud: 'sage', style: 'calm',
+             prefer: ['sonia', 'libby', 'maisie', 'aria', 'google uk english female', 'serena', 'emma'],
+             pitch: 0.98, rate: 0.96, sample: "Hello. I am Nora. Settle in, and let me read you a story." },
+    chief: { label: 'Max', who: 'a big, friendly storyteller', want: 'male', cloud: 'fable', style: 'story',
+             prefer: ['ryan', 'thomas', 'brian', 'andrew', 'google uk english male', 'christopher', 'daniel'],
+             pitch: 0.92, rate: 0.98, sample: "Well hello there! I am Max. Shall we find out what happens next?" }
   };
 
   var NATURAL  = /natural|neural|online|premium|enhanced|google/i;
@@ -108,13 +115,14 @@
   }
   S.cloudVoiceState = function () { return cloudURL() ? cloud.state : 'off'; };
 
-  async function cloudAudio(text, key) {
+  async function cloudAudio(text, key, opts) {
     var c = S.VOICES[key] || S.VOICES.woman;
-    var id = c.cloud + '|' + text;
+    var mode = (opts && opts.mode) || 'story';
+    var id = c.cloud + '|' + mode + '|' + text;
     if (cloud.cache[id]) return cloud.cache[id];
     var res = await fetch(cloudURL(), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text, voice: c.cloud })
+      body: JSON.stringify({ text: text, voice: c.cloud, style: c.style, mode: mode })
     });
     if (!res.ok) {
       if (res.status === 501 || res.status === 400 || res.status === 404) cloud.state = 'off';
@@ -130,7 +138,7 @@
   function playCloud(text, opts) {
     var token = ++playToken;
     var key = S.P.settings.voice || 'woman';
-    return cloudAudio(text, key).then(function (url) {
+    return cloudAudio(text, key, opts).then(function (url) {
       if (token !== playToken) return;            /* something newer was asked for */
       stopAudio();
       var a = new Audio(url);

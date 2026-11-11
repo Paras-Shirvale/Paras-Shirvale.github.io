@@ -7,22 +7,31 @@
    collects is wrong, and the homework it builds is for the wrong
    person.
 
-   How it works: while the microphone is open, the audio is also fed
-   to a Web Audio analyser. Two cheap acoustic features are measured
-   several times a second:
+   How it works: while the microphone is open the audio is also fed
+   to a Web Audio analyser. For every voiced moment three kinds of
+   evidence are measured (see voiceprint.js for why):
 
-     pitch (F0)         — via autocorrelation of the waveform
-     spectral centroid  — where the energy sits in the spectrum
+     vocal-tract length  formants F1-F3, which rise as the throat
+                         gets shorter. A child's are about 25-30%
+                         higher than a man's at ANY pitch. This is
+                         the main child-versus-adult signal.
+     timbre              the mean of 12 MFCCs, the standard
+                         speaker-verification feature.
+     pitch (F0)          only a supporting vote. One person's pitch
+                         swings by a third of an octave between a
+                         question and a statement, so pitch alone
+                         never changes the verdict unless it jumps
+                         by well over half an octave.
 
-   The first few seconds of voiced audio become a baseline. After
-   that, a rolling median is compared against it. A sustained shift
-   in BOTH features is reported.
+   The first seconds of voiced audio become the voiceprint. After
+   that a rolling window is compared against it and the verdict is a
+   vote: two of the three signals must agree, or the vocal tract
+   alone must be clearly different.
 
-   What this is NOT: speaker identification. It cannot tell two
-   children of similar age apart, and it is not security. An adult
-   reading in place of a child is a large, obvious pitch shift and
-   that is the case it catches. The UI says as much rather than
-   making an accusation.
+   What this is NOT: speaker identification. Two children of similar
+   age have similar throats and cannot be told apart, and it is not
+   security. The UI says "that sounds like a different voice" rather
+   than making an accusation, and one tap says "it is still me".
    ============================================================ */
 
 (function (S) {
@@ -37,6 +46,8 @@
   var recent = [];            /* rolling window after enrolment */
   var onChange = null;
   var flagged = false;
+  var trend = [];             /* recent pitch values, for how a phrase ends */
+  var print = null;           /* the voiceprint (MFCC mean + vocal-tract scale) */
   /* In calibration the voice print is only fixed when the WHOLE
      paragraph has been read — never after the first second. */
   var calibrating = false;
@@ -65,9 +76,16 @@
      being said, so demanding a big shift in both at once meant the
      check almost never fired. Instead a clear timbre shift lowers the
      pitch threshold, and a big enough pitch shift stands on its own. */
-  var OCTAVE_CLEAR   = 0.22;   /* pitch alone is enough past this    */
-  var OCTAVE_SUPPORT = 0.14;   /* with timbre agreeing, this is enough */
-  var CENTROID_RATIO = 1.22;
+  /* Votes. Thresholds come from voiceprint tests (synthetic source-filter
+     voices): the same adult at any pitch stays under 0.08 tract / 0.4
+     timbre; a child, even one speaking in a low voice, is above 0.38 tract
+     and 0.7 timbre. These sit well clear of both. */
+  var PITCH_VOTE   = 0.35;     /* octaves, a supporting vote only        */
+  var PITCH_ALONE  = 0.75;     /* nobody's own pitch moves this far      */
+  var TIMBRE_VOTE  = 0.60;     /* MFCC distance in the speaker's own spread */
+  var TRACT_VOTE   = 0.12;     /* |log2| formant ratio                   */
+  var TRACT_CLEAR  = 0.20;     /* a clearly different throat, on its own */
+  var VP = function () { return S.Voiceprint; };
 
   function median(list) {
     if (!list.length) return 0;
@@ -142,17 +160,18 @@
     if (!f0) return;                                  /* unvoiced frame */
 
     var cen = spectralCentroid(freqBuf, ctx.sampleRate, analyser.fftSize);
-    var point = { f0: f0, cen: cen };
+    var point = { f0: f0, cen: cen, t: Date.now() };
+    if (VP()) {
+      point.cep = VP().mfcc(timeBuf, ctx.sampleRate);
+      point.scale = VP().tractScale(VP().formants(timeBuf, ctx.sampleRate));
+    }
+    trend.push({ t: point.t, f0: f0 });
+    if (trend.length > 40) trend.shift();
 
     if (!baseline) {
       enrol.push(point);
       if (calibrating) { report(); return; }
-      if (enrol.length >= ENROL_SAMPLES) {
-        baseline = {
-          f0: median(enrol.map(function (p) { return p.f0; })),
-          cen: median(enrol.map(function (p) { return p.cen; }))
-        };
-      }
+      if (enrol.length >= ENROL_SAMPLES) setBaseline(enrol);
       return;
     }
 
@@ -164,16 +183,19 @@
     var cenNow = median(recent.map(function (p) { return p.cen; }));
 
     var octaves = Math.abs(Math.log2(f0Now / baseline.f0));
-    var cenRatio = Math.max(cenNow, baseline.cen) /
-                   Math.max(1, Math.min(cenNow, baseline.cen));
 
-    var different = octaves > OCTAVE_CLEAR ||
-                    (octaves > OCTAVE_SUPPORT && cenRatio > CENTROID_RATIO);
+    var cmp = (print && VP() && recent[0].cep) ? VP().compare(print, recent) : { timbre: 0, tract: 0 };
+    var votes = (octaves > PITCH_VOTE ? 1 : 0) + (cmp.timbre > TIMBRE_VOTE ? 1 : 0) +
+                (cmp.tract > TRACT_VOTE ? 1 : 0);
+    var different = votes >= 2 || cmp.tract > TRACT_CLEAR || octaves > PITCH_ALONE;
 
     live = {
       baselineHz: Math.round(baseline.f0),
       nowHz: Math.round(f0Now),
       octaves: Math.round(octaves * 100) / 100,
+      timbre: Math.round(cmp.timbre * 100) / 100,
+      tract: Math.round(cmp.tract * 100) / 100,
+      votes: votes,
       direction: f0Now < baseline.f0 ? 'lower' : 'higher',
       different: different
     };
@@ -187,6 +209,14 @@
       if (onChange) onChange(Object.assign({}, live, { recovered: true }));
     }
     report();
+  }
+
+  function setBaseline(points) {
+    baseline = {
+      f0: median(points.map(function (p) { return p.f0; })),
+      cen: median(points.map(function (p) { return p.cen; }))
+    };
+    print = (VP() && points[0].cep) ? VP().enrol(points) : null;
   }
 
   /* A live readout, so this can actually be seen working rather than
@@ -212,7 +242,7 @@
       calibrating = !!opts.calibrate;
       onChange = callback;
       flagged = false;
-      baseline = null;
+      baseline = null; print = null;
       enrol = [];
       recent = [];
 
@@ -266,6 +296,8 @@
         baselineHz: baseline ? Math.round(baseline.f0) : null,
         nowHz: live ? live.nowHz : null,
         octaves: live ? live.octaves : null,
+        timbre: live ? live.timbre : null,
+        tract: live ? live.tract : null,
         direction: live ? live.direction : null
       };
     },
@@ -274,9 +306,24 @@
     watch: function (fn) { onLive = fn; },
     unwatch: function () { onLive = null; },
 
+    /**
+     * How the last stretch of voiced speech ended, for judging a pause.
+     * A phrase that is FINISHED falls in pitch and then stops; a child
+     * who is stuck trails off level, or rises, or stops mid-sound.
+     * Returns { falling, level, rising, ms } or null with no voice.
+     */
+    endingTrend: function () {
+      if (trend.length < 5) return null;
+      var tail = trend.slice(-6), first = median(tail.slice(0, 3).map(function (p) { return p.f0; })),
+          last = median(tail.slice(-3).map(function (p) { return p.f0; }));
+      var st = 12 * Math.log2(last / first);          /* semitones */
+      return { semitones: Math.round(st * 10) / 10, falling: st < -1.2, rising: st > 1.2,
+               level: Math.abs(st) <= 1.2, ms: Date.now() - tail[tail.length - 1].t };
+    },
+
     /** Forget the baseline and learn the voice again from scratch. */
     relearn: function () {
-      baseline = null; enrol = []; recent = []; flagged = false; live = null;
+      baseline = null; print = null; enrol = []; recent = []; flagged = false; live = null;
       report();
     },
 
@@ -291,21 +338,13 @@
     finishCalibration: function () {
       calibrating = false;
       if (enrol.length < 20) return null;
-      baseline = {
-        f0: median(enrol.map(function (p) { return p.f0; })),
-        cen: median(enrol.map(function (p) { return p.cen; }))
-      };
+      setBaseline(enrol);
       return { hz: Math.round(baseline.f0), samples: enrol.length };
     },
 
     /** Accept the current voice as correct and carry on. */
     acceptNewVoice: function () {
-      if (recent.length) {
-        baseline = {
-          f0: median(recent.map(function (p) { return p.f0; })),
-          cen: median(recent.map(function (p) { return p.cen; }))
-        };
-      }
+      if (recent.length) setBaseline(recent);
       flagged = false;
       recent = [];
     }

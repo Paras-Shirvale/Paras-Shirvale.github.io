@@ -205,7 +205,7 @@
   };
 
   function voiceAvatar(key) {
-    return { woman: 'owl', man: 'bear', girl: 'bunny', boy: 'fox' }[key] || 'owl';
+    return { woman: 'owl', man: 'bear', girl: 'bunny', boy: 'fox', story: 'cat', chief: 'panda' }[key] || 'owl';
   }
 
   /* ── the calibration activity ───────────────────────────

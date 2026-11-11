@@ -439,6 +439,7 @@
                        R.tokens[R.idx - 1].si !== token.si),
       durationMs: Date.now() - lastAdvance,
       baselineMs: baselineGap(),
+      prosody: S.voiceCheck && S.voiceCheck.endingTrend ? S.voiceCheck.endingTrend() : null,
       partialHeard: R.aligner ? R.aligner.startedCurrentWord() : null,
       priorStalls: (S.P.words[token.clean] && S.P.words[token.clean].stalled) || 0
     });
@@ -708,7 +709,17 @@
       r.stalls.forEach(function (x) { liveStalls[x.word] = 1; });
       cmp.pauses.forEach(function (p) {
         if (liveStalls[p.word]) return;
-        S.DB.pause({ word: p.word, duration_ms: p.seconds * 1000, pause_type: 'long-gap',
+        /* The model gives exact word times; the same classifier then
+           says whether the gap was phrasing or difficulty. */
+        var tok = r.tokens[p.ei], prev = p.ei > 0 ? r.tokens[p.ei - 1] : null;
+        var v = S.Analysis.classifyPause({
+          token: tok, prevToken: prev,
+          isSentenceStart: !prev || prev.si !== tok.si,
+          durationMs: p.seconds * 1000, baselineMs: (cmp.typicalGap || 0.6) * 1000,
+          partialHeard: null, priorStalls: 0
+        });
+        if (!v.struggle) return;
+        S.DB.pause({ word: p.word, duration_ms: p.seconds * 1000, pause_type: v.type,
                      detected_by: 'model', prefer: r.src.world });
       });
       if (cmp.seconds) session.seconds = Math.round(cmp.seconds);
@@ -1018,18 +1029,21 @@
 
     if (tool === 'picture') {
       out.innerHTML = title + '<div class="rail-pic"></div>';
-      S.Pictures.render(out.querySelector('.rail-pic'), word);
+      S.Pictures.render(out.querySelector('.rail-pic'), word, { sentence: S.sentenceFor(word) });
       S.useCue('picture');
 
     } else if (tool === 'hear') {
-      out.innerHTML = title + '<button class="btn btn-sm" data-say="' + S.esc(word) + '">' +
+      var sent = S.sentenceFor(word);
+      out.innerHTML = title + '<button class="btn btn-sm" data-say="' + S.esc(word) + '" data-sent="' + S.esc(sent) + '">' +
         S.Pictures.icon('speaker', 16) + ' Hear it again</button>';
-      S.say(word);
+      S.sayWord(word, sent);
       S.useCue('sound');
 
     } else if (tool === 'split') {
       var parts = S.syllables(word);
       out.innerHTML = title + '<div class="rail-parts">' + parts.map(chip).join('') + '</div>' +
+        '<button class="btn btn-sm" data-hearparts="' + S.esc(word) + '" data-sent="' + S.esc(S.sentenceFor(word)) + '">' +
+        S.Pictures.icon('speaker', 16) + ' Hear the parts</button>' +
         '<p class="rail-note">Look at each chunk, then read the whole word.</p>';
       /* a better split may arrive from the AI helper */
       S.partsFor(word).then(function (p) {

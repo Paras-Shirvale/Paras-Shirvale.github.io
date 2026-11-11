@@ -334,8 +334,11 @@
 
       if (!e.target.closest('#wordcard')) S.closeWordCard();
 
+      var partsBtn = e.target.closest('[data-hearparts]');
+      if (partsBtn) { S.sayParts(partsBtn.dataset.hearparts, partsBtn.dataset.sent); return; }
+
       var sayBtn = e.target.closest('[data-say]');
-      if (sayBtn) S.say(sayBtn.dataset.say);
+      if (sayBtn) S.sayWord(sayBtn.dataset.say, sayBtn.dataset.sent);
     });
 
     /* Hovering a word previews where it breaks, and shows a picture
@@ -369,7 +372,8 @@
         var parts = S.syllables(shown);
         /* only what can be drawn immediately — waiting on a fetch
            inside a hover reads as the app being broken */
-        var picture = S.Pictures.instant(shown, 96);
+        var sentence = S.sentenceOf(w);
+        var picture = S.Pictures.instant(shown, 96, sentence);
         var phon = S.phonetic(shown);
 
         /* The tip always has something in it. Bailing out on short
@@ -391,7 +395,7 @@
         if (parts.length === 1 && phon) bits.push({ cue: 'parts',
           html: '<span class="tip-parts">' + S.esc(phon) + '</span>' });
         bits.push({ cue: 'sound',
-          html: '<button class="tip-say" data-hearword="' + S.esc(shown) + '" ' +
+          html: '<button class="tip-say" data-hearword="' + S.esc(shown) + '" data-sent="' + S.esc(sentence) + '" ' +
                 'aria-label="Hear it">' + S.Pictures.icon('speaker', 17) + '</button>' });
 
         /* Whichever kind of help has been working for this child goes
@@ -411,11 +415,11 @@
         var slot = tip.querySelector('[data-tippic]');
         if (!picture && !lookable && slot) slot.remove();
         if (lookable) {
-          S.Pictures.lookup(shown).then(function (hit) {
+          S.Pictures.lookup(shown, { sentence: sentence }).then(function (hit) {
             var slotNow = tip.querySelector('[data-tippic]');
             if (hoverWord !== w || !slotNow) return;
             if (hit && hit.url) {
-              slotNow.innerHTML = S.Pictures.instant(shown, 96) || '';
+              slotNow.innerHTML = S.Pictures.instant(shown, 96, sentence) || '';
             } else {
               slotNow.remove();
             }
@@ -448,7 +452,7 @@
       if (!hear) return;
       e.preventDefault();
       e.stopPropagation();
-      S.say(hear.dataset.hearword);
+      S.sayWord(hear.dataset.hearword, hear.dataset.sent);
       S.useCue('sound');
     }, true);
 

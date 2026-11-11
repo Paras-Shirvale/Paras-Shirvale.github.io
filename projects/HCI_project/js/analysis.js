@@ -93,6 +93,15 @@
    *       | 'decoding' | 'word-specific' | 'complex-word' | 'struggle'
    *   struggle: true only when this should affect the profile
    */
+  /* Where people breathe even when there is no punctuation: just before
+     a word that starts a new phrase or clause. A pause here is phrasing,
+     not trouble, the way a fluent reader does it. */
+  var PHRASE_START = {};
+  ('and but or so because when while then that which who where if although though ' +
+   'after before until with without in on at into onto under over by for from to of ' +
+   'as like')
+    .split(' ').forEach(function (w) { PHRASE_START[w] = 1; });
+
   A.classifyPause = function (ctx) {
     var prev = ctx.prevToken ? ctx.prevToken.raw : '';
     var endsSentence = /[.!?]["')\]]?$/.test(prev);
@@ -114,12 +123,33 @@
     if (ctx.isSentenceStart && ratio < 5) {
       return natural('planning', 'getting ready to start the next sentence');
     }
+
+    /* The VOICE says how the stretch before the silence ended (pitch
+       falls at the end of a finished phrase; it stays level or lifts
+       when somebody trails off mid-word). This is the acoustic cue
+       listeners themselves use to tell a pause from a stumble. */
+    var pr = ctx.prosody || null;
+    var sounding = !!ctx.partialHeard;
+    if (pr && pr.falling && !sounding && ratio < 3.5) {
+      return natural('phrase-end', 'their voice fell the way it does at the end of a phrase');
+    }
+    /* A breath before a joining word ("and", "because", "in") is phrasing. */
+    if (PHRASE_START[ctx.token.clean] && !sounding && ratio < 3.5) {
+      return natural('phrase-break', 'a breath before "' + ctx.token.clean + '", where a new phrase starts');
+    }
     /* Barely longer than this child's own rhythm. */
     if (ratio < 1.8) {
       return natural('breath', 'a normal gap between words');
     }
 
     /* ---- now the signals that mean real trouble --------- */
+
+    /* The voice trailed off level or rising, then stopped, well past
+       this child's usual gap: hesitating, not finishing a thought. */
+    if (pr && (pr.level || pr.rising) && ratio >= 2.2 && !sounding && !endsSentence && !endsClause) {
+      return struggle('trailed-off', 0.75,
+        'their voice trailed off level before the word, then stopped');
+    }
 
     /* They started sounding it out and could not finish. That is
        decoding, and it is the clearest signal there is. */

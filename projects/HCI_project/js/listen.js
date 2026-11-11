@@ -168,6 +168,7 @@
        their own usual gap, and over a second in absolute terms. */
     var sorted = gaps.slice().sort(function (a, b) { return a - b; });
     var typical = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0.3;
+    out.typicalGap = typical;
     var limit = Math.max(1.0, typical * 3);
     out.pauses = out.pauses.filter(function (p) { return p.seconds >= limit; })
       .map(function (p) { p.seconds = Math.round(p.seconds * 10) / 10; return p; });

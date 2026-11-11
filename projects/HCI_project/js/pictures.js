@@ -372,7 +372,7 @@
      Which sources are used, and in what order, is set in config.js.
      All of them are free and need no key.                        */
 
-  var CACHE_KEY = 'spark.pictures.v3';
+  var CACHE_KEY = 'spark.pictures.v4';
   var cache = {};
   try { cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); } catch (e) { cache = {}; }
 
@@ -469,24 +469,85 @@
    * once per browser — successes and failures alike, so a word with
    * no picture is not looked up again and again.
    */
-  P.lookup = async function (word) {
+  /* Words whose obvious photograph is of a person's body. A photo of
+     "back", "chest" or "bottom" is never what a child needs, however the
+     word is used, so these never get a photograph. */
+  var BODY = {};
+  ('back body skin bare naked chest breast bottom belly tummy stomach leg legs arm arms ' +
+   'thigh hip hips neck shoulder shoulders waist bra bikini underwear swimsuit lap ' +
+   'nipple private kiss kissing').split(' ').forEach(function (w) { BODY[w] = 1; });
+
+  /* Photographs are only shown when a vision model has looked at the
+     image, with the word, the meaning chosen from the sentence, and the
+     rule "fine for a 7-year-old". Results are remembered. */
+  var judged = {};
+  async function photoIsRight(hit, word, sense) {
+    if (!S.AI || !S.AI.ready || !S.serverURL) return false;
+    var base = S.serverURL('/judge-image');
+    if (!base) return false;
+    var k = word + '|' + hit.url;
+    if (k in judged) return judged[k];
+    try {
+      var r = await fetch(base, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: hit.url, word: word, sense: sense || '' }) });
+      if (!r.ok) return false;                       /* no check → no photograph */
+      var out = await r.json();
+      judged[k] = out.ok === true;
+    } catch (e) { return false; }
+    return judged[k];
+  }
+
+  /**
+   * Find a picture for a word, working down the configured sources.
+   * Resolves { url, credit, kind } or null.
+   *
+   * ctx.sentence is the sentence the word is in. With it, the model
+   * decides WHICH meaning is meant and what to search for, so "back"
+   * in "the back of the chair" looks for a chair back. A word whose
+   * picture would not be suitable (or helpful) gets none, and the
+   * child sees the coloured shape of the word instead.
+   *
+   * Each word (in its sentence) is fetched once per browser.
+   */
+  P.lookup = async function (word, ctx) {
     var w = S.norm(word);
     if (!w || w.length < 2) return null;
     if (S.P.settings.pictures === 'off') return null;
     if (P.SKIP[w]) return null;
 
-    if (Object.prototype.hasOwnProperty.call(cache, w)) return cache[w] || null;
+    var sentence = ctx && ctx.sentence;
+    var sense = null;
+    var ck = w;
+    if (sentence && S.senseOf) {
+      sense = await S.senseOf(w, sentence);
+      if (sense) {
+        ck = S.senseKey(w, sentence);
+        if (!sense.draw) return null;               /* nothing suitable to show */
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(cache, ck)) return cache[ck] || null;
 
+    var term = (sense && sense.query) || w;
     var order = sources();
     var reachedOne = false;
 
     for (var i = 0; i < order.length; i++) {
-      var fetcher = FETCHERS[order[i]];
-      if (!fetcher) continue;
+      var name = order[i], fetcher = FETCHERS[name];
+      if (!fetcher || name === 'drawn') continue;
+      var isPhoto = name !== 'arasaac';
+      /* no photographs of bodies, and none at all for an unresolved
+         word that has several meanings: a pictogram is safer */
+      if (isPhoto && (BODY[w] || BODY[term])) continue;
       try {
-        var hit = await fetcher(w);
+        var hit = await fetcher(term);
         reachedOne = true;
-        if (hit && hit.url) { remember(w, hit); return hit; }
+        if (!hit || !hit.url) continue;
+        if (isPhoto) {
+          var okPhoto = await photoIsRight(hit, w, sense && sense.meaning);
+          if (!okPhoto) continue;
+        }
+        remember(ck, hit);
+        return hit;
       } catch (e) {
         /* offline or blocked — try the next source */
       }
@@ -494,7 +555,7 @@
 
     /* only record "nothing found" if something actually answered;
        otherwise this is an offline moment, worth retrying later */
-    if (reachedOne) remember(w, null);
+    if (reachedOne) remember(ck, null);
     return null;
   };
 
@@ -530,7 +591,7 @@
     el.innerHTML = '<span class="pic-wait"></span>';
     el.dataset.state = 'looking';
 
-    var hit = await P.lookup(word);
+    var hit = await P.lookup(word, opts.sentence ? { sentence: opts.sentence } : null);
     if (hit && hit.url) {
       el.innerHTML =
         '<img class="pic" src="' + hit.url + '" alt="' + S.esc(word) + '" loading="lazy">' +
@@ -638,11 +699,18 @@
    * one already fetched before. Used by the hover preview, where an
    * async gap would read as the app being broken.
    */
-  P.instant = function (word, size) {
-    var svg = P.drawn(word, size);
-    if (svg) return svg;
+  P.instant = function (word, size, sentence) {
     var w = S.norm(word);
-    var hit = cache[w];
+    var sense = sentence && S.senseCached ? S.senseCached(w, sentence) : null;
+    if (sense && !sense.draw) return '';
+    /* a drawing is made for one meaning; use it unless the sentence
+       says the word means something else */
+    var svg = (!sense || sense.query === w) ? P.drawn(word, size) : '';
+    if (svg) return svg;
+    /* with a sentence and a model, only a result for THIS sense counts;
+       the bare-word cache is where wrong-meaning pictures came from */
+    if (sentence && !sense && S.AI && S.AI.ready) return '';
+    var hit = cache[sense ? S.senseKey(w, sentence) : w];
     if (hit && hit.url) {
       return '<img class="pic" src="' + hit.url + '" alt="' + S.esc(word) +
              '" width="' + (size || 44) + '">';

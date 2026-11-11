@@ -4,13 +4,15 @@
    Holds the API keys as Cloudflare SECRETS and forwards requests
    to the model providers. No key is ever sent to the browser.
 
-   Three routes:
+   Four routes:
      POST /            text model (word meanings, word parts,
                        spelling explanations) — Groq Llama 3.3 70B
      POST /transcribe  speech-to-text — Groq Whisper large-v3, with
                        a time for every word. Used to double-check
                        what the child actually said while reading.
                        Uses the same GROQ_API_KEY.
+     POST /judge-image does this picture really show this word, for a
+                       child? — Groq Llama 4 Scout (vision). Same key.
      POST /tts         natural voice — OpenAI gpt-4o-mini-tts.
                        Optional: only on if OPENAI_API_KEY is set;
                        otherwise the app uses the browser's voices.
@@ -121,13 +123,34 @@ async function transcribe(request, env, origin) {
   return fail(`The speech model replied ${last}.`, 502, origin);
 }
 
-/* ── text to speech: a natural, lively voice ──────────── */
+/* ── text to speech: a natural, expressive voice ───────── */
 const TTS_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'fable', 'nova', 'onyx', 'sage', 'shimmer', 'verse'];
-const TTS_STYLE =
-  'You are reading aloud to a 9 to 12 year old who is learning to read. ' +
-  'Sound warm, bright and enthusiastic, like a favourite teacher. ' +
-  'Pronounce every word clearly and correctly, at a calm pace. ' +
-  'If the text is a single word or one part of a word, say just that, clearly.';
+
+/* gpt-4o-mini-tts is steerable: "instructions" changes HOW it speaks
+   (pace, warmth, emphasis, accent), not what. Flat delivery is the
+   default when no style is given, so every request gets one. The
+   browser sends only a short style KEY; the wording lives here so
+   nobody can turn the endpoint into a general prompt box. */
+const TTS_BASE =
+  'You are reading aloud to a child of 7 to 14 who is learning to read and may have dyslexia. ' +
+  'Never sound flat or bored. Use natural, varied intonation: let your pitch rise on questions ' +
+  'and excitement, fall at the end of statements, and slow down a little for important or tricky words. ' +
+  'Give dialogue its own voice and feeling. Leave a short, natural breath at commas and full stops. ' +
+  'Say every word clearly and correctly, using the meaning of the sentence to choose the right ' +
+  'pronunciation and tense (for example "read" as red when it is past tense). ';
+
+const TTS_STYLES = {
+  warm:     'Warm, bright and encouraging, like a favourite teacher. ',
+  calm:     'Calm, gentle and unhurried, like a bedtime story. Soft and soothing. ',
+  lively:   'Lively, cheerful and playful, like a friendly older kid telling an exciting story. ',
+  steady:   'Steady, friendly and clear, a warm grown-up voice. Relaxed pace. ',
+  story:    'A skilled storyteller: dramatic pauses, different feeling for each moment, big expression. ',
+};
+/* Single words and word-parts are not a story: say just that, clearly. */
+const TTS_WORD =
+  'The text is a single word, or a single part of a word, for a child to hear. Say ONLY that, slowly ' +
+  'and very clearly, with no expression added, no extra words and no trailing sound. If it is part of ' +
+  'a longer word, say it as that part sounds inside the word. ';
 
 async function tts(request, env, origin) {
   if (!env.OPENAI_API_KEY) return fail('No voice model is set up.', 501, origin);
@@ -136,13 +159,15 @@ async function tts(request, env, origin) {
   const text = String(body.text || '').slice(0, 1500);
   if (!text.trim()) return fail('No text.', 400, origin);
   const voice = TTS_VOICES.includes(body.voice) ? body.voice : 'coral';
+  const style = TTS_STYLES[body.style] || TTS_STYLES.warm;
+  const instructions = body.mode === 'word' ? TTS_BASE + TTS_WORD : TTS_BASE + style;
 
   const r = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.OPENAI_API_KEY}` },
     body: JSON.stringify({
       model: env.TTS_MODEL || 'gpt-4o-mini-tts',
-      voice, input: text, instructions: TTS_STYLE, response_format: 'mp3',
+      voice, input: text, instructions, response_format: 'mp3',
     }),
   });
   if (!r.ok) return fail(`The voice model replied ${r.status}.`, 502, origin);
@@ -150,6 +175,51 @@ async function tts(request, env, origin) {
     status: 200,
     headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=604800', ...cors(origin) },
   });
+}
+
+/* ── picture check: does this image really show this word? ──
+   A vision model looks at the candidate image, with the word, the
+   meaning chosen from the sentence, and a child-safety rule. This is
+   what stops "back" (of a chair) turning into a bare human back.
+   Uses the same Groq key. Replies { ok, why }. */
+const VISION_MODELS = ['meta-llama/llama-4-scout-17b-16e-instruct', 'meta-llama/llama-4-maverick-17b-128e-instruct'];
+
+async function judgeImage(request, env, origin) {
+  if (!env.GROQ_API_KEY) return fail('The server has no GROQ_API_KEY secret set.', 500, origin);
+  let body;
+  try { body = await request.json(); } catch { return fail('Unreadable request.', 400, origin); }
+  const url = String(body.url || '');
+  if (!/^https:\/\/(upload\.wikimedia\.org|static\.arasaac\.org|[a-z0-9.-]*\.openverse\.org|live\.staticflickr\.com)\//i.test(url)) {
+    return fail('That image address is not allowed.', 400, origin);
+  }
+  const word = String(body.word || '').slice(0, 40);
+  const sense = String(body.sense || '').slice(0, 160);
+  const prompt =
+    'A children\'s reading app wants to show this picture beside the word "' + word + '"' +
+    (sense ? ' meaning: ' + sense : '') + '.\n' +
+    'Answer with only JSON: {"ok":boolean,"why":string}.\n' +
+    'ok is true ONLY if (1) the picture clearly shows that exact meaning, not another meaning of the word, ' +
+    'AND (2) it is suitable for a 7-year-old: no nudity or bare skin beyond a face and hands, no violence, ' +
+    'no scary or adult content, no text-heavy diagrams. Otherwise ok is false. "why" is under 12 words.';
+  for (const model of VISION_MODELS) {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.GROQ_API_KEY}` },
+      body: JSON.stringify({
+        model, temperature: 0, max_tokens: 80, response_format: { type: 'json_object' },
+        messages: [{ role: 'user', content: [
+          { type: 'text', text: prompt }, { type: 'image_url', image_url: { url } }] }],
+      }),
+    });
+    if (!r.ok) continue;
+    try {
+      const out = JSON.parse((await r.json()).choices[0].message.content);
+      return new Response(JSON.stringify({ ok: out.ok === true, why: String(out.why || ''), model }), {
+        status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...cors(origin) },
+      });
+    } catch { /* try the next model */ }
+  }
+  return fail('The picture check is not available.', 502, origin);
 }
 
 export default {
@@ -169,6 +239,7 @@ export default {
     const path = new URL(request.url).pathname.replace(/\/+$/, '');
     if (path === '/transcribe') return transcribe(request, env, origin);
     if (path === '/tts') return tts(request, env, origin);
+    if (path === '/judge-image') return judgeImage(request, env, origin);
 
     const provider = String(env.AI_PROVIDER || 'groq').toLowerCase();
     const spec = PROVIDERS[provider];
