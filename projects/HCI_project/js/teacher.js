@@ -66,10 +66,19 @@
     var d = new Date(iso); if (isNaN(d)) return '';
     return d.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
   }
+  /* "Last active": the time if it was today (24-hour HH:MM), "Yesterday HH:MM"
+     for yesterday, and the date and time for anything older. */
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function hhmm(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
   function ago(iso) {
     if (!iso) return 'never';
-    var days = Math.floor((Date.now() - Date.parse(iso)) / 864e5);
-    return days <= 0 ? 'today' : days === 1 ? 'yesterday' : days < 14 ? days + ' days ago' : shortDate(iso);
+    var d = new Date(iso); if (isNaN(d)) return 'never';
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var yest = new Date(today); yest.setDate(yest.getDate() - 1);
+    if (d >= today) return hhmm(d);
+    if (d >= yest) return 'Yesterday ' + hhmm(d);
+    var thisYear = d.getFullYear() === new Date().getFullYear();
+    return shortDate(iso) + (thisYear ? '' : ' ' + d.getFullYear()) + ' ' + hhmm(d);
   }
   function normKind(c) {
     return c === 'picture' || c === 'visual' ? 'visual' : c === 'choice' ? 'choice' : 'audio';
@@ -119,7 +128,8 @@
       cloud: true, label: 'Study database',
       children: function (pw) { return rpc('teacher_children', { p_password: pw }); },
       child: function (pw, id) { return rpc('teacher_child_data', { p_password: pw, p_child: id }); },
-      all: function (pw) { return rpc('teacher_export', { p_password: pw }); }
+      all: function (pw) { return rpc('teacher_export', { p_password: pw }); },
+      remove: function (pw, id) { return rpc('teacher_remove_child', { p_password: pw, p_child: id }); }
     };
   }
 
@@ -137,33 +147,52 @@
           return out;
         });
       },
-      all: function (pw) { return gate(pw).then(tables); }
+      all: function (pw) { return gate(pw).then(tables); },
+      remove: function () { return Promise.reject(new Error('Removing a student needs the study database (see _server/README.md).')); }
     };
   }
 
   var Source = CLOUD ? cloudSource() : localSource();
   var password = '';
-  var kids = [];
+  var kids = [];          /* students still active */
+  var removedKids = [];   /* removed by a teacher; their history is kept */
+  var cameFrom = 'overview';
+  var current = null;     /* { kid, data, M } for the open student */
 
-  /* ══ signing in ══════════════════════════════════════════ */
-  function login(pw, quiet) {
-    $('#tPwErr').textContent = quiet ? '' : 'Checking…';
-    return Source.children(pw).then(function (list) {
-      password = pw; kids = list;
-      sessionStorage.setItem('spark.teacher.pw', pw);
-      $('#tLogin').hidden = true;
-      $('#tLogout').hidden = false;
+  /* ══ signing in ══════════════════════════════════════════
+     The password is asked on login.html. This page just reuses it for
+     the length of the visit, and sends you back there if it is missing
+     or no longer right. */
+  function toLogin() { location.replace('login.html?next=teacher'); }
+
+  function load() {
+    return Source.children(password).then(function (list) {
+      kids = list.filter(function (k) { return !k.removed_at; });
+      removedKids = list.filter(function (k) { return k.removed_at; });
+      var n = $('#navRemovedN');
+      n.hidden = !removedKids.length; n.textContent = removedKids.length;
       $('#tSource').textContent = Source.label;
-      showOverview();
-    }, function (err) {
-      sessionStorage.removeItem('spark.teacher.pw');
-      $('#tPwErr').textContent = /wrong password/.test(err.message) ? 'That password is not right.' : err.message;
     });
   }
 
-  $('#tPwForm').addEventListener('submit', function (e) { e.preventDefault(); login($('#tPass').value.trim()); });
-  $('#tLogout').addEventListener('click', function () { sessionStorage.removeItem('spark.teacher.pw'); location.reload(); });
-  if (sessionStorage.getItem('spark.teacher.pw')) login(sessionStorage.getItem('spark.teacher.pw'), true);
+  function start() {
+    password = sessionStorage.getItem('spark.teacher.pw') || '';
+    if (!password) { toLogin(); return; }
+    load().then(function () {
+      $('#tChecking').hidden = true;
+      showOverview();
+    }, function (err) {
+      if (/wrong password/.test(err.message)) { sessionStorage.removeItem('spark.teacher.pw'); toLogin(); return; }
+      $('#tChecking').textContent = err.message;
+    });
+  }
+
+  $('#tLogout').addEventListener('click', function () {
+    try { sessionStorage.clear(); } catch (e) {}
+    location.href = 'login.html';
+  });
+  $('#navStudents').addEventListener('click', function () { current = null; showOverview(); });
+  $('#navRemoved').addEventListener('click', function () { current = null; showRemoved(); });
 
   /* ══ charts, drawn here with no library ══════════════════ */
   /* An axis of four equal, round steps that covers the biggest value:
@@ -494,11 +523,39 @@
     return k ? { pair: BY[k], n: errors[k] } : null;
   }
   function totalErrors(k) { return sum(Object.keys(k.errors || {}).map(function (c) { return k.errors[c]; })); }
+  /* the picture the student chose at the start, not their initial */
+  function avatarChip(k, size) {
+    var svg = S.avatarSVG ? S.avatarSVG(k.avatar || 'owl', size || 28) : '';
+    return '<span class="t-av">' + svg + '</span>';
+  }
   function initials(name) { return (String(name).trim()[0] || '?').toUpperCase(); }
   function hue(name) { var h = 0; String(name).split('').forEach(function (c) { h = (h * 31 + c.charCodeAt(0)) % 360; }); return h; }
 
+  function setNav(which) {
+    $('#navStudents').classList.toggle('on', which === 'overview');
+    $('#navRemoved').classList.toggle('on', which === 'removed');
+  }
+
+  function showRemoved() {
+    cameFrom = 'removed';
+    setNav('removed');
+    $('#tStudent').hidden = true; $('#tOverview').hidden = true; $('#tRemoved').hidden = false;
+    window.scrollTo(0, 0);
+    $('#tRemovedRows').innerHTML = removedKids.length ? removedKids.map(function (k) {
+      return '<tr data-kid="' + esc(k.child_id) + '"><td>' + avatarChip(k) + esc(k.name) + '</td>' +
+        '<td>' + (k.age || '—') + '</td><td>' + esc(ago(k.removed_at)) + '</td><td>' + esc(ago(k.last_active)) + '</td>' +
+        '<td>' + totalErrors(k) + '</td><td>' + (k.sessions || 0) + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="t-none">Nobody has been removed.</td></tr>';
+    Array.prototype.forEach.call(document.querySelectorAll('#tRemovedRows tr[data-kid]'), function (tr) {
+      tr.onclick = function () { openStudent(tr.dataset.kid); };
+    });
+  }
+
   function showOverview() {
+    cameFrom = 'overview';
+    setNav('overview');
     $('#tStudent').hidden = true;
+    $('#tRemoved').hidden = true;
     $('#tOverview').hidden = false;
     window.scrollTo(0, 0);
 
@@ -528,10 +585,10 @@
     $('#tAttention').innerHTML = (worst.length || quiet.length)
       ? (worst.length ? '<p class="t-mini">Most mix-ups</p>' + worst.map(function (k) {
           var t = topPair(k.errors);
-          return '<button class="t-chip" data-kid="' + esc(k.child_id) + '"><b>' + esc(k.name) + '</b><span>' + totalErrors(k) + ' mix-ups' + (t ? ' · mostly ' + t.pair.label : '') + '</span></button>';
+          return '<button class="t-chip" data-kid="' + esc(k.child_id) + '">' + avatarChip(k, 36) + '<span class="t-chip-txt"><b>' + esc(k.name) + '</b><span>' + totalErrors(k) + ' mix-ups' + (t ? ' · mostly ' + t.pair.label : '') + '</span></span></button>';
         }).join('') : '') +
         (quiet.length ? '<p class="t-mini">Not active for over a week</p>' + quiet.map(function (k) {
-          return '<button class="t-chip" data-kid="' + esc(k.child_id) + '"><b>' + esc(k.name) + '</b><span>last active ' + ago(k.last_active) + '</span></button>';
+          return '<button class="t-chip" data-kid="' + esc(k.child_id) + '">' + avatarChip(k, 36) + '<span class="t-chip-txt"><b>' + esc(k.name) + '</b><span>last active ' + esc(ago(k.last_active)) + '</span></span></button>';
         }).join('') : '')
       : none('Nobody needs attention yet.');
     Array.prototype.forEach.call(document.querySelectorAll('#tAttention [data-kid]'), function (b2) {
@@ -546,11 +603,11 @@
     var rows = kids.filter(function (k) { return !q || String(k.name).toLowerCase().indexOf(q) > -1; });
     $('#tStudents').innerHTML = rows.length ? rows.map(function (k) {
       var t = topPair(k.errors);
-      return '<tr data-kid="' + esc(k.child_id) + '"><td><span class="t-av" style="background:hsl(' + hue(k.name) + ' 55% 38%)">' + esc(initials(k.name)) + '</span> ' + esc(k.name) + '</td>' +
-        '<td>' + (k.age || '—') + '</td><td>' + esc(ago(k.last_active)) + '</td><td>' + (k.sessions || 0) + '</td>' +
+      return '<tr data-kid="' + esc(k.child_id) + '"><td>' + avatarChip(k) + esc(k.name) + '</td>' +
+        '<td>' + (k.age || '—') + '</td><td>' + esc(ago(k.last_active)) + '</td>' +
         '<td>' + (k.worlds || 0) + ' / 6</td>' +
         '<td>' + (t ? '<span class="pair-dot" style="background:' + t.pair.colour + '"></span>' + t.pair.label : '<span class="t-none">—</span>') + '</td>' +
-        '<td>' + totalErrors(k) + '</td></tr>';
+        '<td>' + totalErrors(k) + '</td><td>' + (k.sessions || 0) + '</td></tr>';
     }).join('') : '<tr><td colspan="7" class="t-none">No students yet.</td></tr>';
     Array.prototype.forEach.call(document.querySelectorAll('#tStudents tr[data-kid]'), function (tr) {
       tr.onclick = function () { openStudent(tr.dataset.kid); };
@@ -563,12 +620,12 @@
   }
 
   /* ══ one student ═════════════════════════════════════════ */
-  var current = null;   /* { kid, data, M } */
 
   function openStudent(id) {
-    var kid = kids.filter(function (k) { return k.child_id === id; })[0];
+    var kid = kids.concat(removedKids).filter(function (k) { return k.child_id === id; })[0];
     if (!kid) return;
     $('#tOverview').hidden = true;
+    $('#tRemoved').hidden = true;
     $('#tStudent').hidden = false;
     $('#tName').textContent = kid.name;
     $('#tMeta').textContent = 'Loading…';
@@ -578,14 +635,37 @@
       renderStudent();
     }, function (err) { $('#tMeta').textContent = err.message; });
   }
-  $('#tBack').addEventListener('click', function () { current = null; showOverview(); });
+  $('#tBack').addEventListener('click', function () { current = null; if (cameFrom === 'removed') showRemoved(); else showOverview(); });
+
+  /* Remove: nothing is deleted. The student moves to "Removed students"
+     with their whole history, and their own device is signed out the
+     next time it checks in. */
+  $('#tRemove').addEventListener('click', function () {
+    if (!current) return;
+    var kid = current.kid;
+    if (!window.confirm('Remove ' + kid.name + '?\n\nTheir device will be signed out and they will have to make a new account. ' +
+        'Their history stays here, on the Removed students page.')) return;
+    var btn = $('#tRemove'); btn.disabled = true; btn.textContent = 'Removing...';
+    Source.remove(password, kid.child_id).then(function () {
+      current = null;
+      return load();
+    }).then(function () { showRemoved(); }, function (err) {
+      window.alert(/404|PGRST|function/i.test(err.message)
+        ? 'The database needs updating first. Run the latest _server/supabase-schema.sql in Supabase (see _server/README.md).'
+        : err.message);
+    }).then(function () { btn.disabled = false; btn.textContent = 'Remove student'; });
+  });
 
   function renderStudent() {
     var kid = current.kid, M = current.M, P = M.pairs;
     var list = PAIRS.map(function (p) { return P[p.k]; });
 
-    $('#tAvatar').textContent = initials(kid.name);
-    $('#tAvatar').style.background = 'hsl(' + hue(kid.name) + ' 55% 38%)';
+    $('#tAvatar').innerHTML = S.avatarSVG ? S.avatarSVG(kid.avatar || 'owl', 56) : '';
+    $('#tAvatar').style.background = 'none';
+    $('#tRemove').hidden = !!kid.removed_at;
+    var note = $('#tRemovedNote');
+    note.hidden = !kid.removed_at;
+    note.textContent = kid.removed_at ? 'Removed on ' + ago(kid.removed_at) + '. This is their saved history; if they came back they have a new account.' : '';
     $('#tName').textContent = kid.name;
     $('#tMeta').textContent = (kid.age ? 'Age ' + kid.age + ' · ' : '') + 'last active ' + ago(kid.last_active) +
       (kid.created_at ? ' · joined ' + shortDate(kid.created_at) : '');
@@ -837,4 +917,5 @@
     var table = $('#tExpTable').value;
     download('spark-' + safe(current.kid.name) + '-' + table + '.csv', toCsv(current.data[table] || []), 'text/csv');
   };
+  start();
 })();

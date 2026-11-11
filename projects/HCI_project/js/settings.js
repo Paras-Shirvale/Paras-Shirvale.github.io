@@ -523,10 +523,21 @@
          so nothing diagnostic ever appears on the child's screen */
       { icon: 'spark',   label: 'Show me around',
         note: 'The guided tour of where everything is', go: function () { S.startTour(); } },
-      { icon: 'lock',    label: 'For grown-ups',
-        note: 'Teacher and parent dashboard (needs the teacher password)',
-        go: function () { location.href = 'teacher.html'; } }
     ];
+    /* A student's menu has nothing about teachers. A teacher's has the
+       Students page and a way out. */
+    if (S.teacherMode) {
+      items.push({ icon: 'home', label: 'Students',
+        note: "Every student's results, from any device",
+        go: function () { location.href = 'teacher.html'; } });
+      items.push({ icon: 'lock', label: 'Sign out',
+        note: 'Back to the login page',
+        go: function () { try { sessionStorage.clear(); } catch (e) {} location.href = 'login.html'; } });
+    } else {
+      items.push({ icon: 'lock', label: 'Switch user',
+        note: 'Go back to the login page',
+        go: function () { try { sessionStorage.removeItem('spark.role'); } catch (e) {} location.href = 'login.html?switch=1'; } });
+    }
 
     S.sheet(
       '<h2>Menu</h2>' +
@@ -540,7 +551,7 @@
           '</button>';
         }).join('') +
       '</div>' +
-      '<button class="btn btn-sm" id="menuReset" style="margin-top:14px">Start over</button>',
+      (S.teacherMode ? '' : '<button class="btn btn-sm" id="menuReset" style="margin-top:14px">Start over</button>'),
       function () {
         S.$$('[data-menu]').forEach(function (b) {
           b.addEventListener('click', function () {

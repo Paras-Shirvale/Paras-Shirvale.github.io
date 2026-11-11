@@ -13,27 +13,21 @@
 <header class="t-top">
   <div class="t-top-in">
     <b class="t-brand">spark<span>.ai</span></b>
-    <span class="t-tag">Teacher / parent view</span>
+    <nav class="t-nav" aria-label="Teacher pages">
+      <button class="t-navb" id="navStudents" type="button" aria-current="page">Students</button>
+      <button class="t-navb" id="navRemoved" type="button">Removed students <span class="t-count" id="navRemovedN" hidden></span></button>
+      <a class="t-navb" href="index.html">Website</a>
+    </nav>
     <span class="t-flex"></span>
     <span class="t-source" id="tSource"></span>
-    <button class="t-btn t-ghost" id="tLogout" hidden>Sign out</button>
-    <a class="t-btn t-ghost" href="index.html">Back to the app</a>
+    <button class="t-btn t-ghost" id="tLogout">Sign out</button>
   </div>
 </header>
 
 <main class="t-main">
 
-  <!-- ── password ──────────────────────────────────────────── -->
-  <section id="tLogin" class="t-login">
-    <h1>Teacher and parent dashboard</h1>
-    <p class="t-sub">Everything Spark measures about each student: which letters they confuse,
-      how they respond to help, and how it changes over time. Students never see this page.</p>
-    <form class="t-card t-pw" id="tPwForm">
-      <label>Password <input type="password" id="tPass" autocomplete="current-password" autofocus required></label>
-      <button class="t-btn" type="submit">Open</button>
-      <p class="t-err" id="tPwErr"></p>
-    </form>
-  </section>
+  <!-- the password is asked on login.html; without it this page sends you there -->
+  <p id="tChecking" class="t-sub" style="padding:40px 0">Checking your login...</p>
 
   <!-- ── all students ──────────────────────────────────────── -->
   <section id="tOverview" hidden>
@@ -75,8 +69,25 @@
       <div class="t-tablehead"><h2>Students</h2><input type="search" id="tSearch" placeholder="Search by name"></div>
       <div class="t-table-wrap">
         <table class="t-pairs t-students">
-          <thead><tr><th>Name</th><th>Age</th><th>Last active</th><th>Sessions</th><th>Worlds explored</th><th>Most confused</th><th>Mix-ups</th></tr></thead>
+          <thead><tr><th>Name</th><th>Age</th><th>Last active</th><th>Worlds explored</th><th>Most confused</th><th>Mix-ups</th><th>Sessions</th></tr></thead>
           <tbody id="tStudents"></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+
+  <!-- ── removed students (their history is kept here) ────────── -->
+  <section id="tRemoved" hidden>
+    <div class="t-head"><div>
+      <h1>Removed students</h1>
+      <p class="t-sub">These students were removed. Their devices were signed out and they had to make a new account.
+        Everything they did before is kept here so you can still look at it.</p>
+    </div></div>
+    <section class="t-card">
+      <div class="t-table-wrap">
+        <table class="t-pairs t-students">
+          <thead><tr><th>Name</th><th>Age</th><th>Removed on</th><th>Last active</th><th>Mix-ups</th><th>Sessions</th></tr></thead>
+          <tbody id="tRemovedRows"></tbody>
         </table>
       </div>
     </section>
@@ -84,13 +95,15 @@
 
   <!-- ── one student ───────────────────────────────────────── -->
   <section id="tStudent" hidden>
-    <button class="t-btn t-ghost" id="tBack">← All students</button>
+    <button class="t-btn t-ghost" id="tBack">← Back</button>
+    <p class="t-removed-note" id="tRemovedNote" hidden></p>
     <div class="t-head" style="margin-top:14px">
       <div class="t-who">
         <span class="t-avatar" id="tAvatar"></span>
         <div><h1 id="tName"></h1><p class="t-sub" id="tMeta"></p></div>
       </div>
       <div class="t-exports">
+        <button class="t-btn t-danger" id="tRemove">Remove student</button>
         <button class="t-btn t-ghost" id="tExpJson">This student (JSON)</button>
         <select id="tExpTable" aria-label="Table to export">
           <option value="sessions">sessions</option><option value="confusion_events">confusion_events</option>
@@ -206,6 +219,7 @@
 window.Spark = { norm: function (w) { return String(w == null ? '' : w).toLowerCase().replace(/[^a-z']/g, ''); } };
 </script>
 <script src="js/config.js"></script>
+<script src="js/avatars.js"></script>
 <script src="js/families.js"></script>
 <script src="js/teacher.js"></script>
 </body>

@@ -43,11 +43,12 @@
                 'help_events', 'submissions'];
 
   var store = { tables: {}, queue: [] };
-  try { store = JSON.parse(localStorage.getItem(KEY)) || store; } catch (e) {}
+  if (!S.teacherMode) { try { store = JSON.parse(localStorage.getItem(KEY)) || store; } catch (e) {} }
   TABLES.forEach(function (t) { store.tables[t] = store.tables[t] || []; });
   store.queue = store.queue || [];
 
   function persist() {
+    if (S.teacherMode) return;           /* a teacher looking round records nothing */
     try { localStorage.setItem(KEY, JSON.stringify(store)); }
     catch (e) {
       /* storage full: drop the oldest half of every table */
@@ -95,7 +96,7 @@
      Called once, when the welcome finishes. After this the name
      and age are locked until "Start over". */
   DB.registerChild = function () {
-    if (S.P.registered || !S.P.name) return;
+    if (S.teacherMode || S.P.registered || !S.P.name) return;
     S.P.registered = true;
     S.save();
     DB.log('children', { age: S.P.age || null, avatar: S.P.avatar || '' });
@@ -312,7 +313,7 @@
   }
 
   function scheduleSync() {
-    if (!cfg()) return;
+    if (!cfg() || S.teacherMode) return;
     clearTimeout(syncTimer);
     syncTimer = setTimeout(DB.sync, 2500);
   }
@@ -340,7 +341,7 @@
 
   DB.sync = async function () {
     var c = cfg();
-    if (!c || syncing || wiped || !store.queue.length || navigator.onLine === false) return;
+    if (!c || S.teacherMode || syncing || wiped || !store.queue.length || navigator.onLine === false) return;
     syncing = true;
     var batch = store.queue.slice(0, 200);
     var byTable = {};
@@ -425,6 +426,34 @@
     savePending(left);
   };
 
-  setTimeout(function () { DB.sync(); DB.flushResets(); }, 4000);
+  /* ── "your teacher closed this account" ─────────────────
+     A teacher can remove a student. Their history stays with the
+     teacher; this device asks the server (child_status) and, when the
+     answer is yes, clears itself so the next person signs in as a brand
+     new student. Checked on opening, when the tab comes back, and every
+     minute. A network failure is never taken as "removed". */
+  var removedHandled = false;
+  DB.checkRemoved = async function () {
+    var c = cfg(), id = S.P.childId;
+    if (S.teacherMode || !c || !id || removedHandled || navigator.onLine === false) return false;
+    try {
+      var res = await fetch(c.url + '/rest/v1/rpc/child_status', {
+        method: 'POST', headers: authHeaders(c.key), body: JSON.stringify({ p_child: id })
+      });
+      if (!res.ok) return false;
+      var out = await res.json();
+      if (!out || out.removed !== true) return false;
+    } catch (e) { return false; }
+    removedHandled = true;
+    DB.wipeLocal();            /* no resetRemote: the teacher keeps the history */
+    S.reset();
+    try { sessionStorage.removeItem('spark.role'); } catch (e) {}
+    if (S.onRemoved) S.onRemoved(); else location.replace('login.html?removed=1');
+    return true;
+  };
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) DB.checkRemoved(); });
+  setInterval(DB.checkRemoved, 60000);
+
+  setTimeout(function () { DB.sync(); DB.flushResets(); DB.checkRemoved(); }, 4000);
 
 })(window.Spark);

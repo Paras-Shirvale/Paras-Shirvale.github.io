@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spark - log in</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/login.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23E09200'/%3E%3Cpath d='M12 4l1.8 5.2L19 11l-4.4 1.8L12 18l-1.8-5.2L5.2 11l5-1.5z' fill='%232A1F00'/%3E%3C/svg%3E">
+</head>
+<body class="lg-body">
+
+<main class="lg">
+  <div class="lg-brand"><span class="lg-mark" id="lgMark"></span><b>Spark</b></div>
+  <h1 id="lgTitle">Who is here today?</h1>
+  <p class="lg-sub" id="lgSub">Pick the one that is you.</p>
+
+  <p class="lg-notice" id="lgNotice" hidden></p>
+
+  <!-- step 1: choose -->
+  <div class="lg-choose" id="lgChoose">
+    <button class="lg-card lg-student" id="lgStudent" type="button">
+      <span class="lg-face" id="lgStudentFace"></span>
+      <b id="lgStudentTitle">I'm a student</b>
+      <span id="lgStudentNote">Read, write and play with Spark.</span>
+    </button>
+    <button class="lg-card lg-teacher" id="lgTeacher" type="button">
+      <span class="lg-face" id="lgTeacherFace"></span>
+      <b>I'm a teacher or parent</b>
+      <span>See how every student is getting on.</span>
+    </button>
+  </div>
+
+  <!-- step 2 (teacher): password -->
+  <form class="lg-form" id="lgForm" hidden>
+    <label for="lgPass">Teacher password</label>
+    <input id="lgPass" type="password" autocomplete="current-password" required>
+    <p class="lg-err" id="lgErr" role="alert"></p>
+    <div class="lg-row">
+      <button class="lg-btn" type="submit" id="lgGo">Log in</button>
+      <button class="lg-btn lg-ghost" type="button" id="lgBack">Back</button>
+    </div>
+  </form>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/avatars.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = window.Spark, CFG = window.SPARK_CONFIG || {};
+  var $ = function (id) { return document.getElementById(id); };
+  var q = new URLSearchParams(location.search);
+
+  /* little pictures: a bear for the teacher, the student's own face if known */
+  var mascot = '<svg viewBox="0 0 100 100" width="40" height="40" aria-hidden="true"><path d="M50 6 L61 36 L94 38 L68 58 L77 91 L50 72 L23 91 L32 58 L6 38 L39 36 Z" fill="#FFC93C" stroke="#E09200" stroke-width="3" stroke-linejoin="round"/><ellipse cx="40" cy="50" rx="4.5" ry="6" fill="#2B2118"/><ellipse cx="60" cy="50" rx="4.5" ry="6" fill="#2B2118"/><path d="M42 62 Q50 70 58 62" stroke="#2B2118" stroke-width="3" fill="none" stroke-linecap="round"/></svg>';
+  $('lgMark').innerHTML = mascot;
+  $('lgTeacherFace').innerHTML = S.avatarSVG('owl', 72);
+
+  /* a student who already has a profile on this device */
+  var mine = null;
+  try { mine = JSON.parse(localStorage.getItem('spark.profile.v1') || 'null'); } catch (e) {}
+  if (mine && mine.name) {
+    $('lgStudentFace').innerHTML = S.avatarSVG(mine.avatar || 'fox', 72);
+    $('lgStudentTitle').textContent = 'Continue as ' + mine.name;
+    $('lgStudentNote').textContent = 'Back to your reading and writing.';
+  } else {
+    $('lgStudentFace').innerHTML = S.avatarSVG('fox', 72);
+    $('lgStudentNote').textContent = 'New here? You will pick a name, an age and a picture.';
+  }
+
+  if (q.get('removed')) {
+    var n = $('lgNotice');
+    n.hidden = false;
+    n.textContent = 'Your teacher has closed your old account. Log in again to start a new one.';
+  }
+
+  $('lgStudent').addEventListener('click', function () {
+    try { sessionStorage.setItem('spark.role', 'student'); sessionStorage.removeItem('spark.teacher.pw'); } catch (e) {}
+    location.href = 'index.html?as=student';
+  });
+
+  $('lgTeacher').addEventListener('click', function () {
+    $('lgChoose').hidden = true; $('lgForm').hidden = false;
+    $('lgTitle').textContent = 'Teacher and parent login';
+    $('lgSub').textContent = 'Enter the teacher password.';
+    $('lgPass').focus();
+  });
+  $('lgBack').addEventListener('click', function () {
+    $('lgForm').hidden = true; $('lgChoose').hidden = false; $('lgErr').textContent = '';
+    $('lgTitle').textContent = 'Who is here today?'; $('lgSub').textContent = 'Pick the one that is you.';
+  });
+
+  /* Check the password the same way the Students page does: with the
+     database's own password check when it is connected, or the local one
+     when it is not. */
+  function check(pw) {
+    var url = CFG.SUPABASE_URL && CFG.SUPABASE_ANON_KEY ? CFG.SUPABASE_URL.replace(/\/$/, '') : '';
+    if (!url) return Promise.resolve(pw === 'hci123');
+    var h = { apikey: CFG.SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    if (/^eyJ/.test(CFG.SUPABASE_ANON_KEY)) h.Authorization = 'Bearer ' + CFG.SUPABASE_ANON_KEY;
+    return fetch(url + '/rest/v1/rpc/teacher_children', { method: 'POST', headers: h, body: JSON.stringify({ p_password: pw }) })
+      .then(function (r) {
+        if (r.ok) return true;
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (/wrong password/i.test(String(j.message || ''))) return false;
+          throw new Error('Could not reach the database (' + r.status + ').');
+        });
+      }, function () { throw new Error('Could not reach the database. Check the internet connection.'); });
+  }
+
+  $('lgForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var pw = $('lgPass').value.trim(), err = $('lgErr'), go = $('lgGo');
+    err.textContent = ''; go.disabled = true; go.textContent = 'Checking...';
+    check(pw).then(function (good) {
+      if (!good) { err.textContent = 'That password is not right.'; return; }
+      try { sessionStorage.setItem('spark.teacher.pw', pw); sessionStorage.setItem('spark.role', 'teacher'); } catch (x) {}
+      location.href = q.get('next') === 'teacher' ? 'teacher.html' : 'index.html';
+    }, function (x) { err.textContent = x.message; })
+    .then(function () { go.disabled = false; go.textContent = 'Log in'; });
+  });
+})();
+</script>
+</body>
+</html>

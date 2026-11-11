@@ -108,3 +108,23 @@ small{font-size:11.5px}
 .insight b{font-size:14.5px}
 .insight p{margin:2px 0 3px;color:#D5D2CC;font-size:14px}
 .insight small{color:var(--dim)}
+
+/* pages in the header, avatars, removing a student */
+.t-nav{display:flex;gap:4px;margin-left:10px}
+.t-navb{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:0;background:transparent;
+  font:inherit;font-weight:700;color:var(--ink-2);cursor:pointer;text-decoration:none}
+.t-navb:hover{background:var(--surface-2,#eee)}
+.t-navb.on{background:var(--teal,#23835C);color:#fff}
+.t-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#E2678C;color:#fff;font-size:12px}
+.t-count[hidden]{display:none}
+.t-av{width:auto;height:auto;background:none;border-radius:0;margin-right:9px;vertical-align:middle;display:inline-flex}
+.t-av svg{display:block;border-radius:50%}
+.t-chip{flex-direction:row;align-items:center;gap:10px}
+.t-chip-txt{display:flex;flex-direction:column;align-items:flex-start;font-size:inherit}
+.t-chip-txt b{font-size:14.5px}
+.t-avatar{background:none;width:auto;height:auto;border-radius:0;display:inline-flex}
+.t-btn.t-danger{background:transparent;color:#B3261E;border-color:#B3261E}
+.t-btn.t-danger:hover{background:#B3261E;color:#fff}
+.t-btn[hidden]{display:none}
+.t-removed-note{margin:10px 0 0;padding:10px 14px;border-radius:10px;background:#FFF2D6;border:1px solid #E09200;font-weight:600}
+.t-removed-note[hidden]{display:none}

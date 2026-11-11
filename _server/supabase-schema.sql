@@ -30,6 +30,9 @@ create table if not exists children (
   avatar     text,
   created_at timestamptz default now()
 );
+-- a teacher can remove a student: the row stays (history is kept for the
+-- teacher) and the student's own device is told to start a fresh account
+alter table children add column if not exists removed_at timestamptz;
 
 create table if not exists sessions (
   id           uuid primary key,
@@ -209,7 +212,7 @@ begin
     select jsonb_agg(to_jsonb(t) order by lower(coalesce(t.name, ''))) from (
       select ids.child_id,
              coalesce(c.child_name, (select s.child_name from sessions s where s.child_id = ids.child_id and s.child_name <> '' limit 1)) as name,
-             c.age, c.avatar, c.created_at,
+             c.age, c.avatar, c.created_at, c.removed_at,
              (select count(*) from sessions s where s.child_id = ids.child_id and s.completed) as sessions,
              (select max(s.ended_at) from sessions s where s.child_id = ids.child_id) as last_active,
              (select count(distinct s.world) from sessions s
@@ -276,10 +279,38 @@ begin
   delete from children          where child_id = p_child;
 end $$;
 
+-- Teacher removes a student. NOTHING is deleted: the student moves to the
+-- teacher's "Removed students" page with all their history, and the
+-- student's own device (which asks child_status) clears itself and sends
+-- them to sign in again as a brand-new student.
+create or replace function teacher_remove_child(p_password text, p_child uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not teacher_ok(p_password) then
+    raise exception 'wrong password' using errcode = '28000';
+  end if;
+  insert into children (id, child_id, child_name, created_at)
+    select gen_random_uuid(), p_child,
+           coalesce((select s.child_name from sessions s where s.child_id = p_child and s.child_name <> '' limit 1), 'Unnamed'),
+           now()
+    where not exists (select 1 from children c where c.child_id = p_child);
+  update children set removed_at = coalesce(removed_at, now()) where child_id = p_child;
+end $$;
+
+-- The student's device asks only this: "am I still a student here?"
+-- It reveals nothing but a yes/no for an id only that device knows.
+create or replace function child_status(p_child uuid) returns jsonb
+language sql security definer set search_path = public as $$
+  select jsonb_build_object('removed',
+    exists (select 1 from children c where c.child_id = p_child and c.removed_at is not null));
+$$;
+
 revoke execute on function teacher_ok(text), teacher_children(text), teacher_child_data(text, uuid),
-                           teacher_export(text), reset_child(uuid) from public, anon, authenticated;
+                           teacher_export(text), reset_child(uuid), teacher_remove_child(text, uuid),
+                           child_status(uuid) from public, anon, authenticated;
 grant execute on function teacher_children(text), teacher_child_data(text, uuid),
-                          teacher_export(text), reset_child(uuid) to anon, authenticated;
+                          teacher_export(text), reset_child(uuid), teacher_remove_child(text, uuid),
+                          child_status(uuid) to anon, authenticated;
 
 -- ── the per-pair profile, rebuilt after each session ends ───
 create or replace function refresh_confusion_profile(p_child uuid)

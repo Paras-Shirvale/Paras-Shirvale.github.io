@@ -1,0 +1,29 @@
+/* login.html - choose student or teacher */
+.lg-body{min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--font-ui,system-ui,sans-serif)}
+.lg{max-width:760px;margin:0 auto;padding:40px 18px 60px;text-align:center}
+.lg-brand{display:inline-flex;align-items:center;gap:8px;font-size:26px;margin-bottom:18px}
+.lg-mark{display:inline-flex}
+.lg h1{font-size:30px;margin:0 0 6px}
+.lg-sub{color:var(--ink-2);margin:0 0 24px;font-size:16px}
+.lg-notice{background:var(--amber-soft);border:2px solid var(--amber);border-radius:14px;padding:12px 16px;font-weight:600;margin:0 auto 20px;max-width:520px}
+.lg-choose{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.lg-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 18px;border-radius:22px;
+  background:var(--surface);border:3px solid var(--line);cursor:pointer;font:inherit;color:inherit;text-align:center;
+  transition:transform .12s,border-color .12s,box-shadow .12s}
+.lg-card b{font-size:21px}
+.lg-card span:last-child{color:var(--ink-2);font-size:15px;line-height:1.35}
+.lg-card:hover,.lg-card:focus-visible{transform:translateY(-3px);box-shadow:0 8px 22px rgba(0,0,0,.1);outline:none}
+.lg-student:hover,.lg-student:focus-visible{border-color:var(--violet)}
+.lg-teacher:hover,.lg-teacher:focus-visible{border-color:var(--moss)}
+.lg-face{display:inline-flex}
+.lg-form{max-width:380px;margin:0 auto;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:20px;padding:22px}
+.lg-form label{display:block;font-weight:700;margin-bottom:6px}
+.lg-form input{width:100%;padding:12px 14px;font:inherit;font-size:17px;border:2px solid var(--line);border-radius:12px;background:#fff;color:inherit;box-sizing:border-box}
+.lg-form input:focus{outline:none;border-color:var(--moss)}
+.lg-err{color:#B3261E;font-weight:600;min-height:22px;margin:8px 0}
+.lg-row{display:flex;gap:10px}
+.lg-btn{flex:1;padding:12px 16px;border-radius:12px;border:0;background:var(--moss);color:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+.lg-btn:disabled{opacity:.6;cursor:default}
+.lg-ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+[hidden]{display:none!important}
+@media (max-width:560px){.lg-choose{grid-template-columns:1fr}}

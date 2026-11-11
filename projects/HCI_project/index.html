@@ -33,6 +33,7 @@
       <button class="tab" data-go="worlds"><span class="i tab-ico" data-icon="book" data-icon-size="20"></span><span class="tab-txt">Let's read</span></button>
       <button class="tab" data-go="write"><span class="i tab-ico" data-icon="pencil" data-icon-size="20"></span><span class="tab-txt">Let's write</span></button>
       <button class="tab" data-go="progress"><span class="i tab-ico" data-icon="trophy" data-icon-size="20"></span><span class="tab-txt">Progress</span></button>
+      <a class="tab tab-students" id="tabStudents" href="teacher.html" hidden><span class="i tab-ico" data-icon="home" data-icon-size="20"></span><span class="tab-txt">Students</span></a>
     </nav>
 
     <div class="topbar-end">
@@ -42,6 +43,11 @@
     </div>
   </div>
 </header>
+
+<div class="teacher-strip" id="teacherStrip" hidden>
+  You are looking round as a teacher. Nothing you do here is saved or counted as a student's work.
+  <a href="teacher.html">Open the Students page</a>
+</div>
 
 <main id="main">
 
@@ -442,6 +448,7 @@
 
 <!-- ══ SCRIPTS (order matters) ══════════════════════════════════ -->
 <script src="js/config.js"></script>
+<script src="js/avatars.js"></script>
 <script src="js/store.js"></script>
 <script src="js/lexicon.js"></script>
 <script src="js/pictures.js"></script>

@@ -140,14 +140,34 @@ window.Spark = window.Spark || {};
     return p;
   }
 
-  S.P = load();
+  /* A teacher or parent looking round the website. They see the same
+     pages a student does, but with a throw-away profile that is never
+     saved and never recorded, so nothing they click becomes a student's
+     data (and a student's saved profile on the same computer is left
+     exactly as it was). */
+  var role = '';
+  try { role = sessionStorage.getItem('spark.role') || ''; } catch (e) {}
+  S.teacherMode = role === 'teacher';
+  S.blankProfile = blank;
+
+  if (S.teacherMode) {
+    S.P = blank();
+    S.P.name = 'Teacher';
+    S.P.avatar = 'owl';
+    S.P.age = 10;
+    S.P.registered = true;
+  } else {
+    S.P = load();
+  }
 
   S.save = function () {
+    if (S.teacherMode) return;
     try { localStorage.setItem(KEY, JSON.stringify(S.P)); }
     catch (e) { /* storage full or blocked; the session still works */ }
   };
 
   S.reset = function () {
+    if (S.teacherMode) return;
     S.P = blank();
     try { localStorage.removeItem(KEY); } catch (e) {}
   };

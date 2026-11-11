@@ -99,6 +99,21 @@
 
   /* ── boot ───────────────────────────────────────────── */
   function boot() {
+    /* Who is here? A teacher signed in on the login page, a student who
+       chose "I'm a student" there, or a student already on this device.
+       Anyone else goes to the login page first. */
+    var role = '';
+    try {
+      if (/[?&]as=student/.test(location.search)) sessionStorage.setItem('spark.role', 'student');
+      role = sessionStorage.getItem('spark.role') || '';
+    } catch (e) {}
+    if (!S.teacherMode && !S.P.name && role !== 'student') { location.replace('login.html'); return; }
+    if (S.teacherMode) {
+      document.body.classList.add('teacher-mode');
+      var ts = document.getElementById('tabStudents'); if (ts) ts.hidden = false;
+      var st = document.getElementById('teacherStrip'); if (st) st.hidden = false;
+    }
+
     S.applySettings();
 
     S.wireShell();

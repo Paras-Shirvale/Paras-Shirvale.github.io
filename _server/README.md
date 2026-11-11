@@ -112,3 +112,15 @@ Spark detects it automatically; nothing in the website needs changing.
 - The Worker only answers requests from `ALLOWED_ORIGINS` and caps message size
   and reply length. Use a free-tier key (Groq needs no card) so there is never a bill.
 - If the key ever leaks, revoke it at console.groq.com and replace the secret.
+
+## Updating the database for "remove student" (one-time)
+
+The login page, removing students and the Removed students page need two new database functions. In Supabase:
+SQL Editor -> New query -> paste the whole of `_server/supabase-schema.sql` -> Run. It is safe to run again; it only adds
+what is missing (a `removed_at` column on `children`, `teacher_remove_child`, `child_status`). Until you do, everything
+else keeps working and the Remove button says the database needs updating.
+
+How removal works: the teacher presses **Remove student** on that student's page. Nothing is deleted. The student moves
+to **Removed students** with all their history. Their own device asks the server about itself (when the page opens,
+when the tab comes back, and every minute), clears itself, and goes to the login page, where they have to make a new
+account (a new id, so none of the old details follow them).
