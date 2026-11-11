@@ -358,3 +358,6 @@ button.mix-chip:hover{border-color:var(--violet)}
 .signup-top a:hover{text-decoration:underline}
 .signup-card{width:100%;max-width:640px;margin:8px auto 40px;background:var(--surface);border:2px solid var(--line);border-radius:26px;padding:26px;box-sizing:border-box}
 .signup-card h1{font-size:23px;margin:0 0 14px;text-align:center}
+
+.theme-row{margin:0 0 14px}
+.prof-section .theme-row{margin:0}

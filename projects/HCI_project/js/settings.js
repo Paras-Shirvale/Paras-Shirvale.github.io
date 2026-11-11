@@ -510,6 +510,26 @@
      A menu button says "there is more in here", which is true, and
      each destination is named in words rather than guessed from a
      symbol. */
+  /* Light / Dark / Auto, in the menu and on the profile page, not only
+     down inside Reading settings. */
+  S.themeControl = function () {
+    var cur = S.P.settings.theme || 'light';
+    return '<div class="srow theme-row"><label>Page colours</label><div class="seg" data-theme-seg>' +
+      [['light', 'Light'], ['dark', 'Dark'], ['auto', 'Auto']].map(function (t) {
+        return '<button type="button" data-theme-quick="' + t[0] + '" aria-pressed="' + (cur === t[0]) + '">' + t[1] + '</button>';
+      }).join('') + '</div><p class="srow-note">Auto follows your device.</p></div>';
+  };
+  S.wireThemeControl = function (root) {
+    S.$$('[data-theme-quick]', root).forEach(function (b) {
+      b.addEventListener('click', function () {
+        S.P.settings.theme = b.dataset.themeQuick;
+        S.save(); S.applySettings();
+        S.$$('[data-theme-quick]', root).forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        if (S.paintScene) S.paintScene();
+      });
+    });
+  };
+
   S.openMenu = function () {
     var items = [
       { icon: 'book',    label: 'Reading settings',
@@ -541,6 +561,7 @@
 
     S.sheet(
       '<h2>Menu</h2>' +
+      S.themeControl() +
       '<div class="menu-list">' +
         items.map(function (it, i) {
           return '<button class="menu-item" data-menu="' + i + '">' +
@@ -560,6 +581,7 @@
             if (it && it.go) setTimeout(it.go, 120);
           });
         });
+        S.wireThemeControl(S.$('#sheet'));
         var reset = S.$('#menuReset');
         if (reset) reset.addEventListener('click', S.confirmReset);
       }

@@ -45,7 +45,11 @@
     decoding: 'Sounding a word out', 'word-specific': 'A word that keeps catching them',
     'complex-word': 'A long or tricky word', struggle: 'Stuck in the middle of a phrase', 'long-gap': 'A long gap (found on re-listening)'
   };
-  var CUE_LABEL = { visual: 'Visual (pictures, letter shapes)', audio: 'Audio (hearing it)', choice: 'Choice (pick the right one)' };
+  var CUE_LABEL = {
+    picture: 'Picture (seeing what the word is)', audio: 'Hearing it (Spark says the word)',
+    speak: 'Saying it (the child says it)', split: 'Splitting the word into chunks',
+    visual: 'Visual clue (writing help)', choice: 'Choice (pick the right one)'
+  };
 
   /* ── small helpers ──────────────────────────────────── */
   function esc(s) {
@@ -61,7 +65,11 @@
   }
   function f1(v) { return v == null ? '—' : (Math.round(v * 10) / 10).toString(); }
   function byStart(a, b) { return String(a.started_at || a.created_at) < String(b.started_at || b.created_at) ? -1 : 1; }
-  function day(iso) { return String(iso || '').slice(0, 10); }
+  /* the calendar day in the teacher's own time zone, to match the student's streak */
+  function day(iso) {
+    var d = new Date(iso); if (isNaN(d)) return '';
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
   function shortDate(iso) {
     var d = new Date(iso); if (isNaN(d)) return '';
     return d.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
@@ -81,7 +89,7 @@
     return shortDate(iso) + (thisYear ? '' : ' ' + d.getFullYear()) + ' ' + hhmm(d);
   }
   function normKind(c) {
-    return c === 'picture' || c === 'visual' ? 'visual' : c === 'choice' ? 'choice' : 'audio';
+    return CUE_LABEL[c] ? c : (c === 'sound' ? 'audio' : 'audio');
   }
 
   /* ══ where the data comes from ═══════════════════════════ */
@@ -446,7 +454,7 @@
 
     /* which help works */
     var kinds = {};
-    M.he.filter(function (h) { return h.rung !== 'supply'; }).forEach(function (h) {
+    M.he.filter(function (h) { return !(h.rung === 'supply' && h.cue_type !== 'audio'); }).forEach(function (h) {
       var k = normKind(h.cue_type); kinds[k] = kinds[k] || { shown: 0, ok: 0, no: 0 };
       kinds[k].shown++; if (h.resolved) kinds[k].ok++; if (h.dismissed) kinds[k].no++;
     });
@@ -675,8 +683,8 @@
     /* engagement */
     var days = {}; M.done.forEach(function (s) { days[day(s.started_at)] = 1; });
     var streak = 0, dd = new Date();
-    if (!days[dd.toISOString().slice(0, 10)]) dd.setUTCDate(dd.getUTCDate() - 1);
-    while (days[dd.toISOString().slice(0, 10)]) { streak++; dd.setUTCDate(dd.getUTCDate() - 1); }
+    if (!days[day(dd)]) dd.setDate(dd.getDate() - 1);
+    while (days[day(dd)]) { streak++; dd.setDate(dd.getDate() - 1); }
     var explored = PAIRS.filter(function (p) { return M.done.some(function (s) { return s.world === p.id; }); }).length;
     var chapters = 0, badges = [];
     PAIRS.forEach(function (p) {
@@ -758,7 +766,7 @@
 
     /* 5 · which cues work */
     var kinds = {};
-    M.he.filter(function (h) { return h.rung !== 'supply'; }).forEach(function (h) {
+    M.he.filter(function (h) { return !(h.rung === 'supply' && h.cue_type !== 'audio'); }).forEach(function (h) {
       var k = normKind(h.cue_type); kinds[k] = kinds[k] || { shown: 0, ok: 0, no: 0 };
       kinds[k].shown++; if (h.resolved) kinds[k].ok++; if (h.dismissed) kinds[k].no++;
     });
@@ -885,7 +893,7 @@
   /* ══ export for the study ════════════════════════════════ */
   function download(name, text, type) {
     var a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([text], { type: type }));
+    a.href = URL.createObjectURL(new Blob([text], { type: type }));  /* text or bytes */
     a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
   }
@@ -909,14 +917,27 @@
     })), 'text/csv');
   };
   $('#tExpAllJson').onclick = function () { Source.all(password).then(function (t) { download('spark-all-data.json', JSON.stringify(t, null, 2), 'application/json'); }); };
+  /* one Excel file with a tab for each kind of data (a CSV cannot hold tabs) */
+  var TAB_NAME = { children: 'Students', sessions: 'Sessions', confusion_events: 'Letter mix-ups', timing_events: 'Word timings',
+                   pause_events: 'Pauses', help_events: 'Help used', submissions: 'Readings and sentences' };
+  function workbook(tables, order, filename) {
+    var sheets = order.map(function (k) { return { name: TAB_NAME[k], rows: tables[k] || [] }; });
+    download(filename, window.SparkXlsx.makeXlsx(sheets), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  }
+  var ORDER = ['sessions', 'confusion_events', 'timing_events', 'pause_events', 'help_events', 'submissions'];
+
   $('#tExpAllCsv').onclick = function () {
     var table = $('#tExpAllTable').value;
-    Source.all(password).then(function (t) { download('spark-' + table + '-all-students.csv', toCsv(t[table] || []), 'text/csv'); });
+    Source.all(password).then(function (t) {
+      if (table === 'all') workbook(t, ['children'].concat(ORDER), 'spark-all-students-all-data.xlsx');
+      else download('spark-' + table + '-all-students.csv', toCsv(t[table] || []), 'text/csv');
+    });
   };
   $('#tExpJson').onclick = function () { if (current) download('spark-' + safe(current.kid.name) + '.json', JSON.stringify(current.data, null, 2), 'application/json'); };
   $('#tExpCsv').onclick = function () {
     if (!current) return;
     var table = $('#tExpTable').value;
+    if (table === 'all') { workbook(current.data, ORDER, 'spark-' + safe(current.kid.name) + '-all-data.xlsx'); return; }
     download('spark-' + safe(current.kid.name) + '-' + table + '.csv', toCsv(current.data[table] || []), 'text/csv');
   };
   start();

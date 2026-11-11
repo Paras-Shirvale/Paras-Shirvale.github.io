@@ -495,17 +495,25 @@
      It counts as having helped if the child carries on reading
      straight afterwards. */
   var TOOL_HELP = {
-    split:   ['prompt', 'visual'],
-    picture: ['cue', 'visual'],
-    say:     ['cue', 'speak'],
-    hear:    ['supply', 'audio']
+    /* tool    rung      logged as    cue profile key */
+    split:   ['prompt', 'split',   'parts'],
+    picture: ['cue',    'picture', 'picture'],
+    say:     ['cue',    'speak',   'say'],
+    hear:    ['supply', 'audio',   'sound']
   };
 
   function logHelpUse(tool, word) {
-    if (R.helpOpen && R.helpOpen.h) R.helpOpen.h.close();
+    if (R.helpOpen && R.helpOpen.h) R.helpOpen.h.close();      /* the previous one did not lead anywhere */
     var m = TOOL_HELP[tool];
-    R.helpOpen = { word: S.norm(word), rung: m[0],
+    /* the child's own record of what they reach for: shown now,
+       "worked" if they carry on reading straight afterwards */
+    var key = m[2];
+    S.P.cue[key] = S.P.cue[key] || { shown: 0, worked: 0 };
+    S.P.cue[key].shown++;
+    R.helpOpen = { word: S.norm(word), rung: m[0], cue: key,
                    h: S.DB.help({ rung: m[0], cue_type: m[1], word: word, prefer: R.src.world }) };
+    S.save();
+    S.markFavouredTool();
   }
 
   function resolveHelp(worked) {
@@ -514,31 +522,26 @@
     if (worked) {
       var rec = S.P.words[h.word];
       if (rec) rec.helped = (rec.helped || 0) + 1;
+      if (S.P.cue[h.cue]) S.P.cue[h.cue].worked++;
       if (h.h) h.h.resolve();
     } else if (h.h) h.h.close();
     R.helpOpen = null;
     S.save();
+    S.markFavouredTool();
   }
 
-  /** Called when the child chooses a kind of help themselves. */
+  /** Other parts of the app (hover tip, writing help) credit a cue they showed. */
   S.useCue = function (kind) {
     if (!S.P.cue[kind]) return;
-    if (R && R.helpOpen) {
-      /* they swapped to a different kind than the one offered —
-         credit the one they actually chose */
-      R.helpOpen.cue = kind;
-    } else {
-      /* chosen without being offered: counts as both shown and useful */
-      S.P.cue[kind].shown++;
-      S.P.cue[kind].worked++;
-    }
+    S.P.cue[kind].shown++;
+    S.P.cue[kind].worked++;
     S.save();
     S.markFavouredTool();
   };
 
   S.markFavouredTool = function () {
     var fav = S.favourite();
-    var tool = { picture: 'picture', sound: 'hear', parts: 'split' }[fav];
+    var tool = { picture: 'picture', sound: 'hear', parts: 'split', say: 'say' }[fav];
     S.$$('.tool').forEach(function (b) {
       b.classList.toggle('favoured', !!tool && b.dataset.tool === tool);
     });
@@ -1030,14 +1033,12 @@
     if (tool === 'picture') {
       out.innerHTML = title + '<div class="rail-pic"></div>';
       S.Pictures.render(out.querySelector('.rail-pic'), word, { sentence: S.sentenceFor(word) });
-      S.useCue('picture');
 
     } else if (tool === 'hear') {
       var sent = S.sentenceFor(word);
       out.innerHTML = title + '<button class="btn btn-sm" data-say="' + S.esc(word) + '" data-sent="' + S.esc(sent) + '">' +
         S.Pictures.icon('speaker', 16) + ' Hear it again</button>';
       S.sayWord(word, sent);
-      S.useCue('sound');
 
     } else if (tool === 'split') {
       var parts = S.syllables(word);
@@ -1052,11 +1053,9 @@
           box.innerHTML = p.map(function (x) { return chip(x.text); }).join('');
         }
       });
-      S.useCue('parts');
 
     } else if (tool === 'say') {
       sayIt(word, out, title);
-      S.useCue('sound');
     }
   }
 

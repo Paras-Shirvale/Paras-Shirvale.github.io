@@ -1,3 +1,5 @@
+> The full technical explanation (how each measure works, personalisation, voice check, novelty, limits) is in HOW-SPARK-WORKS.md.
+
 # Spark: models used, where, and what is new
 
 This file lists every model and signal-processing method in Spark, what each one is for, what its known weak

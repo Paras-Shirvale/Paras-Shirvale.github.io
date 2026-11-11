@@ -229,6 +229,8 @@
         statTile('amber', 'spark', P.streak, 'day streak') +
       '</div>' +
 
+      '<section class="card prof-section" id="profTheme">' + S.themeControl() + '</section>' +
+
       '<section class="card prof-section">' +
         '<h2>My badges</h2>' +
         '<div class="badge-row">' + S.WORLDS.map(function (w) {
@@ -242,6 +244,7 @@
       '</section>';
 
     S.$('#profEdit').addEventListener('click', editDetails);
+    S.wireThemeControl(S.$('#profTheme'));
   };
 
   function statTile(colour, icon, n, label) {
@@ -287,6 +290,7 @@
         S.$('#edSave').addEventListener('click', function () {
           S.P.avatar = pick;
           S.save();
+          S.DB.syncAvatar();
           S.closeSheet();
           S.paintAvatars();
           S.paintProfile();

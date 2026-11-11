@@ -382,6 +382,7 @@
     S.P.writings = S.P.writings.slice(0, 40);
     S.save();
 
+    S.bumpStreak();
     if (!again) S.award(5 + right * 2, 'Saved your answers');
     S.P.storyDone = S.P.storyDone || {};
     S.P.storyDone[storyIdx()] = true;

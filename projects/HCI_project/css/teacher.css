@@ -130,3 +130,11 @@ small{font-size:11.5px}
 .t-removed-note[hidden]{display:none}
 
 .t-csv-label{font-size:13px;font-weight:700;color:var(--ink-2);align-self:center}
+
+.t-explain{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.t-explain summary{cursor:pointer;font-weight:700;color:var(--ink-2)}
+.t-explain dl{margin:10px 0 0;display:grid;grid-template-columns:170px 1fr;gap:8px 16px;font-size:14px;line-height:1.5}
+.t-explain dt{font-weight:800}
+.t-explain dd{margin:0;color:var(--ink-2)}
+.t-explain .r-line{display:block;margin-top:3px}
+@media (max-width:700px){.t-explain dl{grid-template-columns:1fr}}

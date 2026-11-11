@@ -17,7 +17,11 @@ window.Spark = window.Spark || {};
   S.$     = function (sel, root) { return (root || document).querySelector(sel); };
   S.$$    = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
   S.clamp = function (n, lo, hi) { return Math.min(hi, Math.max(lo, n)); };
-  S.today = function () { return new Date().toISOString().slice(0, 10); };
+  /* The child's own calendar day (not UTC): a streak must roll over at their
+     midnight, not at 05:30 in India. */
+  function ymd(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  S.today = function () { return ymd(new Date()); };
+  S.ymd = ymd;
 
   /** A stored YYYY-MM-DD as a child would say it. */
   S.niceDate = function (iso) {
@@ -59,7 +63,8 @@ window.Spark = window.Spark || {};
       cue: {
         picture: { shown: 0, worked: 0 },
         sound:   { shown: 0, worked: 0 },
-        parts:   { shown: 0, worked: 0 }
+        parts:   { shown: 0, worked: 0 },
+        say:     { shown: 0, worked: 0 }
       },
 
       /* word -> { seen, stalled, helped, misread, kinds } */
@@ -187,7 +192,8 @@ window.Spark = window.Spark || {};
   S.bumpStreak = function () {
     var d = S.today();
     if (S.P.lastDay === d) return;
-    var yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+    var yd = new Date(); yd.setDate(yd.getDate() - 1);
+    var yesterday = ymd(yd);
     S.P.streak = (S.P.lastDay === yesterday) ? S.P.streak + 1 : 1;
     S.P.lastDay = d;
     S.save();

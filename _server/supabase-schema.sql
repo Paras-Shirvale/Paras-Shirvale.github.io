@@ -33,6 +33,8 @@ create table if not exists children (
 -- a teacher can remove a student: the row stays (history is kept for the
 -- teacher) and the student's own device is told to start a fresh account
 alter table children add column if not exists removed_at timestamptz;
+-- the last time the student's device was open and used (not just the last lesson)
+alter table children add column if not exists last_seen_at timestamptz;
 
 create table if not exists sessions (
   id           uuid primary key,
@@ -214,7 +216,7 @@ begin
              coalesce(c.child_name, (select s.child_name from sessions s where s.child_id = ids.child_id and s.child_name <> '' limit 1)) as name,
              c.age, c.avatar, c.created_at, c.removed_at,
              (select count(*) from sessions s where s.child_id = ids.child_id and s.completed) as sessions,
-             (select max(s.ended_at) from sessions s where s.child_id = ids.child_id) as last_active,
+             greatest(c.last_seen_at, (select max(s.ended_at) from sessions s where s.child_id = ids.child_id)) as last_active,
              (select count(distinct s.world) from sessions s
                where s.child_id = ids.child_id and s.completed and s.world in ('bd','pq','mw','nu','cs','gj')) as worlds,
              (select coalesce(jsonb_object_agg(x.confusion_class, x.n), '{}'::jsonb)
@@ -305,12 +307,25 @@ language sql security definer set search_path = public as $$
     exists (select 1 from children c where c.child_id = p_child and c.removed_at is not null));
 $$;
 
+-- "last active" is the last time the device was used at all, so the device
+-- says so now and then (at most once a minute)
+create or replace function touch_child(p_child uuid) returns void
+language sql security definer set search_path = public as $$
+  update children set last_seen_at = now() where child_id = p_child and removed_at is null;
+$$;
+
+-- a student who changes their picture: the teacher's list shows the new one
+create or replace function set_child_avatar(p_child uuid, p_avatar text) returns void
+language sql security definer set search_path = public as $$
+  update children set avatar = left(p_avatar, 40) where child_id = p_child and removed_at is null;
+$$;
+
 revoke execute on function teacher_ok(text), teacher_children(text), teacher_child_data(text, uuid),
                            teacher_export(text), reset_child(uuid), teacher_remove_child(text, uuid),
-                           child_status(uuid) from public, anon, authenticated;
+                           child_status(uuid), touch_child(uuid), set_child_avatar(uuid, text) from public, anon, authenticated;
 grant execute on function teacher_children(text), teacher_child_data(text, uuid),
                           teacher_export(text), reset_child(uuid), teacher_remove_child(text, uuid),
-                          child_status(uuid) to anon, authenticated;
+                          child_status(uuid), touch_child(uuid), set_child_avatar(uuid, text) to anon, authenticated;
 
 -- ── the per-pair profile, rebuilt after each session ends ───
 create or replace function refresh_confusion_profile(p_child uuid)

@@ -451,9 +451,37 @@
     if (S.onRemoved) S.onRemoved(); else location.replace('login.html?removed=1');
     return true;
   };
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) DB.checkRemoved(); });
+  /* ── "last active" is the last time the device was used ──
+     Not the last lesson finished: any tap, key press or the page coming
+     back is a sign of life. Said to the server at most once a minute. */
+  var lastTouch = 0;
+  DB.touch = function (force) {
+    var c = cfg();
+    if (S.teacherMode || !c || !S.P.childId || !S.P.registered || navigator.onLine === false) return;
+    if (!force && Date.now() - lastTouch < 60000) return;
+    lastTouch = Date.now();
+    fetch(c.url + '/rest/v1/rpc/touch_child', { method: 'POST', headers: authHeaders(c.key),
+      body: JSON.stringify({ p_child: S.P.childId }) }).catch(function () {});
+  };
+  ['pointerdown', 'keydown'].forEach(function (ev) { document.addEventListener(ev, function () { DB.touch(); }, { passive: true }); });
+
+  /* ── a changed picture reaches the teacher's list ─────── */
+  DB.syncAvatar = function () {
+    var c = cfg();
+    if (S.teacherMode || !c || !S.P.childId || !S.P.registered || navigator.onLine === false) return;
+    if (!S.P.avatar || S.P.avatarSent === S.P.avatar) return;
+    var sent = S.P.avatar;
+    fetch(c.url + '/rest/v1/rpc/set_child_avatar', { method: 'POST', headers: authHeaders(c.key),
+      body: JSON.stringify({ p_child: S.P.childId, p_avatar: sent }) })
+      .then(function (r) { if (r.ok) { S.P.avatarSent = sent; S.save(); } }, function () {});
+  };
+
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { DB.checkRemoved(); DB.touch(true); DB.syncAvatar(); } });
   setInterval(DB.checkRemoved, 60000);
 
-  setTimeout(function () { DB.sync(); DB.flushResets(); DB.checkRemoved(); }, 4000);
+  setInterval(DB.syncAvatar, 30000);
+  window.addEventListener('online', function () { DB.syncAvatar(); });
+  setTimeout(function () { DB.sync(); DB.flushResets(); DB.checkRemoved(); DB.touch(true); }, 4000);
+  setTimeout(DB.syncAvatar, 8000);   /* after the first rows have reached the server */
 
 })(window.Spark);

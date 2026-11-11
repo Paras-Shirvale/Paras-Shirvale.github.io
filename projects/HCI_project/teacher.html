@@ -40,9 +40,9 @@
       <div class="t-exports">
         <button class="t-btn t-ghost" id="tExpSummary">Class summary (CSV)</button>
         <button class="t-btn t-ghost" id="tExpAllJson">All data (JSON)</button>
-        <label class="t-csv-label" for="tExpAllTable">CSV of</label>
-        <select id="tExpAllTable" aria-label="Which table to download as CSV"><option value="sessions">Sessions</option><option value="confusion_events">Letter mix-ups</option><option value="timing_events">Word timings</option><option value="pause_events">Pauses</option><option value="help_events">Help used</option><option value="submissions">Readings and sentences</option><option value="children">Students</option></select>
-        <button class="t-btn t-ghost" id="tExpAllCsv">Download CSV</button>
+        <label class="t-csv-label" for="tExpAllTable">Download</label>
+        <select id="tExpAllTable" aria-label="What to download"><option value="all">Everything: one Excel file, a tab for each</option><option value="sessions">Sessions</option><option value="confusion_events">Letter mix-ups</option><option value="timing_events">Word timings</option><option value="pause_events">Pauses</option><option value="help_events">Help used</option><option value="submissions">Readings and sentences</option><option value="children">Students</option></select>
+        <button class="t-btn t-ghost" id="tExpAllCsv">Download</button>
       </div>
     </div>
 
@@ -101,9 +101,9 @@
       <div class="t-exports">
         <button class="t-btn t-danger" id="tRemove">Remove student</button>
         <button class="t-btn t-ghost" id="tExpJson">This student (JSON)</button>
-        <label class="t-csv-label" for="tExpTable">CSV of</label>
-        <select id="tExpTable" aria-label="Which table to download as CSV"><option value="sessions">Sessions</option><option value="confusion_events">Letter mix-ups</option><option value="timing_events">Word timings</option><option value="pause_events">Pauses</option><option value="help_events">Help used</option><option value="submissions">Readings and sentences</option></select>
-        <button class="t-btn t-ghost" id="tExpCsv">Download CSV</button>
+        <label class="t-csv-label" for="tExpTable">Download</label>
+        <select id="tExpTable" aria-label="What to download"><option value="all">Everything: one Excel file, a tab for each</option><option value="sessions">Sessions</option><option value="confusion_events">Letter mix-ups</option><option value="timing_events">Word timings</option><option value="pause_events">Pauses</option><option value="help_events">Help used</option><option value="submissions">Readings and sentences</option></select>
+        <button class="t-btn t-ghost" id="tExpCsv">Download</button>
       </div>
     </div>
 
@@ -123,13 +123,28 @@
       <div class="t-table-wrap">
         <table class="t-pairs">
           <thead><tr>
-            <th>Pair</th><th>World</th><th>Mix-ups</th><th>Per 100 words<br><small>containing the letters</small></th>
-            <th>Caught it themselves<br><small>within 2 s</small></th><th>Trend<br><small>first half vs second</small></th>
-            <th>Help needed<br><small><i class="r-prompt"></i>prompt <i class="r-cue"></i>cue <i class="r-choice"></i>choice <i class="r-supply"></i>supply</small></th>
+            <th>Pair</th><th>World</th><th>Mix-ups</th><th title="Mix-ups for every 100 words the child met that contain these letters. It lets different chapters and different letter pairs be compared fairly.">Per 100 words<br><small>containing the letters</small></th>
+            <th title="Of the mix-ups, how many the child fixed on their own within 2 seconds, with no help.">Caught it themselves<br><small>within 2 s</small></th><th title="Mix-ups per 100 words in the first half of this pair's chapters against the second half.">Trend<br><small>first half vs second</small></th>
+            <th title="How much help was used on this pair. Blue is the lightest help, pink is the most.">Help needed<br><small><i class="r-prompt"></i>prompt <i class="r-cue"></i>cue <i class="r-choice"></i>choice <i class="r-supply"></i>supply</small></th>
           </tr></thead>
           <tbody id="tPairs"></tbody>
         </table>
       </div>
+      <details class="t-explain">
+        <summary>What do these columns mean?</summary>
+        <dl>
+          <dt>Mix-ups</dt><dd>How many times the child swapped, dropped or added a letter from this pair, reading or writing.</dd>
+          <dt>Per 100 words</dt><dd>Mix-ups divided by how many words containing those letters the child actually met, times 100. A hard passage has more of those words, so a raw count would look worse than it is; this removes that. Lower is better.</dd>
+          <dt>Caught it themselves</dt><dd>The share of mix-ups the child corrected within 2 seconds without being helped. Rising before the mix-up rate falls is the sign a skill is becoming automatic.</dd>
+          <dt>Trend</dt><dd>The average mix-ups per 100 words in the first half of the chapters against the second half. <b>Improving</b>: the second half is at least 25% lower. <b>Rising</b>: at least 25% higher. <b>Steady</b>: about the same. Needs at least three chapters, otherwise "not enough data". It is a signal, not a test result.</dd>
+          <dt>Help needed</dt><dd>The child's own use of the help tools, from lightest to most:
+            <span class="r-line"><i class="r-prompt"></i><b>prompt</b> a nudge to look again, such as the word split into chunks;</span>
+            <span class="r-line"><i class="r-cue"></i><b>cue</b> a clue to work it out, such as a picture, or saying it themselves;</span>
+            <span class="r-line"><i class="r-choice"></i><b>choice</b> picking between two or three options;</span>
+            <span class="r-line"><i class="r-supply"></i><b>supply</b> being told the answer, such as hearing the word read.</span>
+            Mostly blue means a little help was enough; mostly pink means the answer had to be given.</dd>
+        </dl>
+      </details>
     </section>
 
     <div class="t-grid2">
@@ -212,6 +227,7 @@
 window.Spark = { norm: function (w) { return String(w == null ? '' : w).toLowerCase().replace(/[^a-z']/g, ''); } };
 </script>
 <script src="js/config.js"></script>
+<script src="js/xlsx.js"></script>
 <script src="js/avatars.js"></script>
 <script src="js/human.js"></script>
 <script src="js/families.js"></script>
