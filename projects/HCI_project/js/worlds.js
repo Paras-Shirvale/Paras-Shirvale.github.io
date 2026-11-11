@@ -69,7 +69,7 @@
   /** What the world's button says. */
   function action(w) {
     var done = S.levelsDone(w.id);
-    if (done >= 3) return 'Play again';
+    if (done >= 3) return 'Read again';
     var next = done + 1, ls = state(w.id).levels[next] || {};
     if (ls.read && !ls.write) return 'Continue';
     if (done === 0) return started(w.id) ? 'Continue' : 'Begin';
@@ -161,7 +161,7 @@
               '<span data-on="' + (l.write ? '1' : '') + '">' + S.Pictures.icon('pencil', 14) + ' Write</span>' +
             '</div></div>' +
           (openCh ? '<button class="btn ' + (complete ? '' : 'btn-primary') + '" data-play="' + n + '">' +
-                    (complete ? 'Play again' : l.read ? 'Write it' : 'Play') + '</button>'
+                    (complete ? 'Read again' : l.read ? 'Write it' : 'Read') + '</button>'
                   : '<span class="world-locked-label">' + S.Pictures.icon('lock', 16) + '</span>') +
         '</div>';
       }).join('') + '</div>' +
@@ -174,9 +174,20 @@
 
   function badgeHTML(w, on) {
     return '<span class="wbadge tone-' + w.tone + (on ? ' on' : '') + '">' +
-      '<span class="wbadge-disc">' + S.Pictures.icon(on ? 'trophy' : 'lock', 22) + '</span></span>';
+      '<span class="wbadge-disc">' + S.Pictures.icon('trophy', 26) + '</span></span>';
   }
   S.worldBadge = badgeHTML;
+
+  /** A badge with its name. Grey until earned, then in colour; hovering
+      (or focusing) it says what to do to earn it. */
+  S.badgeTile = function (w, got) {
+    var n = S.levelsDone(w.id);
+    var how = got ? 'Earned! You finished all 3 chapters of ' + w.title + '.'
+                  : 'Finish all 3 chapters of ' + w.title + ' to earn this. ' + n + ' of 3 done.';
+    return '<div class="badge-item' + (got ? ' on' : '') + '" tabindex="0" data-how="' + S.esc(how) + '">' +
+      badgeHTML(w, got) + '<b>' + S.esc(w.badge) + '</b><span>' + S.esc(w.title) + '</span>' +
+      '<em>' + (got ? 'Earned' : n + ' of 3 chapters') + '</em></div>';
+  };
 
   /* ── playing a chapter: read, then write ────────────── */
   S.playChapter = function (id, n) {

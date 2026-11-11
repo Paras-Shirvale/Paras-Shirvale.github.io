@@ -293,9 +293,7 @@
       '<section class="card prof-section">' +
         '<h2>My badges</h2>' +
         '<div class="badge-row">' + S.WORLDS.map(function (w) {
-          var got = badges.indexOf(w) > -1;
-          return '<div class="badge-item' + (got ? ' on' : '') + '">' + S.worldBadge(w, got) +
-            '<b>' + (got ? S.esc(w.badge) : '???') + '</b><span>' + S.esc(w.title) + '</span></div>';
+          return S.badgeTile(w, badges.indexOf(w) > -1);
         }).join('') + '</div>' +
       '</section>' +
 

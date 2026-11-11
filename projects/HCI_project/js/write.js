@@ -27,11 +27,20 @@
 (function (S) {
   'use strict';
 
-  var promptIndex = 0;
+  /* Which picture story the child is on. Remembered, so the tile on
+     Let's write and the page it opens always show the same picture. */
+  function storyIdx() { return S.P.storyIndex || 0; }
+  function storyDone(i) { return !!(S.P.storyDone && S.P.storyDone[i == null ? storyIdx() : i]); }
   var tidied = null;
   var rung = { who: 0, what: 0, where: 0 };   /* how far up the ladder each field is */
 
-  function current() { return S.PROMPTS[promptIndex % S.PROMPTS.length]; }
+  function current() { return S.PROMPTS[storyIdx() % S.PROMPTS.length]; }
+
+  /* Which activities suit the child's age: 7 to 11 do "Describe a
+     picture" only; 12 and over do both. */
+  S.writeActivities = function () {
+    return (S.P.age && S.P.age >= 12) ? ['describe', 'story'] : ['describe'];
+  };
   var FIELD_ID = { who: 'fWho', what: 'fWhat', where: 'fWhere' };
 
   /* ── which activity is open ──────────────────────────
@@ -53,6 +62,8 @@
          is actually in the picture */
       S.$('#writePic').innerHTML = S.Pictures.scene(p.scene);
       S.$('#writeQ').textContent = p.q;
+      /* "Next picture" only appears once this one is written */
+      S.$('#btnNewPrompt').hidden = !storyDone();
       build();
     }
     paintSaved();
@@ -91,8 +102,12 @@
     var dd = S.P.describeDone || {};
     var described = Object.keys(dd).length;
     var stories = S.P.writings.filter(function (w) { return w.kind === 'picture'; }).length;
-    S.$('#actDescribePic').innerHTML = S.Pictures.scene(S.PROMPTS[3].scene);
-    S.$('#actStoryPic').innerHTML = S.Pictures.scene(S.PROMPTS[0].scene);
+    /* each tile shows the picture that will actually open */
+    S.$('#actDescribePic').innerHTML = S.Pictures.scene(S.PROMPTS[S.DESCRIBE[S.describeNext()].scene].scene);
+    S.$('#actStoryPic').innerHTML = S.Pictures.scene(current().scene);
+    var acts = S.writeActivities();
+    S.$('.act-story').hidden = acts.indexOf('story') < 0;
+    S.$('.write-acts').classList.toggle('one', acts.length === 1);
     S.$('#actDescribeFoot').textContent = described ? described + ' of ' + S.DESCRIBE.length + ' pictures described' : '6 pictures to describe';
     S.$('#actStoryFoot').textContent = stories ? stories + ' sentence' + (stories > 1 ? 's' : '') + ' written' : 'Who or what? · Doing? · Where?';
   }
@@ -264,8 +279,13 @@
     S.save();
 
     S.award(5, 'Saved your sentence');
+    S.P.storyDone = S.P.storyDone || {};
+    S.P.storyDone[storyIdx()] = true;
+    S.save();
     clear();
     paintSaved();
+    S.$('#btnNewPrompt').hidden = false;      /* finished: the next picture is allowed */
+    S.toast('Well done! You can try the next picture.');
   }
 
   S.paintSaved = paintSaved;
@@ -399,7 +419,9 @@
     });
 
     S.$('#btnNewPrompt').addEventListener('click', function () {
-      promptIndex++;
+      if (!storyDone()) return;
+      S.P.storyIndex = storyIdx() + 1;
+      S.save();
       clear();
       S.paintWrite();
     });

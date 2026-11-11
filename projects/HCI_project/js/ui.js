@@ -323,7 +323,12 @@
         S.$('#hovertip').style.display = 'none';
         S.noteWord(word.textContent, 'seen');
         S.save();
-        S.openWordCard(word, word.textContent, S.favourite() || 'picture');
+        /* tapping a word puts it in the "Stuck on a word?" box; the
+           child then chooses what helps. No card pops over the story. */
+        if (S.setHelpWord && S.$('#helpWord')) {
+          S.setHelpWord(word.textContent);
+          S.$('#helpWord').focus({ preventScroll: true });
+        }
         return;
       }
 
@@ -364,7 +369,7 @@
         var parts = S.syllables(shown);
         /* only what can be drawn immediately — waiting on a fetch
            inside a hover reads as the app being broken */
-        var picture = S.Pictures.instant(shown, 40);
+        var picture = S.Pictures.instant(shown, 96);
         var phon = S.phonetic(shown);
 
         /* The tip always has something in it. Bailing out on short
@@ -410,7 +415,7 @@
             var slotNow = tip.querySelector('[data-tippic]');
             if (hoverWord !== w || !slotNow) return;
             if (hit && hit.url) {
-              slotNow.innerHTML = S.Pictures.instant(shown, 40) || '';
+              slotNow.innerHTML = S.Pictures.instant(shown, 96) || '';
             } else {
               slotNow.remove();
             }

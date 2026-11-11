@@ -23,40 +23,31 @@
 (function (S) {
   'use strict';
 
-  /* A gap is {first|second|third}: the words that suit it, best first. */
+  /* Three short sentences per picture, and ONE gap in each. The word for
+     a gap is written in braces. The word bank shows only these words, so
+     there is nothing to choose between except where each one goes. */
   var PICTURES = [
-    { scene: 0, title: 'The sleepy cat', lines: [
-        'Once there was a {orange|furry|sleepy} cat who lived in a {cozy|warm|little} house.',
-        'It had {soft|fluffy|orange} fur and {sleepy|green|bright} eyes.',
-        'It was napping on a {blue|soft|comfy} sofa.'],
-      extra: ['happy', 'quiet'] },
-    { scene: 3, title: 'The busy bee', lines: [
-        'One {sunny|bright|warm} day, a {busy|tiny|buzzy} bee flew into the garden.',
-        'It had {yellow|black|fuzzy} stripes and {shiny|tiny|clear} wings.',
-        'It landed on a {pink|pretty|big} flower.'],
-      extra: ['happy', 'green'] },
-    { scene: 1, title: 'The brave boat', lines: [
-        'On a {stormy|dark|windy} night, a {small|brave|little} boat sailed on the sea.',
-        'The {wild|big|rough} waves rocked it from side to side.',
-        'A {tall|bright|white} lighthouse showed the way home.'],
-      extra: ['cold', 'strong'] },
-    { scene: 2, title: 'Launch day', lines: [
-        'On a {starry|clear|dark} night, a {huge|shiny|white} rocket stood ready.',
-        'It had {red|pointy|strong} fins and a {round|blue|small} window.',
-        'It blasted off into the {dark|quiet|starry} sky.'],
-      extra: ['loud', 'fast'] },
-    { scene: 4, title: 'The big match', lines: [
-        'On a {sunny|bright|warm} afternoon, a {fast|round|spinning} ball flew across the grass.',
-        'It zoomed into the {big|white|wide} goal.',
-        'The {happy|loud|excited} crowd gave a big cheer.'],
-      extra: ['green', 'tired'] },
-    { scene: 5, title: 'The little bird', lines: [
-        'On a {cold|frosty|quiet} morning, a {little|blue|tiny} bird hopped across the snow.',
-        'It had {soft|fluffy|blue} feathers and a {tiny|orange|sharp} beak.',
-        'The {white|deep|soft} snow sparkled all around.'],
-      extra: ['happy', 'gentle'] }
+    { scene: 0, title: 'The sleepy cat',
+      lines: ['The cat is {orange}.', 'The sofa is {blue}.', 'The cat is {sleepy}.'] },
+    { scene: 3, title: 'The busy bee',
+      lines: ['The bee is {yellow}.', 'The flower is {pink}.', 'The day is {sunny}.'] },
+    { scene: 1, title: 'The little boat',
+      lines: ['The night is {dark}.', 'The boat is {small}.', 'The lighthouse is {tall}.'] },
+    { scene: 2, title: 'The rocket',
+      lines: ['The rocket is {white}.', 'The sky is {dark}.', 'The rocket is {fast}.'] },
+    { scene: 4, title: 'The football',
+      lines: ['The ball is {round}.', 'The grass is {green}.', 'The crowd is {happy}.'] },
+    { scene: 5, title: 'The little bird',
+      lines: ['The bird is {little}.', 'The snow is {white}.', 'The day is {cold}.'] }
   ];
   S.DESCRIBE = PICTURES;
+
+  /** The first picture not finished yet, so the tile shows what will open. */
+  S.describeNext = function () {
+    var dd = S.P.describeDone || {};
+    var i = PICTURES.findIndex(function (p, k) { return !dd[k]; });
+    return i < 0 ? 0 : i;
+  };
 
   var COLOURS = ['c-teal', 'c-amber', 'c-green', 'c-orange', 'c-yellow', 'c-blue', 'c-coral', 'c-peach'];
   var X = null;   /* the picture in progress */
@@ -76,19 +67,14 @@
   }
 
   S.openDescribe = function (index) {
-    if (index == null) {
-      index = PICTURES.findIndex(function (p, i) { return !done()[i]; });
-      if (index < 0) index = 0;
-    }
+    if (index == null) index = S.describeNext();
     var p = PICTURES[index];
     var lines = p.lines.map(parse);
     var gaps = [];
     lines.forEach(function (l, li) { l.forEach(function (piece) { if (piece.gap) { piece.id = gaps.length; piece.li = li; gaps.push(piece); } }); });
 
-    /* the bank: one word that fits each gap, plus a few more */
-    var bank = [];
-    gaps.forEach(function (g) { g.fits.forEach(function (w) { if (bank.indexOf(w) < 0) bank.push(w); }); });
-    bank = S.shuffle(bank.concat(p.extra.filter(function (w) { return bank.indexOf(w) < 0; })));
+    /* the bank: exactly the words that are needed, one per gap */
+    var bank = S.shuffle(gaps.map(function (g) { return g.fits[0]; }));
 
     X = { index: index, p: p, lines: lines, gaps: gaps, bank: bank, fill: {}, selected: null,
           step: 1, writeLine: 0, peeks: 0, checks: 0, help: [] };
@@ -176,7 +162,7 @@
     Object.keys(X.fill).forEach(function (k) { used[X.fill[k]] = (used[X.fill[k]] || 0) + 1; });
 
     S.$('#dsBody').innerHTML =
-      '<section class="desc-box bank-box"><span class="desc-label">Word bank — drag or tap a describing word</span>' +
+      '<section class="desc-box bank-box"><span class="desc-label">Word bank — tap a word, then tap its gap</span>' +
         '<div class="chips">' + X.bank.map(function (w, i) {
           var isUsed = used[w];
           return '<button class="chip-word ' + COLOURS[i % COLOURS.length] + (isUsed ? ' used' : '') +
@@ -231,6 +217,17 @@
 
   function place(id, word) {
     if (!word) return;
+    if (word !== X.gaps[id].fits[0]) {
+      /* not this one: it goes back, gently, and the helper says so */
+      X.selected = null;
+      paintFill();
+      var gapEl = S.$('#dsBody .gap[data-gap="' + id + '"]');
+      if (gapEl) gapEl.classList.add('shake');
+      var say = 'That word fits somewhere else. Try another gap!';
+      var t = S.$('#dsHelperText'); if (t) t.textContent = say;
+      S.say(say);
+      return;
+    }
     X.fill[id] = word;
     X.selected = null;
     /* read the whole sentence back, with the new word in it */

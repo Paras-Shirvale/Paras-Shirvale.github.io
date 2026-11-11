@@ -95,7 +95,9 @@
     S.setStep('read');
     markStepsDone();
     updateStats();
-    S.railSay('Read at your own speed. Tap any word you want help with.');
+    S.railSay('Read at your own speed. Stuck on a word? Type it below.');
+    S.setHelpWord('');
+    var ro = S.$('#railOut'); if (ro) ro.hidden = true;
     S.markFavouredTool();
   };
 
@@ -321,7 +323,6 @@
     }
 
     /* a gentle nudge — no "wrong", no letters named */
-    S.railSay('Have another look at "' + ev.expected + '".');
     S.save();
   }
 
@@ -475,98 +476,47 @@
     /* needed help here — step in a little sooner next time */
     S.P.patience = S.clamp(S.P.patience - 0.25, 2.5, 9);
 
-    offerHelp(token, verdict);
+    /* Deliberately no pop-up here. A card appearing in the middle of a
+       sentence is a distraction, so a pause is only recorded for the
+       teacher. Help is there when the child asks for it. */
     S.save();
   }
 
-  /* ── the cue engine ─────────────────────────────────── */
+  /* ── help the child asks for ────────────────────────────
+     Every use of "Stuck on a word?" is a row for the teacher, with how
+     much help it was:
 
-  /* ── the help ladder: prompt → cue → choice → supply ──────
-     Each time the child stalls on the same word, Spark gives a
-     little more. Every card has "Not now", which closes it and is
-     recorded — a cue that is often dismissed is arriving at the
-     wrong moment, and the teacher should know.
+       Split it    shows the chunks of the word      prompt  (a little)
+       Picture     shows what it is                  cue
+       Say it      the child says it, Spark listens  cue
+       Hear it     Spark says the word               supply  (the most)
 
-       prompt  look closely — the word's shape, letters coloured
-       cue     the kind of help that works best for this child:
-               a picture, hearing it, or its parts
-       choice  "Is it dog or bog?" — the word and its letter twin
-       supply  Spark says the word                             */
-  function offerHelp(token, verdict) {
-    var idx = R.tokens.indexOf(token);
-    var step = (R.rungs[idx] || 0) + 1;
-    var twin = S.twinOf(token.clean, R.src.world);
-    if (step === 3 && !twin) step = 4;
-    step = Math.min(4, step);
-    R.rungs[idx] = step;
+     It counts as having helped if the child carries on reading
+     straight afterwards. */
+  var TOOL_HELP = {
+    split:   ['prompt', 'visual'],
+    picture: ['cue', 'visual'],
+    say:     ['cue', 'speak'],
+    hear:    ['supply', 'audio']
+  };
 
-    /* a card still open from an earlier rung is replaced, not lost */
+  function logHelpUse(tool, word) {
     if (R.helpOpen && R.helpOpen.h) R.helpOpen.h.close();
-
-    var rung = ['prompt', 'cue', 'choice', 'supply'][step - 1];
-    var kind = S.cueRank()[0];
-    var word = token.raw.replace(/[^A-Za-z'-]/g, '');
-    var cueType = { prompt: 'visual', cue: kind, choice: 'choice', supply: 'audio' }[rung];
-
-    var h = S.DB.help({ rung: rung, cue_type: cueType, word: token.clean, prefer: R.src.world });
-    R.helpOpen = { word: token.clean, cue: kind, at: Date.now(), h: h, rung: rung };
-    if (rung === 'cue') { S.P.cue[kind].shown++; S.save(); }
-
-    var opts = {
-      mode: rung,
-      onNotNow: function () {
-        h.dismiss();
-        if (R) R.helpOpen = null;
-        S.railSay('Okay. Keep going when you\'re ready.');
-      }
-    };
-    if (rung === 'prompt') {
-      S.railSay('Take your time. Look closely at the letters in this word.');
-      S.openWordCard(token.el, token.raw, null, opts);
-    } else if (rung === 'cue') {
-      var phrase = { picture: 'a picture', sound: 'me say it', parts: 'the parts' }[kind];
-      S.railSay('Here\'s ' + phrase + ' to help.');
-      S.openWordCard(token.el, token.raw, kind, opts);
-    } else if (rung === 'choice') {
-      S.railSay('Which word is it?');
-      opts.choices = S.shuffle([word, twin.replace(/[^A-Za-z'-]/g, '')]);
-      opts.answer = word;
-      opts.onPick = function (picked) {
-        if (S.norm(picked) === S.norm(word)) { S.say(word); h.resolve(); if (R) R.helpOpen = null; S.closeWordCard(); S.railSay('Yes! Keep going.'); }
-        else { S.say('Listen: ' + word); }
-      };
-      S.openWordCard(token.el, token.raw, null, opts);
-    } else {
-      S.railSay('This word is "' + word + '".');
-      S.openWordCard(token.el, token.raw, 'sound', opts);
-    }
-    S.markFavouredTool();
-
-    /* a cue nobody looks at is closed after a while */
-    clearTimeout(R.cueTimer);
-    R.cueTimer = setTimeout(function () {
-      if (R && R.helpOpen && R.helpOpen.word === token.clean) {
-        R.helpOpen.h.close();
-        R.helpOpen = null;
-        S.closeWordCard();
-      }
-    }, 14000);
+    var m = TOOL_HELP[tool];
+    R.helpOpen = { word: S.norm(word), rung: m[0],
+                   h: S.DB.help({ rung: m[0], cue_type: m[1], word: word, prefer: R.src.world }) };
   }
 
   function resolveHelp(worked) {
     if (!R || !R.helpOpen) return;
     var h = R.helpOpen;
     if (worked) {
-      if (h.rung === 'cue') S.P.cue[h.cue].worked++;
       var rec = S.P.words[h.word];
       if (rec) rec.helped = (rec.helped || 0) + 1;
       if (h.h) h.h.resolve();
     } else if (h.h) h.h.close();
     R.helpOpen = null;
     S.save();
-    S.markFavouredTool();
-    S.closeWordCard();
-    S.railSay(worked ? 'Good. Keep going.' : 'Keep going.');
   }
 
   /** Called when the child chooses a kind of help themselves. */
@@ -587,8 +537,9 @@
 
   S.markFavouredTool = function () {
     var fav = S.favourite();
+    var tool = { picture: 'picture', sound: 'hear', parts: 'split' }[fav];
     S.$$('.tool').forEach(function (b) {
-      b.classList.toggle('favoured', !!fav && b.dataset.tool === fav);
+      b.classList.toggle('favoured', !!tool && b.dataset.tool === tool);
     });
   };
 
@@ -860,7 +811,6 @@
   S._armStall = armStall;
   S._stillTrying = stillTrying;
   S._readerFeed = function (results) { if (R && !R.aligner) { R.aligner = S.makeAligner(R.tokens); } onResults(results); };
-  S._offerHelp = function (i) { offerHelp(R.tokens[i], null); };
 
   /* ── is this still the same reader? ─────────────────────
      The whole profile is only meaningful if the voice it was built
@@ -1026,46 +976,105 @@
     }
   };
 
-  /* ── the help rail ──────────────────────────────────── */
-  S.useTool = async function (tool) {
-    if (!R) return;
+  /* ── "Stuck on a word?" ─────────────────────────────────
+     A box where the child types the word they are stuck on (or taps it
+     in the story, which fills it in), then chooses what would help:
 
-    var token = R.tokens[R.idx] || R.tokens[0];
-    if (tool === 'explain') { await explainHere(token); return; }
-    if (!token) return;
+       Picture   see what the word is
+       Hear it   hear it said
+       Say it    the CHILD says it; Spark listens and says if it matched
+       Split it  the word broken into its chunks (to look at)
 
-    if (tool === 'picture') S.openWordCard(token.el, token.raw, 'picture');
-    if (tool === 'sound')   { S.say(token.raw); S.openWordCard(token.el, token.raw, 'sound'); }
-    if (tool === 'parts')   { S.sayInParts(token.raw); S.openWordCard(token.el, token.raw, 'parts'); }
+     Nothing here happens on its own. */
+  function helpWord() {
+    var el = S.$('#helpWord');
+    return el ? String(el.value || '').replace(/[^A-Za-z'-]/g, '').trim() : '';
+  }
 
-    S.useCue(tool);
+  S.setHelpWord = function (raw) {
+    var el = S.$('#helpWord');
+    if (!el) return;
+    el.value = String(raw || '').replace(/[^A-Za-z'-]/g, '');
+    var out = S.$('#railOut'); if (out) out.hidden = true;
   };
 
-  async function explainHere(token) {
-    var sentence = R.sentences[token ? token.si : 0] || R.sentences[0];
-    if (!S.AI.ready) {
-      S.railSay('In short: ' + plainly(sentence));
-      S.say(plainly(sentence));
+  function chip(text) { return '<span class="syl">' + S.esc(text) + '</span>'; }
+
+  S.useTool = function (tool) {
+    if (!R) return;
+    var word = helpWord();
+    var out = S.$('#railOut');
+    if (!word) {
+      out.hidden = false;
+      out.innerHTML = '<p class="rail-note">Type the word you are stuck on, or tap it in the story. ' +
+                      'Then choose what helps.</p>';
+      S.$('#helpWord').focus();
       return;
     }
-    S.railSay('Let me put that another way…');
-    try {
-      var text = await S.AI.ask(
-        'Rewrite this sentence for a 10-year-old who finds reading hard. ' +
-        'One short sentence, plain words, no preamble.\n\n"' + sentence + '"',
-        { maxTokens: 120 }
-      );
-      var clean = text.replace(/^["']|["']$/g, '').trim();
-      S.railSay(clean);
-      S.say(clean);
-    } catch (e) {
-      S.railSay(S.AI.friendly(e) || ('In short: ' + plainly(sentence)));
+    logHelpUse(tool, word);
+    out.hidden = false;
+    out.dataset.word = word.toLowerCase();
+    var title = '<div class="rail-word">' + S.esc(word) + '</div>';
+
+    if (tool === 'picture') {
+      out.innerHTML = title + '<div class="rail-pic"></div>';
+      S.Pictures.render(out.querySelector('.rail-pic'), word);
+      S.useCue('picture');
+
+    } else if (tool === 'hear') {
+      out.innerHTML = title + '<button class="btn btn-sm" data-say="' + S.esc(word) + '">' +
+        S.Pictures.icon('speaker', 16) + ' Hear it again</button>';
+      S.say(word);
+      S.useCue('sound');
+
+    } else if (tool === 'split') {
+      var parts = S.syllables(word);
+      out.innerHTML = title + '<div class="rail-parts">' + parts.map(chip).join('') + '</div>' +
+        '<p class="rail-note">Look at each chunk, then read the whole word.</p>';
+      /* a better split may arrive from the AI helper */
+      S.partsFor(word).then(function (p) {
+        var box = out.querySelector('.rail-parts');
+        if (box && out.dataset.word === word.toLowerCase() && p.length) {
+          box.innerHTML = p.map(function (x) { return chip(x.text); }).join('');
+        }
+      });
+      S.useCue('parts');
+
+    } else if (tool === 'say') {
+      sayIt(word, out, title);
+      S.useCue('sound');
     }
   }
 
-  /* crude but honest: drop the subordinate clause */
-  function plainly(s) {
-    return String(s).replace(/,[^,]*,/g, ' ').replace(/\s+/g, ' ').trim();
+  /* The child says the word; Spark listens. One microphone at a time,
+     so reading aloud is paused for a moment, then carries on. */
+  function sayIt(word, out, title) {
+    var problem = S.micProblem();
+    if (problem) { out.innerHTML = title + '<p class="rail-note">' + S.esc(problem) + '</p>'; return; }
+    var resume = !!R.listening;
+    if (resume) S.stopReading();
+    out.innerHTML = title + '<p class="rail-note rail-listening">' + S.Pictures.icon('mic', 16) + ' Say the word now…</p>';
+
+    var finished = false;
+    function finish(html) {
+      if (finished) return;
+      finished = true;
+      out.innerHTML = title + html;
+      if (resume && R && !R.finished) setTimeout(S.startReading, 400);
+    }
+    setTimeout(function () {
+      var handle = S.listenOnce(null, function (heard) {
+        var said = String(heard || '').trim();
+        if (!said) { finish('<p class="rail-note">I did not hear anything. Tap Say it and try again.</p>'); return; }
+        var match = said.split(/\s+/).map(S.norm).filter(Boolean).some(function (x) {
+          return S.soundsLike(x, S.norm(word));
+        });
+        finish(match
+          ? '<p class="rail-good">' + S.Pictures.icon('check', 16) + ' Yes! That is how it sounds.</p>'
+          : '<p class="rail-note">I heard “' + S.esc(said) + '”. Tap Hear it, then try again.</p>');
+      }, function (msg) { finish('<p class="rail-note">' + S.esc(msg) + '</p>'); });
+      if (!handle) finish('<p class="rail-note">I could not start the microphone.</p>');
+    }, resume ? 300 : 0);
   }
 
   /* ── wiring ─────────────────────────────────────────── */
@@ -1091,6 +1100,10 @@
     S.$('#railTools').addEventListener('click', function (e) {
       var b = e.target.closest('.tool');
       if (b) S.useTool(b.dataset.tool);
+    });
+    S.$('#helpClear').addEventListener('click', function () {
+      S.setHelpWord('');
+      S.$('#helpWord').focus();
     });
 
     S.$('#voiceWarn').addEventListener('click', function (e) {

@@ -482,3 +482,6 @@ canvas{display:block;width:100%;height:auto}
   background:var(--violet-soft);color:var(--violet);border:0;
 }
 .tip-say:hover{background:var(--violet);color:#fff}
+
+#hovertip .tip-pic .pic{width:96px;height:96px;border-radius:10px}
+#hovertip{align-items:center;gap:10px}

@@ -169,18 +169,26 @@
       <aside class="rail">
         <div class="spark-say">
           <span class="spark-face"><span class="i" data-icon="spark" data-icon-size="18"></span></span>
-          <span id="railSay">Read at your own speed. Tap any word you want help with.</span>
+          <span id="railSay">Read at your own speed. Stuck on a word? Type it below.</span>
         </div>
 
         <div class="stat-row">
                     <div class="stat"><b id="statWords">0</b><span>words read</span></div>
         </div>
 
-        <div class="tools" id="railTools">
-          <button class="tool" data-tool="picture"><i><span class="i" data-icon="picture" data-icon-size="18"></span></i><span>Picture</span></button>
-          <button class="tool" data-tool="sound"><i><span class="i" data-icon="speaker" data-icon-size="18"></span></i><span>Hear it</span></button>
-          <button class="tool" data-tool="parts"><i><span class="i" data-icon="speaker" data-icon-size="18"></span></i><span>Say slowly</span></button>
-          <button class="tool" data-tool="explain"><i><span class="i" data-icon="idea" data-icon-size="18"></span></i><span>Explain</span></button>
+        <div class="help-box">
+          <label class="help-label" for="helpWord">Stuck on a word?</label>
+          <div class="help-input">
+            <input id="helpWord" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type it here" maxlength="24">
+            <button class="btn btn-sm" id="helpClear" type="button" aria-label="Clear word">&times;</button>
+          </div>
+          <div class="tools" id="railTools">
+            <button class="tool" data-tool="picture"><i><span class="i" data-icon="picture" data-icon-size="18"></span></i><span>Picture</span></button>
+            <button class="tool" data-tool="hear"><i><span class="i" data-icon="speaker" data-icon-size="18"></span></i><span>Hear it</span></button>
+            <button class="tool" data-tool="say"><i><span class="i" data-icon="mic" data-icon-size="18"></span></i><span>Say it</span></button>
+            <button class="tool" data-tool="split"><i><span class="i" data-icon="idea" data-icon-size="18"></span></i><span>Split it</span></button>
+          </div>
+          <div class="rail-out" id="railOut" hidden></div>
         </div>
       </aside>
     </div>
@@ -227,7 +235,7 @@
         <p class="prompt-q" id="writeQ">What is happening in this picture?</p>
         <div class="toolbar">
           <button class="btn btn-sm" id="btnHearPrompt"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear it</button>
-          <button class="btn btn-sm" id="btnNewPrompt"><span class="i" data-icon="refresh" data-icon-size="18"></span> New picture</button>
+          <button class="btn btn-sm btn-primary" id="btnNewPrompt" hidden><span class="i" data-icon="refresh" data-icon-size="18"></span> Next picture</button>
         </div>
 
         <div class="piece-head">

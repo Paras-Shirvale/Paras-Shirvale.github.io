@@ -39,7 +39,7 @@
       S.$('#homeGo').addEventListener('click', function () { S.playChapter(id, n); });
     } else {
       S.$('#homeNext').innerHTML = '<div class="next-card done"><span class="next-text"><b>You finished every world!</b>' +
-        '<span>Play any chapter again from Let\'s read.</span></span></div>';
+        '<span>Read any chapter again from Let\'s read.</span></span></div>';
     }
 
     S.$('#homeExplore').innerHTML = S.WORLDS.map(function (x) {
