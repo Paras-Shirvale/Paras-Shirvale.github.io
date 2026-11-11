@@ -71,6 +71,6 @@ window.SPARK_CONFIG = {
 
      The anon key is safe to publish: the database only lets it
      INSERT rows, never read them back.                          */
-  SUPABASE_URL: '',
-  SUPABASE_ANON_KEY: ''
+  SUPABASE_URL: 'https://rjfmhougcltgrvpgogyn.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_GaqIkvR156yxx5GEnPQ2PQ_OM30vmAe'
 };

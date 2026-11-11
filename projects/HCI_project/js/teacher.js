@@ -103,7 +103,9 @@
     function rpc(fn, args) {
       return fetch(CLOUD.url + '/rest/v1/rpc/' + fn, {
         method: 'POST',
-        headers: { apikey: CLOUD.key, Authorization: 'Bearer ' + CLOUD.key, 'Content-Type': 'application/json' },
+        headers: /^eyJ/.test(CLOUD.key)
+          ? { apikey: CLOUD.key, Authorization: 'Bearer ' + CLOUD.key, 'Content-Type': 'application/json' }
+          : { apikey: CLOUD.key, 'Content-Type': 'application/json' },
         body: JSON.stringify(args)
       }).then(function (res) {
         if (res.ok) return res.json();

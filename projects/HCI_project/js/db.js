@@ -302,10 +302,40 @@
   }
   DB.online = function () { return !!cfg(); };
 
+  /* The classic "anon" key is a signed token (starts eyJ) and goes in the
+     Authorization header too. Supabase's newer "publishable" key
+     (sb_publishable_…) is not a token and goes in apikey only. */
+  function authHeaders(key) {
+    var h = { apikey: key, 'Content-Type': 'application/json' };
+    if (/^eyJ/.test(key)) h.Authorization = 'Bearer ' + key;
+    return h;
+  }
+
   function scheduleSync() {
     if (!cfg()) return;
     clearTimeout(syncTimer);
     syncTimer = setTimeout(DB.sync, 2500);
+  }
+
+  /* Supabase refuses a batch whose rows do not all have exactly the same
+     fields (a reading session records a speed, a writing session does not).
+     So every row in a batch gets the same set, with null where it had none. */
+  function uniform(rows) {
+    var keys = {};
+    rows.forEach(function (r) { Object.keys(r).forEach(function (k) { keys[k] = 1; }); });
+    return rows.map(function (r) {
+      var o = {};
+      Object.keys(keys).forEach(function (k) { o[k] = r[k] === undefined ? null : r[k]; });
+      return o;
+    });
+  }
+
+  function post(c, table, rows) {
+    return fetch(c.url + '/rest/v1/' + table, {
+      method: 'POST',
+      headers: Object.assign(authHeaders(c.key), { Prefer: 'return=minimal' }),
+      body: JSON.stringify(uniform(rows))
+    });
   }
 
   DB.sync = async function () {
@@ -319,16 +349,20 @@
     for (var table in byTable) {
       var seen = {}, rows = byTable[table].filter(function (r) { if (seen[r.id]) return false; seen[r.id] = 1; return true; });
       try {
-        var res = await fetch(c.url + '/rest/v1/' + table + '?on_conflict=id', {
-          method: 'POST',
-          headers: {
-            apikey: c.key, Authorization: 'Bearer ' + c.key, 'Content-Type': 'application/json',
-            /* insert-only: a row already there is left alone */
-            Prefer: 'return=minimal,resolution=ignore-duplicates'
-          },
-          body: JSON.stringify(rows)
-        });
-        if (res.ok) done = done.concat(rows.map(function (r) { return r.id; }));
+        /* A plain insert. (Asking Postgres to "ignore duplicates" needs read
+           permission on the table, which the public key deliberately lacks.) */
+        var res = await post(c, table, rows);
+        if (res.ok) {
+          done = done.concat(rows.map(function (r) { return r.id; }));
+        } else if (res.status === 409) {
+          /* some of these rows already arrived on an earlier try (a dropped
+             connection after the server had saved them). Send one at a time:
+             "already there" counts as delivered. */
+          for (var i = 0; i < rows.length; i++) {
+            var one = await post(c, table, [rows[i]]);
+            if (one.ok || one.status === 409) done.push(rows[i].id);
+          }
+        }
       } catch (e) { /* offline — try again later */ }
     }
     if (!wiped) {
@@ -365,7 +399,7 @@
     try {
       var res = await fetch(c.url + '/rest/v1/rpc/reset_child', {
         method: 'POST',
-        headers: { apikey: c.key, Authorization: 'Bearer ' + c.key, 'Content-Type': 'application/json' },
+        headers: authHeaders(c.key),
         body: JSON.stringify({ p_child: id }),
         signal: ctrl ? ctrl.signal : undefined
       });
