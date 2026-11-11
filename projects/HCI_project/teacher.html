@@ -40,13 +40,9 @@
       <div class="t-exports">
         <button class="t-btn t-ghost" id="tExpSummary">Class summary (CSV)</button>
         <button class="t-btn t-ghost" id="tExpAllJson">All data (JSON)</button>
-        <select id="tExpAllTable" aria-label="Table to export">
-          <option value="sessions">sessions</option><option value="confusion_events">confusion_events</option>
-          <option value="timing_events">timing_events</option><option value="pause_events">pause_events</option>
-          <option value="help_events">help_events</option><option value="submissions">submissions</option>
-          <option value="children">children</option>
-        </select>
-        <button class="t-btn t-ghost" id="tExpAllCsv">Table (CSV)</button>
+        <label class="t-csv-label" for="tExpAllTable">CSV of</label>
+        <select id="tExpAllTable" aria-label="Which table to download as CSV"><option value="sessions">Sessions</option><option value="confusion_events">Letter mix-ups</option><option value="timing_events">Word timings</option><option value="pause_events">Pauses</option><option value="help_events">Help used</option><option value="submissions">Readings and sentences</option><option value="children">Students</option></select>
+        <button class="t-btn t-ghost" id="tExpAllCsv">Download CSV</button>
       </div>
     </div>
 
@@ -105,12 +101,9 @@
       <div class="t-exports">
         <button class="t-btn t-danger" id="tRemove">Remove student</button>
         <button class="t-btn t-ghost" id="tExpJson">This student (JSON)</button>
-        <select id="tExpTable" aria-label="Table to export">
-          <option value="sessions">sessions</option><option value="confusion_events">confusion_events</option>
-          <option value="timing_events">timing_events</option><option value="pause_events">pause_events</option>
-          <option value="help_events">help_events</option><option value="submissions">submissions</option>
-        </select>
-        <button class="t-btn t-ghost" id="tExpCsv">Table (CSV)</button>
+        <label class="t-csv-label" for="tExpTable">CSV of</label>
+        <select id="tExpTable" aria-label="Which table to download as CSV"><option value="sessions">Sessions</option><option value="confusion_events">Letter mix-ups</option><option value="timing_events">Word timings</option><option value="pause_events">Pauses</option><option value="help_events">Help used</option><option value="submissions">Readings and sentences</option></select>
+        <button class="t-btn t-ghost" id="tExpCsv">Download CSV</button>
       </div>
     </div>
 

@@ -63,7 +63,7 @@
     S.refreshPictureQs(at).then(function (got) {
       if (!got || mode !== 'picture' || storyIdx() !== at) return;
       var untouched = FIELDS.every(function (f) { return !S.$('#' + FIELD_ID[f]).value.trim() && !rung[f]; });
-      if (untouched) { paintQuestions(); build(); }
+      if (untouched) paintQuestions();
     });
   }
 
@@ -90,7 +90,6 @@
       upgradeQuestions();
       /* "Next picture" only appears once this one is written */
       S.$('#btnNewPrompt').hidden = !storyDone();
-      build();
     }
     paintSaved();
   };
@@ -268,55 +267,135 @@
     S.save();
   }
 
-  /* ── assembling the sentence ────────────────────────── */
-  function build() {
-    /* each answer goes into its own frame: "The cat is {orange}." */
-    var q = qs();
-    var parts = FIELDS.map(function (f, i) {
-      var v = S.$('#' + FIELD_ID[f]).value.trim().replace(/[.!?]+$/, '');
-      if (!v) return '';
-      var sentence = q[i].frame.replace('{}', v);
-      return sentence.charAt(0).toUpperCase() + sentence.slice(1);
-    }).filter(Boolean);
-    var s = parts.join(' ');
+  /* ── the answers ────────────────────────────────────
+     Three boxes, one per question. Each answer goes into its own frame
+     to make a sentence: "The cat is {orange}." */
+  function answers() { return FIELDS.map(function (f) { return S.$('#' + FIELD_ID[f]).value.trim(); }); }
 
-    tidied = null;
-    S.$('#fixList').innerHTML = '';
-    var out = S.$('#sentOut');
-    out.textContent = s || 'Your sentence will appear here.';
-    out.classList.toggle('placeholder', !s);
-    return s;
+  function sentenceFrom(list) {
+    var q = qs();
+    return FIELDS.map(function (f, i) {
+      var v = (list[i] || '').replace(/[.!?]+$/, '');
+      if (!v) return '';
+      var t = q[i].frame.replace('{}', v);
+      return t.charAt(0).toUpperCase() + t.slice(1);
+    }).filter(Boolean).join(' ');
+  }
+  function build() { return sentenceFrom(answers()); }
+
+  function clearFeedback(field) {
+    var fx = S.$('[data-fixes="' + field + '"]'), vd = S.$('[data-verdict="' + field + '"]');
+    if (fx) fx.innerHTML = '';
+    if (vd) { vd.hidden = true; vd.innerHTML = ''; vd.className = 'field-verdict'; }
   }
 
   function clear() {
-    Object.keys(FIELD_ID).forEach(function (f) { S.$('#' + FIELD_ID[f]).value = ''; });
+    FIELDS.forEach(function (f) { S.$('#' + FIELD_ID[f]).value = ''; clearFeedback(f); });
     tidied = null;
+    var r = S.$('#picResult'); if (r) r.innerHTML = '';
     resetLadders();
-    build();
   }
 
-  /* ── saving ─────────────────────────────────────────── */
-  function saveSentence() {
-    var s = tidied || build();
-    if (!s) { S.toast('Write something first'); return; }
+  /* ── spelling, then right or wrong, then save ───────────
+     "Check my spelling" looks at all three answers. "Save it" does that
+     too, then checks each answer against the picture and says which are
+     right, shows the right answer for any that are not, and saves all
+     three. */
+  var busy = false;
 
-    Object.keys(FIELD_ID).forEach(function (f) {
-      if (S.$('#' + FIELD_ID[f]).value.trim()) { creditLadder(f); settleHelp(f, 'resolve'); }
+  /** Spelling-only check of each answer; corrects the boxes and shows what changed. */
+  async function spellAll() {
+    var list = answers(), changed = 0;
+    await Promise.all(FIELDS.map(async function (f, i) {
+      var fx = S.$('[data-fixes="' + f + '"]');
+      fx.innerHTML = '';
+      if (!list[i]) return;
+      var res = await S.checkWriting(list[i], { where: 'Picture story', spellingOnly: true });
+      if (res.fixes.length) {
+        var fixed = res.corrected.trim();
+        S.$('#' + FIELD_ID[f]).value = fixed;
+        list[i] = fixed; changed++;
+        paintFixes(res.fixes, res.full, '[data-fixes="' + f + '"]');
+      }
+    }));
+    return { list: list, changed: changed };
+  }
+
+  async function checkSpelling() {
+    if (busy) return;
+    if (!answers().some(Boolean)) { S.toast('Write your answers first'); return; }
+    busy = true;
+    var btn = S.$('#btnTidy'), label = btn.innerHTML;
+    btn.disabled = true; btn.textContent = 'Checking…';
+    var r = await spellAll();
+    btn.disabled = false; btn.innerHTML = label; busy = false;
+    S.toast(r.changed ? 'Check the changes below' : 'No spelling mistakes found');
+    if (!r.changed) S.say('No spelling mistakes found. Well done!');
+  }
+
+  function showVerdict(field, v, q) {
+    var host = S.$('[data-verdict="' + field + '"]');
+    host.hidden = false;
+    host.className = 'field-verdict ' + (v.ok ? 'is-ok' : v.unsure ? 'is-unsure' : 'is-no');
+    host.innerHTML =
+      '<span class="verdict-mark">' + (v.ok ? '&#10003;' : v.unsure ? '?' : '&#10007;') + '</span>' +
+      '<div class="verdict-body"><b>' + (v.ok ? 'Right!' : v.unsure ? 'Not sure' : 'Not quite') + '</b> ' + S.esc(v.why) +
+      (v.ok ? '' :
+        '<div class="verdict-fix">The answer: <b>' + S.esc(q.ladder.answer) + '</b> ' +
+        '<button class="btn btn-sm" data-useright="' + field + '">Use the right answer</button></div>') +
+      '</div>' +
+      '<button class="icon-xs" data-say="' + S.esc(v.ok ? 'Right!' : 'Not quite. ' + v.why) + '" aria-label="Hear it">' +
+        '<span class="i" data-icon="speaker" data-icon-size="18"></span></button>';
+  }
+
+  async function saveSentence() {
+    if (busy) return;
+    var first = answers();
+    var empty = first.findIndex(function (a) { return !a; });
+    if (empty >= 0) {
+      S.toast('Answer all three questions first');
+      S.$('#' + FIELD_ID[FIELDS[empty]]).focus();
+      return;
+    }
+    busy = true;
+    var btn = S.$('#btnSaveSent'), label = btn.innerHTML;
+    btn.disabled = true; btn.textContent = 'Checking…';
+
+    var sp = await spellAll();                       /* 1. spelling, boxes corrected */
+    var verdicts = await S.judgeAnswers(storyIdx(), sp.list);   /* 2. right or wrong */
+    var q = qs();
+    FIELDS.forEach(function (f, i) { showVerdict(f, verdicts[i], q[i]); });
+
+    /* 3. save all three */
+    FIELDS.forEach(function (f, i) {
+      creditLadder(f); settleHelp(f, 'resolve');
     });
-    S.DB.submission({ mode: 'write', word_count: S.wordCount(s), sentence_text: s, accuracy_pct: null });
+    var sentence = sentenceFrom(sp.list);
+    var right = verdicts.filter(function (v) { return v.ok; }).length;
+    S.DB.submission({ mode: 'write', word_count: S.wordCount(sentence), sentence_text: sentence,
+                      accuracy_pct: Math.round(100 * right / FIELDS.length) });
 
-    S.P.writings.unshift({ date: S.today(), prompt: current().q, text: s, kind: 'picture' });
+    var entry = { date: S.today(), prompt: current().q, text: sentence, kind: 'picture', story: storyIdx(),
+                  answers: sp.list.map(function (a, i) { return { q: q[i].q, said: a, right: verdicts[i].ok, unsure: !!verdicts[i].unsure }; }) };
+    var again = S.P.writings[0] && S.P.writings[0].kind === 'picture' && S.P.writings[0].story === storyIdx();
+    if (again) S.P.writings[0] = entry; else S.P.writings.unshift(entry);   /* saving again replaces, not duplicates */
     S.P.writings = S.P.writings.slice(0, 40);
     S.save();
 
-    S.award(5, 'Saved your sentence');
+    if (!again) S.award(5 + right * 2, 'Saved your answers');
     S.P.storyDone = S.P.storyDone || {};
     S.P.storyDone[storyIdx()] = true;
     S.save();
-    clear();
+
+    var sum = S.$('#picResult');
+    sum.innerHTML = '<div class="pic-summary' + (right === 3 ? ' all' : '') + '"><b>' + right + ' of 3 right</b> ' +
+      (right === 3 ? 'Brilliant! All three answers are right.' :
+       'Look at the answers marked below. Tap "Use the right answer" to fix one, then press Save it again.') + '</div>';
+    S.say(right + ' of 3 right.' + (right === 3 ? ' Brilliant!' : ''));
+
     paintSaved();
-    S.$('#btnNewPrompt').hidden = false;      /* finished: the next picture is allowed */
-    S.toast('Well done! You can try the next picture.');
+    S.$('#btnNewPrompt').hidden = false;
+    btn.disabled = false; btn.innerHTML = label; busy = false;
   }
 
   S.paintSaved = paintSaved;
@@ -335,29 +414,6 @@
         '<span class="saved-text">' + S.esc(w.text) + '</span>' +
       '</div>';
     }).join('');
-  }
-
-  /* ── checking spelling and grammar ─────────────────────
-     A full spelling and grammar checker (spell.js). Shows WHAT
-     changed and WHY, word by word, so the correction teaches. */
-  async function checkSpelling() {
-    var s = build();
-    if (!s) { S.toast('Write something first'); return; }
-
-    var btn = S.$('#btnTidy');
-    var label = btn.innerHTML;
-    btn.disabled = true;
-    btn.textContent = 'Checking…';
-
-    var result = await S.checkWriting(s, { where: 'Picture story' });
-    tidied = result.corrected;
-    var out = S.$('#sentOut');
-    out.textContent = tidied;
-    out.classList.remove('placeholder');
-
-    paintFixes(result.fixes, result.full);
-    btn.disabled = false;
-    btn.innerHTML = label;
   }
 
   S.paintFixes = paintFixes;
@@ -391,8 +447,9 @@
 
   /* ── wiring ─────────────────────────────────────────── */
   S.wireWrite = function () {
+    /* changing an answer clears what was said about the old one */
     Object.keys(FIELD_ID).forEach(function (f) {
-      S.$('#' + FIELD_ID[f]).addEventListener('input', build);
+      S.$('#' + FIELD_ID[f]).addEventListener('input', function () { clearFeedback(f); });
     });
 
     /* the ladder, and anything the rungs offer */
@@ -407,6 +464,22 @@
       if (dict) { S.openDictation(dict.dataset.dictation); return; }
 
       if (e.target.closest('[data-write-back]')) { S.closeWriteActivity(); return; }
+
+      var hear = e.target.closest('[data-hearans]');
+      if (hear) {
+        var said = S.$('#' + FIELD_ID[hear.dataset.hearans]).value.trim();
+        if (said) S.say(said); else S.toast('Write your answer first');
+        return;
+      }
+
+      var right = e.target.closest('[data-useright]');
+      if (right) {
+        var rf = right.dataset.useright;
+        S.$('#' + FIELD_ID[rf]).value = ladderOf(rf).answer;
+        clearFeedback(rf);
+        S.say(ladderOf(rf).answer);
+        return;
+      }
 
       var stuck = e.target.closest('[data-stuck]');
       if (stuck) { climb(stuck.dataset.stuck); return; }
@@ -429,7 +502,7 @@
       if (choice) {
         var field = choice.closest('[data-field]').dataset.field;
         S.$('#' + FIELD_ID[field]).value = choice.dataset.choice;
-        build();
+        clearFeedback(field);
         S.say(choice.dataset.choice);
         return;
       }
@@ -438,7 +511,7 @@
       if (use) {
         var f2 = use.closest('[data-field]').dataset.field;
         S.$('#' + FIELD_ID[f2]).value = use.dataset.use;
-        build();
+        clearFeedback(f2);
         return;
       }
 
@@ -457,10 +530,6 @@
       S.paintWrite();
     });
     S.$('#btnHearPrompt').addEventListener('click', function () { S.say(current().q); });
-    S.$('#btnSaySent').addEventListener('click', function () {
-      var s = tidied || build();
-      if (s) S.say(s); else S.toast('Write something first');
-    });
     S.$('#btnClearSent').addEventListener('click', clear);
     S.$('#btnTidy').addEventListener('click', checkSpelling);
     S.$('#btnSaveSent').addEventListener('click', saveSentence);

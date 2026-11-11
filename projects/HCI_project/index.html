@@ -257,8 +257,11 @@
           <div class="field-row">
             <input class="inp" id="fWho" autocomplete="off">
             <button class="mic" data-micfor="fWho" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
+            <button class="icon-xs hear-ans" data-hearans="who" aria-label="Hear my answer"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
             <button class="btn btn-sm stuck" data-stuck="who">Stuck?</button>
           </div>
+          <div class="field-fixes" data-fixes="who"></div>
+          <div class="field-verdict" data-verdict="who" hidden></div>
           <div class="field-help" data-help="who" hidden></div>
         </div>
 
@@ -269,8 +272,11 @@
           <div class="field-row">
             <input class="inp" id="fWhat" autocomplete="off">
             <button class="mic" data-micfor="fWhat" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
+            <button class="icon-xs hear-ans" data-hearans="what" aria-label="Hear my answer"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
             <button class="btn btn-sm stuck" data-stuck="what">Stuck?</button>
           </div>
+          <div class="field-fixes" data-fixes="what"></div>
+          <div class="field-verdict" data-verdict="what" hidden></div>
           <div class="field-help" data-help="what" hidden></div>
         </div>
 
@@ -281,23 +287,25 @@
           <div class="field-row">
             <input class="inp" id="fWhere" autocomplete="off">
             <button class="mic" data-micfor="fWhere" aria-label="Speak your answer"><span class="i" data-icon="mic" data-icon-size="18"></span></button>
+            <button class="icon-xs hear-ans" data-hearans="where" aria-label="Hear my answer"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
             <button class="btn btn-sm stuck" data-stuck="where">Stuck?</button>
           </div>
+          <div class="field-fixes" data-fixes="where"></div>
+          <div class="field-verdict" data-verdict="where" hidden></div>
           <div class="field-help" data-help="where" hidden></div>
         </div>
       </div>
 
       <aside class="write-side">
         <section class="card">
-          <h2>My sentence</h2>
-          <div class="sentence-out" id="sentOut">Your sentence will appear here.</div>
+          <h2>Check and save</h2>
+          <p class="sub" style="margin:0 0 12px">Answer all three questions, then check your spelling and save. Spark will tell you which answers are right.</p>
           <div class="toolbar">
-            <button class="btn btn-sm" id="btnSaySent"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear it</button>
-            <button class="btn btn-sm" id="btnTidy">✓ Check my spelling</button>
+            <button class="btn btn-sm" id="btnTidy">&#10003; Check my spelling</button>
             <button class="btn btn-sm" id="btnClearSent">Clear</button>
           </div>
-          <div id="fixList"></div>
-          <button class="btn btn-rose btn-block" id="btnSaveSent">Save it ✓</button>
+          <button class="btn btn-rose btn-block" id="btnSaveSent">Save it &#10003;</button>
+          <div id="picResult"></div>
         </section>
 
         <section class="card">

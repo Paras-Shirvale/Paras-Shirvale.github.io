@@ -805,3 +805,21 @@
 .gap.shake{animation:sparkshake .4s}
 @keyframes sparkshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .write-acts.one{grid-template-columns:1fr;max-width:420px}
+
+/* picture story: spelling fixes, right/wrong, and the summary */
+.hear-ans{flex-shrink:0}
+.field-fixes:empty{display:none}
+.field-fixes{margin-top:6px}
+.field-verdict{display:flex;gap:10px;align-items:flex-start;margin-top:9px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface)}
+.field-verdict[hidden]{display:none}
+.field-verdict .verdict-mark{flex-shrink:0;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff}
+.field-verdict .verdict-body{flex:1;min-width:0;font-size:15px;line-height:1.4}
+.field-verdict .verdict-fix{margin-top:6px}
+.field-verdict.is-ok{border-color:#23835C;background:#E2F3EB}
+.field-verdict.is-ok .verdict-mark{background:#23835C}
+.field-verdict.is-no{border-color:#CC3F6B;background:#FDE8EF}
+.field-verdict.is-no .verdict-mark{background:#CC3F6B}
+.field-verdict.is-unsure{border-color:#E09200;background:#FFF2D6}
+.field-verdict.is-unsure .verdict-mark{background:#E09200}
+.pic-summary{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--amber-soft);border:2px solid var(--amber);font-size:15px}
+.pic-summary.all{background:#E2F3EB;border-color:#23835C}

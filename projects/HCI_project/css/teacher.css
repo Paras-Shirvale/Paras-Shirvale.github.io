@@ -128,3 +128,5 @@ small{font-size:11.5px}
 .t-btn[hidden]{display:none}
 .t-removed-note{margin:10px 0 0;padding:10px 14px;border-radius:10px;background:#FFF2D6;border:1px solid #E09200;font-weight:600}
 .t-removed-note[hidden]{display:none}
+
+.t-csv-label{font-size:13px;font-weight:700;color:var(--ink-2);align-self:center}

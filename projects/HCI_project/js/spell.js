@@ -77,7 +77,7 @@
   }
 
   /** The offline fallback: known slips, capitals, full stop. */
-  function localCheck(text) {
+  function localCheck(text, spellingOnly) {
     var fixes = [];
     var out = text.replace(/\b[A-Za-z']+\b/g, function (word) {
       var hit = COMMON[word.toLowerCase()];
@@ -86,6 +86,7 @@
       fixes.push({ from: word, to: to, why: hit[1], kind: 'spelling' });
       return to;
     });
+    if (spellingOnly) return { corrected: out, fixes: fixes, full: false };
     if (/^[a-z]/.test(out)) {
       var first = out.split(' ')[0];
       fixes.push({ from: first, to: first.charAt(0).toUpperCase() + first.slice(1),
@@ -121,7 +122,7 @@
       if (!res.ok) throw new Error('checker ' + res.status);
       matches = (await res.json()).matches || [];
     } catch (e) {
-      return localCheck(text);
+      return localCheck(text, opts.spellingOnly);
     }
 
     /* apply fixes from the end so earlier offsets stay valid */
@@ -129,6 +130,9 @@
     var out = text;
     matches.slice().sort(function (a, b) { return b.offset - a.offset; }).forEach(function (m) {
       var from = text.substr(m.offset, m.length);
+      /* A short answer is not a sentence: no capital, full stop or grammar
+         advice, only real spelling mistakes. */
+      if (opts.spellingOnly && !(m.rule && m.rule.issueType === 'misspelling')) return;
       var rep = m.replacements && m.replacements[0] && m.replacements[0].value;
       if (!rep) return;
       /* prefer a known child-friendly fix when there is one */
@@ -144,7 +148,7 @@
       });
     });
 
-    if (out.trim() && !/[.!?]["')]?$/.test(out.trim())) {
+    if (!opts.spellingOnly && out.trim() && !/[.!?]["')]?$/.test(out.trim())) {
       fixes.push({ from: '…' + out.trim().slice(-8), to: '…' + out.trim().slice(-8) + '.',
                    why: 'End with a full stop.', kind: 'punctuation' });
       out = out.trim() + '.';
@@ -162,9 +166,11 @@
           if (a.pairs && a.pairs.length) {
             S.Analysis.recordMisread(a, { source: 'writing', sentence: text, passage: opts.where || 'Writing' });
           }
-          if (S.DB && S.norm(f.to)) S.DB.confusion(a, { detected_by: 'spelling', mode: 'write' });
+          if (S.DB && S.norm(f.to) && /^[A-Za-z'-]+$/.test(String(f.from).trim())) S.DB.confusion(a, { detected_by: 'spelling', mode: 'write' });
         } else if (f.kind === 'grammar' && S.DB) {
-          S.DB.confusion({ kind: 'grammar', heard: S.norm(f.from), expected: S.norm(f.to), pairs: [] },
+          /* keep the words as written, with their spaces: "boat is boat is", not "boatisboatis" */
+          S.DB.confusion({ kind: 'grammar', heard: String(f.from).toLowerCase().trim() || '(nothing)',
+                           expected: String(f.to).toLowerCase().trim() || '(nothing)', pairs: [] },
                          { detected_by: 'spelling', mode: 'write' });
         }
       });
