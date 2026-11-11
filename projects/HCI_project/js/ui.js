@@ -11,7 +11,8 @@
     S.$$('.view').forEach(function (v) { v.hidden = (v.id !== 'v-' + name); });
     var btnP = S.$('#btnProfile');
     if (btnP) btnP.dataset.on = name === 'profile' ? '1' : '';
-    var tabFor = { world: 'home', read: 'home' }[name] || name;
+    var tabFor = { world: 'worlds', read: 'worlds', profile: '' }[name];
+    if (tabFor === undefined) tabFor = name;
     S.$$('.tab').forEach(function (t) {
       if (t.dataset.go === tabFor) t.setAttribute('aria-current', 'page');
       else t.removeAttribute('aria-current');
@@ -25,6 +26,7 @@
     if (name === 'write')    S.paintWrite && S.paintWrite();
     if (name === 'profile')  S.paintProfile && S.paintProfile();
     if (name === 'world')    S.paintWorld && S.paintWorld();
+    if (name === 'worlds')   S.paintWorlds && S.paintWorlds();
     /* arriving at Progress always lands on the summary, not on the
        detail list somebody left open last time */
     if (name === 'progress') {
@@ -291,10 +293,7 @@
       S.say(cardWord);
       S.useCue('sound');
     });
-    S.$('#wcSlow').addEventListener('click', function () {
-      S.sayInParts(cardWord);
-      S.useCue('parts');
-    });
+
 
     S.$('#scrim').addEventListener('click', function (e) {
       if (e.target.id === 'scrim') S.closeSheet();

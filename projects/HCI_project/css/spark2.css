@@ -33,7 +33,7 @@
 .sparks-chip .icon{color:#B86E00}
 
 @media (max-width:560px){
-  .tabs{grid-template-columns:repeat(3,1fr)!important}
+  .tabs{grid-template-columns:repeat(4,1fr)!important}
 }
 
 /* ── home ────────────────────────────────────────────── */

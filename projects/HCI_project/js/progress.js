@@ -30,7 +30,7 @@
 
   S.paintProgress = function () {
     var P = S.P;
-    var unlocked = S.WORLDS.filter(function (w) { return S.isUnlocked(w); });
+    var unlocked = S.WORLDS.filter(function (w) { return S.worldStarted(w.id); });
     var badges = S.WORLDS.filter(function (w) { return P.worlds && P.worlds[w.id] && P.worlds[w.id].badge; });
     var sentences = sentencesWritten();
     var week = wordsThisWeek();
@@ -45,14 +45,13 @@
       '<div class="me-grid">' +
         /* worlds unlocked: the path */
         '<section class="me-card me-wide tone-violet">' +
-          '<h2>Worlds unlocked</h2>' +
+          '<h2>Worlds explored</h2>' +
           '<div class="world-path">' + S.WORLDS.map(function (w, i) {
-            var open = S.isUnlocked(w);
+            var open = S.worldStarted(w.id);
             return (i ? '<span class="path-line' + (open ? ' on' : '') + '"></span>' : '') +
-              '<button class="path-stop' + (open ? ' on' : '') + '" ' + (open ? 'data-path="' + w.id + '"' : 'disabled') +
-                ' title="' + S.esc(open ? w.title : 'Locked') + '">' +
-                '<span class="path-art">' + S.worldArt(w, !open) + '</span>' +
-                '<small>' + (open ? S.esc(w.title) : 'Locked') + '</small>' +
+              '<button class="path-stop' + (open ? ' on' : '') + '" data-path="' + w.id + '" title="' + S.esc(w.title) + '">' +
+                '<span class="path-art">' + S.worldArt(w) + '</span>' +
+                '<small>' + S.esc(w.title) + (open ? ' ✓' : '') + '</small>' +
               '</button>';
           }).join('') + '</div>' +
           '<p class="me-note">' + unlocked.length + ' of ' + S.WORLDS.length + ' worlds explored</p>' +
@@ -61,7 +60,7 @@
         /* chapters completed */
         '<section class="me-card tone-moss">' +
           '<h2>Chapters completed</h2>' +
-          '<div class="me-levels">' + unlocked.map(function (w) {
+          '<div class="me-levels">' + (unlocked.length ? '' : '<p class="me-note">Start a world to see your chapters here.</p>') + unlocked.map(function (w) {
             var st = (P.worlds || {})[w.id] || { levels: {} };
             return '<div class="me-level"><span>' + S.esc(w.title) + '</span><span class="pips">' +
               [1, 2, 3].map(function (n) {

@@ -1,35 +1,46 @@
 /* ============================================================
-   db.js — every event, as a database row.
+   db.js — every event, as a database row, for every student.
 
-   The child never sees any of this. It is the raw record that
-   powers the teacher/parent dashboard (teacher.html) and the
-   study data. Six tables, as designed:
+   HOW MANY STUDENTS WORK
+   Each student has ONE profile on their device: the name and age
+   they give at the very start. Registering creates a random
+   child_id and a row in `children`. Every row logged afterwards
+   carries that child_id and name, and is sent to the shared study
+   database (Supabase), so a teacher can open ANY student's data
+   from ANY computer. Students never see each other, and never see
+   any of this.
 
-     sessions           a world/level/mode attempt, start → end
-     confusion_events   every letter mix-up, and whether the child
-                        caught it themselves within 2 seconds
-     timing_events      how long each word containing a target
-                        pair took to read or write
-     help_events        every cue card shown: which rung, which
-                        kind, did it help, was it dismissed
-     submissions        each finished reading or sentence
-     confusion_profile  per child per pair, re-computed after
-                        every session (here, and on the server)
+   "Start over" deletes this student's rows — on the device and in
+   the shared database (reset_child) — and nobody else's.
 
-   Rows are stored in this browser AND queued for Supabase when
+   Tables (see _server/supabase-schema.sql):
+     children          who: name, age, avatar
+     sessions          a world/chapter/mode attempt; also records
+                       EXPOSURE (how many words with each letter
+                       pair were met) and pause counts
+     confusion_events  every letter mix-up, whether the child
+                       caught it within 2 seconds, how it was found
+     timing_events     time on words with a target pair, and an
+                       ORDINARY-word baseline per session
+     pause_events      every real difficulty pause and its type
+     help_events       every cue card: rung, kind, helped, dismissed
+     submissions       each finished reading or sentence
+
+   Rows are kept on the device and queued for Supabase when
    config.js has SUPABASE_URL and SUPABASE_ANON_KEY. The queue
-   survives going offline: rows sync whenever the page next can.
-   The anon key only allows INSERTS (see supabase-schema.sql);
-   reading the data back needs a teacher login.
+   survives going offline. The public key may only INSERT.
    ============================================================ */
 
 (function (S) {
   'use strict';
 
   var KEY = 'spark.db.v1';
-  var MAX_ROWS = 4000;
-  var TABLES = ['sessions', 'confusion_events', 'timing_events', 'help_events', 'submissions', 'confusion_profile'];
-  var SYNCED = ['sessions', 'confusion_events', 'timing_events', 'help_events', 'submissions'];
+  var RESET_KEY = 'spark.reset.pending';
+  var MAX_ROWS = 6000;
+  var TABLES = ['children', 'sessions', 'confusion_events', 'timing_events', 'pause_events',
+                'help_events', 'submissions', 'confusion_profile'];
+  var SYNCED = ['children', 'sessions', 'confusion_events', 'timing_events', 'pause_events',
+                'help_events', 'submissions'];
 
   var store = { tables: {}, queue: [] };
   try { store = JSON.parse(localStorage.getItem(KEY)) || store; } catch (e) {}
@@ -39,7 +50,7 @@
   function persist() {
     try { localStorage.setItem(KEY, JSON.stringify(store)); }
     catch (e) {
-      /* storage full: drop the oldest half of the biggest tables */
+      /* storage full: drop the oldest half of every table */
       TABLES.forEach(function (t) { store.tables[t] = store.tables[t].slice(-Math.floor(MAX_ROWS / 2)); });
       try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e2) {}
     }
@@ -80,10 +91,20 @@
   DB.all = function () { return store.tables; };
   DB.pending = function () { return store.queue.length; };
 
+  /* ── who this student is ────────────────────────────────
+     Called once, when the welcome finishes. After this the name
+     and age are locked until "Start over". */
+  DB.registerChild = function () {
+    if (S.P.registered || !S.P.name) return;
+    S.P.registered = true;
+    S.save();
+    DB.log('children', { age: S.P.age || null, avatar: S.P.avatar || '' });
+  };
+
   /* ── sessions ───────────────────────────────────────────
-     A session is one go at one mode of one level: reading
-     chapter 2 of Deep Sea Signal is one session, writing it is
-     another. The row is written when it ends, with both times. */
+     A session is one go at one mode of one chapter: reading
+     chapter 2 of "Bud the Dog" is one session, writing it is
+     another. The row is written when it ends. */
   var open = null;
 
   DB.startSession = function (info) {
@@ -94,7 +115,8 @@
       level: info.level || null,
       mode: info.mode,
       started_at: new Date().toISOString(),
-      t0: Date.now()
+      t0: Date.now(),
+      ord: { sum: 0, n: 0 }          /* ordinary-word timings, averaged at the end */
     };
     return open.session_id;
   };
@@ -106,6 +128,15 @@
     if (!open) return null;
     closeAllHelp();
     var s = open; open = null;
+
+    /* the baseline: how fast this child is on words WITHOUT the
+       target letters, so hesitation on target words means something */
+    if (s.ord.n) {
+      DB.log('timing_events', {
+        session_id: s.session_id, mode: s.mode, confusion_class: 'none', word: null,
+        ms_to_respond: Math.round(s.ord.sum / s.ord.n), n: s.ord.n, is_target: false
+      });
+    }
     var row = DB.log('sessions', Object.assign({
       session_id: s.session_id, world: s.world, level: s.level, mode: s.mode,
       started_at: s.started_at, ended_at: new Date().toISOString(),
@@ -115,7 +146,6 @@
     return row;
   };
 
-  /* a session left open when the page closes still counts */
   window.addEventListener('pagehide', function () {
     if (open) DB.endSession({ completed: false });
   });
@@ -126,7 +156,7 @@
     return Object.assign({ session_id: s.session_id || null, mode: s.mode || null }, extra);
   }
 
-  /** A letter mix-up. analysis comes from S.Analysis.analyseMisread. */
+  /** A letter mix-up (or any spelling slip). analysis is from S.Analysis.analyseMisread. */
   DB.confusion = function (analysis, opts) {
     opts = opts || {};
     var pairs = (analysis && analysis.pairs && analysis.pairs.length) ? analysis.pairs : [null];
@@ -147,23 +177,41 @@
     });
   };
 
+  /**
+   * How long a word took. Words containing the world's letters are
+   * logged one by one (they are the evidence); every other word only
+   * feeds the session's ordinary-word average.
+   */
   DB.timing = function (word, ms, opts) {
     opts = opts || {};
-    var cls = S.classOfWord(word, opts.prefer);
-    if (!cls || !(ms > 0) || ms > 60000) return;
-    DB.log('timing_events', base({ confusion_class: cls, word: S.norm(word), ms_to_respond: Math.round(ms) }));
+    if (!(ms > 0) || ms > 60000) return;
+    var cls = S.classOfWord(word, opts.prefer, !!opts.prefer);
+    if (!cls) {
+      if (open) { open.ord.sum += ms; open.ord.n++; }
+      return;
+    }
+    DB.log('timing_events', base({ confusion_class: cls, word: S.norm(word), ms_to_respond: Math.round(ms), n: 1, is_target: true }));
+  };
+
+  /** A real difficulty pause: where, how long, and why Spark judged it so. */
+  DB.pause = function (info) {
+    DB.log('pause_events', base({
+      confusion_class: S.classOfWord(info.word, info.prefer, !!info.prefer) || 'none',
+      word: S.norm(info.word), duration_ms: Math.round(info.duration_ms),
+      pause_type: info.pause_type, struggle: info.struggle !== false,
+      detected_by: info.detected_by || 'live'
+    }));
   };
 
   /**
    * A cue card was shown. The row is written once, when the card's
    * story is over — it helped, it was dismissed with "Not now", or
-   * the session ended with it unused — so the database only ever
-   * needs inserts, never updates.
+   * the session ended with it unused — so the database only needs inserts.
    */
   var openHelp = [];
   DB.help = function (info) {
     var row = base({
-      confusion_class: info.confusion_class || S.classOfWord(info.word, info.prefer) || 'none',
+      confusion_class: info.confusion_class || S.classOfWord(info.word, info.prefer, !!info.prefer) || 'none',
       rung: info.rung, cue_type: info.cue_type, word: info.word ? S.norm(info.word) || info.word : null,
       shown_at: new Date().toISOString()
     });
@@ -193,10 +241,7 @@
     }));
   };
 
-  /* ── the confusion profile ──────────────────────────────
-     One row per letter pair, rebuilt from the raw events after
-     every session. The same maths runs on the server (SQL) and
-     in the dashboard, so all three agree. */
+  /* ── the confusion profile (local copy) ─────────────── */
   DB.computeProfile = function (tables) {
     var t = tables || store.tables;
     var profile = S.confusionProfile(t, childId());
@@ -209,10 +254,6 @@
     return profile;
   };
 
-  /**
-   * Shared maths for the profile and the dashboard.
-   * trend: last 3 sessions vs the 3 before, errors per session.
-   */
   S.confusionProfile = function (t, child) {
     var mine = function (r) { return !child || r.child_id === child; };
     var sessions = (t.sessions || []).filter(mine)
@@ -228,7 +269,6 @@
       var self = ev.filter(function (e) { return e.self_corrected; }).length;
       var avg = tm.length ? tm.reduce(function (n, e) { return n + e.ms_to_respond; }, 0) / tm.length : null;
 
-      /* errors per session, for the sessions this class appeared in */
       var per = {};
       ev.forEach(function (e) { if (e.session_id in order) per[e.session_id] = (per[e.session_id] || 0) + 1; });
       var touched = sessions.filter(function (s) {
@@ -253,8 +293,8 @@
     });
   };
 
-  /* ── syncing to Supabase ────────────────────────────── */
-  var syncTimer = null, syncing = false;
+  /* ── the shared database (Supabase) ─────────────────── */
+  var syncTimer = null, syncing = false, wiped = false;
 
   function cfg() {
     var c = window.SPARK_CONFIG || {};
@@ -270,14 +310,13 @@
 
   DB.sync = async function () {
     var c = cfg();
-    if (!c || syncing || !store.queue.length || navigator.onLine === false) return;
+    if (!c || syncing || wiped || !store.queue.length || navigator.onLine === false) return;
     syncing = true;
     var batch = store.queue.slice(0, 200);
     var byTable = {};
     batch.forEach(function (q) { (byTable[q.t] = byTable[q.t] || []).push(q.r); });
     var done = [];
     for (var table in byTable) {
-      /* the latest version of each row, once */
       var seen = {}, rows = byTable[table].filter(function (r) { if (seen[r.id]) return false; seen[r.id] = 1; return true; });
       try {
         var res = await fetch(c.url + '/rest/v1/' + table + '?on_conflict=id', {
@@ -292,13 +331,66 @@
         if (res.ok) done = done.concat(rows.map(function (r) { return r.id; }));
       } catch (e) { /* offline — try again later */ }
     }
-    store.queue = store.queue.filter(function (q) { return done.indexOf(q.r.id) < 0; });
-    persist();
+    if (!wiped) {
+      store.queue = store.queue.filter(function (q) { return done.indexOf(q.r.id) < 0; });
+      persist();
+    }
     syncing = false;
     if (store.queue.length && done.length) scheduleSync();
   };
 
-  window.addEventListener('online', function () { DB.sync(); });
-  setTimeout(function () { DB.sync(); }, 4000);
+  window.addEventListener('online', function () { DB.sync(); DB.flushResets(); });
+
+  /* ── "Start over": this student's data, and only theirs ─
+     The device copy goes at once. The shared copy is deleted by
+     the server's reset_child(), which only ever touches the one
+     child_id it is given. If the device is offline the request is
+     kept and retried the next time the page opens. */
+  DB.wipeLocal = function () {
+    wiped = true;
+    open = null; openHelp = [];
+    store = { tables: {}, queue: [] };
+    TABLES.forEach(function (t) { store.tables[t] = []; });
+    try { localStorage.removeItem(KEY); } catch (e) {}
+  };
+
+  function pendingResets() { try { return JSON.parse(localStorage.getItem(RESET_KEY)) || []; } catch (e) { return []; } }
+  function savePending(list) { try { localStorage.setItem(RESET_KEY, JSON.stringify(list)); } catch (e) {} }
+
+  async function callReset(id) {
+    var c = cfg();
+    if (!c) return true;
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 6000) : null;
+    try {
+      var res = await fetch(c.url + '/rest/v1/rpc/reset_child', {
+        method: 'POST',
+        headers: { apikey: c.key, Authorization: 'Bearer ' + c.key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_child: id }),
+        signal: ctrl ? ctrl.signal : undefined
+      });
+      return res.ok;
+    } catch (e) { return false; }
+    finally { if (timer) clearTimeout(timer); }
+  }
+
+  DB.resetRemote = async function (id) {
+    if (!id || !cfg()) return true;
+    if (await callReset(id)) return true;
+    var list = pendingResets();
+    if (list.indexOf(id) < 0) list.push(id);
+    savePending(list);
+    return false;
+  };
+
+  DB.flushResets = async function () {
+    var list = pendingResets();
+    if (!list.length || !cfg() || navigator.onLine === false) return;
+    var left = [];
+    for (var i = 0; i < list.length; i++) { if (!(await callReset(list[i]))) left.push(list[i]); }
+    savePending(left);
+  };
+
+  setTimeout(function () { DB.sync(); DB.flushResets(); }, 4000);
 
 })(window.Spark);

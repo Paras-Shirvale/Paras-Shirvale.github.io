@@ -150,14 +150,22 @@
       out = out.trim() + '.';
     }
 
-    /* letter confusions in spelling count towards the detector */
+    /* Every slip is kept, with its type, so the teacher can see what
+       kind of spelling trouble this is: swapped letters, letters left
+       out or added, letters in the wrong order, a different word, or a
+       grammar slip. Letter swaps also feed the confusion profile. */
     if (opts.record !== false) {
       fixes.forEach(function (f) {
-        if (f.kind !== 'spelling') return;
-        var a = S.Analysis.analyseMisread(f.from, f.to);
-        if (a && a.pairs && a.pairs.length) {
-          S.Analysis.recordMisread(a, { source: 'writing', sentence: text, passage: opts.where || 'Writing' });
-          if (S.DB) S.DB.confusion(a, { detected_by: 'spelling', mode: 'write' });
+        if (f.kind === 'spelling') {
+          var a = S.Analysis.analyseMisread(f.from, f.to) ||
+                  { kind: 'other', heard: S.norm(f.from), expected: S.norm(f.to), pairs: [], note: 'spelt differently' };
+          if (a.pairs && a.pairs.length) {
+            S.Analysis.recordMisread(a, { source: 'writing', sentence: text, passage: opts.where || 'Writing' });
+          }
+          if (S.DB && S.norm(f.to)) S.DB.confusion(a, { detected_by: 'spelling', mode: 'write' });
+        } else if (f.kind === 'grammar' && S.DB) {
+          S.DB.confusion({ kind: 'grammar', heard: S.norm(f.from), expected: S.norm(f.to), pairs: [] },
+                         { detected_by: 'spelling', mode: 'write' });
         }
       });
       S.save();

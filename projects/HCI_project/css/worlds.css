@@ -72,9 +72,9 @@
 .wbadge{--b1:#C9C1B3;--b2:#A69E90;width:58px;height:58px;border-radius:50%;display:inline-grid;place-items:center;flex-shrink:0;
   background:radial-gradient(circle at 35% 30%,#F1EDE5,var(--b1));border:4px solid var(--b2);color:#8E8778}
 .wbadge.on{color:#3A2A10;box-shadow:0 4px 10px rgba(0,0,0,.15)}
-.wbadge.on.tone-sea{--b1:#7FB2FF;--b2:#2C6FD1} .wbadge.on.tone-sand{--b1:#FFD75E;--b2:#C8963C}
-.wbadge.on.tone-storm{--b1:#7DE0C4;--b2:#1F7A68} .wbadge.on.tone-market{--b1:#F3C1A8;--b2:#C25A3A}
-.wbadge.on.tone-lab{--b1:#B9AEF8;--b2:#6A5BD6} .wbadge.on.tone-jungle{--b1:#B6E08A;--b2:#4E7A12}
+.wbadge.on.tone-yard{--b1:#7FB2FF;--b2:#2C6FD1} .wbadge.on.tone-pond{--b1:#FFD75E;--b2:#C8963C}
+.wbadge.on.tone-windy{--b1:#7DE0C4;--b2:#1F7A68} .wbadge.on.tone-sunny{--b1:#F3C1A8;--b2:#C25A3A}
+.wbadge.on.tone-home{--b1:#B9AEF8;--b2:#6A5BD6} .wbadge.on.tone-kitchen{--b1:#B6E08A;--b2:#4E7A12}
 .badge-banner{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:16px;
   background:var(--amber-soft);margin-bottom:16px;max-width:760px}
 .badge-banner.center{justify-content:center;margin:12px auto}
@@ -152,3 +152,9 @@
 .bank-card .bank-art .world-art{width:100%;height:100%}
 .bank-card h3,.bank-card p,.bank-card .lib-foot{padding:0 15px}
 .bank-card .lib-foot{padding-bottom:14px}
+
+/* ── a name and age that are fixed ───────────────────── */
+.locked-detail{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;margin-bottom:8px;
+  border-radius:var(--r);background:var(--surface-2)}
+.locked-detail span{font-size:13px;font-weight:700;color:var(--ink-2)}
+.locked-detail b{font-size:17px}

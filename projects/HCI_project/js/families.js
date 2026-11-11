@@ -3,20 +3,22 @@
 
    Every world is secretly built around ONE pair of letters that
    readers with dyslexia commonly confuse. The child never sees
-   that: they are on "Deep Sea Signal", not "the b/d world". The
-   pair only appears on the teacher/parent dashboard.
+   that: they are with "Bud the Dog", not "the b/d world". The pair
+   only appears on the teacher/parent dashboard.
 
-     Deep Sea Signal     b / d        Night Market Run   n / u
-     Pyramid Puzzle      p / q        Glitch Lab         c / s
-     Storm Chaser        m / w        Jungle Expedition  g / j
+     Bud the Dog      b / d      Nell's Sunny Day   n / u
+     Pip and the Duck p / q      Sam and the Cat    c / s
+     Windy Day Kite   m / w      Gran's Jam         g / j
+
+   The stories are for SMALL children: things they know (a dog, a
+   duck, a kite, a cat, jam), short sentences, easy words, about
+   forty words a chapter. The letters being watched come up again
+   and again, because that is the point — but the story never needs
+   a hard word to do it.
 
    Each world has three chapters. A chapter is read aloud, then
-   written: the child hears three sentences from the chapter and
-   writes them. Finishing all three chapters earns the world's
-   badge. The next world unlocks when a chapter of this one is done.
-
-   For older code, each world also answers to the shape the app
-   used before (S.FAMILIES, .stories, .dictation, .bank).
+   written: the child hears three short sentences from it and
+   writes them. Finishing all three earns the world's badge.
    ============================================================ */
 
 (function (S) {
@@ -25,183 +27,119 @@
   S.WORLDS = [
     {
       id: 'bd', pair: 'bd', letters: ['b', 'd'], pairs: ['bd'], swap: { b: 'd', d: 'b' },
-      title: 'Deep Sea Signal', genre: 'Mystery', badge: 'Signal Decoded', tone: 'sea',
-      blurb: 'A crew aboard submarine BD-7 picks up a signal no one can decode. You\'re the only one who can read it.',
+      title: 'Bud the Dog', genre: 'Pets', badge: 'Dog Helper', tone: 'yard',
+      blurb: 'Bud is a big dog who loves his bed and his bone.',
       chapters: [
-        { id: 'scr-bd', title: 'The Signal',
-          text: 'Deep below the waves, the submarine BD-7 drifted in the dark. Dina sat by the radio and listened. ' +
-                'A beep came, then a buzz, then a dull drum beat. "Bob, did you hear that?" she called. ' +
-                'Bob dropped his book and dashed to the dials.',
-          write: ['Dina heard a beep.', 'Bob dropped his book.', 'The sub drifted in the dark.'] },
-        { id: 'w-bd-2', title: 'Down to the Sea Bed',
-          text: 'The signal came from the sea bed, far below. Bob steered the sub down, past big blue fish and bubbling vents. ' +
-                'Dina pointed to a dim box buried in the sand. A bright badge glowed on the lid. ' +
-                '"Somebody left this here," said Bob.',
-          write: ['Bob steered the sub down.', 'A box was buried in the sand.', 'The badge was bright.'] },
-        { id: 'w-bd-3', title: 'Signal Decoded',
-          text: 'Back on board, Dina opened the box with a bang. Inside was a tiny device blinking red and blue. ' +
-                'Bob studied the dots and dashes on the side. "It\'s a diver\'s beacon," he said. "We can bring the diver back!" ' +
-                'The crew cheered as BD-7 rose to the surface.',
-          write: ['Dina opened the box.', 'The device blinked red and blue.', 'The crew cheered.'] }
+        { id: 'scr-bd', title: 'Bud\'s Bed',
+          text: 'Bud is a big dog. Bud has a bed. The bed is big and soft. Bud digs in his bed. ' +
+                'Dad says, "Bud, stop!" Bud does a big bark.',
+          write: ['Bud is a big dog.', 'Bud has a big bed.', 'Dad said no.'] },
+        { id: 'w-bd-2', title: 'The Bone',
+          text: 'Dad gave Bud a bone. Bud hid the bone in the garden. Bud dug a deep hole. ' +
+                'Bob, the baby, did a big giggle. Bud dug it up and ran back to Bob.',
+          write: ['Dad gave Bud a bone.', 'Bud dug a deep hole.', 'Bob did a big giggle.'] },
+        { id: 'w-bd-3', title: 'Bath Day',
+          text: 'Today is bath day. Bud does not like the bath. Dad fills the bath with bubbles. ' +
+                'Bud jumps in with a big splash! Bud is a bubbly, happy dog.',
+          write: ['Today is bath day.', 'Bud is in the bubbles.', 'Dad dries Bud.'] }
       ]
     },
     {
       id: 'pq', pair: 'pq', letters: ['p', 'q'], pairs: ['pq', 'bp'], swap: { p: 'q', q: 'p' },
-      title: 'Pyramid Puzzle', genre: 'Adventure', badge: 'Pyramid Unlocked', tone: 'sand',
-      blurb: 'Ancient carvings, hidden passages, a queen\'s secret. Only the right words will open the next door.',
+      title: 'Pip and the Duck', genre: 'Animals', badge: 'Pond Pal', tone: 'pond',
+      blurb: 'Pip the pup plays with a quacking duck.',
       chapters: [
-        { id: 'scr-pq', title: 'The Hidden Passage',
-          text: 'Pia and her pal Quin stood at the foot of the pyramid. A painted panel showed a queen with a pet parrot. ' +
-                'Pia pressed a pebble in the panel and it popped open. A narrow passage sloped deep into the stone. ' +
-                '"Quick, bring the lamp," Quin whispered.',
-          write: ['Pia pressed a pebble.', 'The panel popped open.', 'Quin was quick.'] },
-        { id: 'w-pq-2', title: 'The Queen\'s Riddle',
-          text: 'In a quiet room they found a pool of pale sand. Carved on the wall was a question about a pyramid with no peak. ' +
-                'Pia picked up a pointed pin from the floor. Quin spotted a pattern of pearls around a square plate. ' +
-                'Together they placed the pin in the plate.',
-          write: ['They found a quiet room.', 'Pia picked up a pin.', 'Quin spotted a pattern.'] },
-        { id: 'w-pq-3', title: 'Pyramid Unlocked',
-          text: 'With a deep rumble, a stone door opened upward. Behind it was the queen\'s purple cape and a pot of gold pennies. ' +
-                'A painted map showed the path back to the palace. "The queen hid her secret to keep it safe," said Pia. ' +
-                'They put everything back and promised to keep the puzzle quiet.',
-          write: ['A stone door opened.', 'The queen had a purple cape.', 'They kept the secret quiet.'] }
+        { id: 'scr-pq', title: 'The Pond',
+          text: 'Pip is a little pup. Pip plays by the pond. A duck is in the pond. ' +
+                'Quack, quack! Pip jumps up. Pip is not quiet.',
+          write: ['Pip is a pup.', 'The duck says quack.', 'Pip is quick.'] },
+        { id: 'w-pq-2', title: 'Puddle Fun',
+          text: 'It is a wet day. Pip finds a big puddle. Pip pops in the puddle. Splash! ' +
+                'The duck quacks and quacks. Pip pulls a stick from the puddle.',
+          write: ['Pip finds a puddle.', 'Pip plays in the puddle.', 'The duck quacks.'] },
+        { id: 'w-pq-3', title: 'The Quilt',
+          text: 'Pip is wet and cold. Mum puts a soft quilt on Pip. The quilt is pink. ' +
+                'Pip is quiet now. Pip is fast asleep on the quilt.',
+          write: ['Mum puts on a quilt.', 'The quilt is pink.', 'Pip is quiet.'] }
       ]
     },
     {
       id: 'mw', pair: 'mw', letters: ['m', 'w'], pairs: ['mw'], swap: { m: 'w', w: 'm' },
-      title: 'Storm Chaser', genre: 'Science', badge: 'Storm Tracked', tone: 'storm',
-      blurb: 'You\'re part of a weather research team tracking a monster cyclone. Every word in your report could save lives.',
+      title: 'Windy Day Kite', genre: 'Weather', badge: 'Kite Flyer', tone: 'windy',
+      blurb: 'It\'s a windy day! Fly a kite with Mum and Max.',
       chapters: [
-        { id: 'scr-mw', title: 'The Warning',
-          text: 'The weather van was parked at the edge of the meadow. Max watched the clouds swirl into a wide white wall. ' +
-                '"The wind is moving west," said Mum, checking the map. Warm rain began to whip the windows. ' +
-                '"We must warn the town," Max said.',
-          write: ['Max watched the clouds.', 'The wind was warm.', 'We must warn the town.'] },
-        { id: 'w-mw-2', title: 'Into the Wind',
-          text: 'Mum drove the van down the muddy road. Wild winds made the trees wave and moan. ' +
-                'Max held the weather meter out of the window. The numbers went up and up. ' +
-                '"This storm is massive," he whispered.',
-          write: ['Mum drove the van.', 'The trees waved in the wind.', 'Max held the meter.'] },
-        { id: 'w-mw-3', title: 'Storm Tracked',
-          text: 'At midnight the storm moved away from the town. Max wrote the last numbers in his report. ' +
-                'Mum sent the warning to the mayor, and everyone stayed safe. In the morning the sky was calm and the meadow was wet. ' +
-                '"We made it," said Max with a wide smile.',
-          write: ['Max wrote the report.', 'The storm moved away.', 'The morning was calm.'] }
+        { id: 'scr-mw', title: 'The Wind',
+          text: 'It is a windy day. Mum and Max go up the hill. Mum has a kite. ' +
+                'The wind pulls the kite up, up, up! Max waves at the kite.',
+          write: ['It is a windy day.', 'Mum has a kite.', 'Max waves.'] },
+        { id: 'w-mw-2', title: 'The Kite Runs Away',
+          text: 'The kite is red. It has a long tail. The wind blows the kite away! ' +
+                'Max runs and runs. Mum runs with Max. They want the kite back.',
+          write: ['The wind is wild.', 'Mum and Max run.', 'The kite is away.'] },
+        { id: 'w-mw-3', title: 'Home Time',
+          text: 'The kite lands in a tree. Max climbs up and gets it. Mum is so glad. ' +
+                'They walk home. Mum makes warm milk. Max waves bye to the wind.',
+          write: ['Max gets the kite.', 'Mum makes warm milk.', 'We walk home.'] }
       ]
     },
     {
       id: 'nu', pair: 'nu', letters: ['n', 'u'], pairs: ['nu'], swap: { n: 'u', u: 'n' },
-      title: 'Night Market Run', genre: 'Chase', badge: 'Market Mystery Solved', tone: 'market',
-      blurb: 'Someone left a note at the night market. You have one hour to follow the clues before the market closes.',
+      title: 'Nell\'s Sunny Day', genre: 'Fun', badge: 'Sun Star', tone: 'sunny',
+      blurb: 'Nell and Nan have fun in the sun.',
       chapters: [
-        { id: 'w-nu-1', title: 'The Note',
-          text: 'Nina found a note under a bun at the night market. It said: run to the blue tent before the sun comes up. ' +
-                'Lanterns hung over the stalls like round orange moons. Nina tucked the note in her pocket and began to run. ' +
-                'Somewhere, a drum began to thump.',
-          write: ['Nina found a note.', 'She began to run.', 'The lanterns were round.'] },
-        { id: 'w-nu-2', title: 'Under the Lanterns',
-          text: 'At the blue tent, a man was selling hot nuts and buns. "Nobody leaves a note for no reason," he said. ' +
-                'He pointed to a number painted on a tub. Nina turned the tub and found a second note. ' +
-                'It said: find the drum under the bridge.',
-          write: ['The man sold hot nuts.', 'Nina turned the tub.', 'Run under the bridge.'] },
-        { id: 'w-nu-3', title: 'The Last Clue',
-          text: 'Under the bridge, Nina found the drummer. It was her uncle Nuno! He had planned a fun hunt for her birthday. ' +
-                'Inside his drum was a new sun hat and a bag of buns. Nina laughed and hugged him as the market began to close. ' +
-                'It was the best night run ever.',
-          write: ['Nina found her uncle.', 'The hunt was fun.', 'She got a new sun hat.'] }
+        { id: 'w-nu-1', title: 'Sun Fun',
+          text: 'Nell has a sun hat. It is a sunny day. Nell and Nan run in the sun. ' +
+                'Nell has fun. Nan has a nut bun.',
+          write: ['Nell has a sun hat.', 'Nan runs in the sun.', 'We have fun.'] },
+        { id: 'w-nu-2', title: 'Under the Tree',
+          text: 'Nell and Nan sit under a tree. Nan has nine nuts. A little bug runs under a nut. ' +
+                'Nell laughs. It is fun in the sun.',
+          write: ['Nan has nine nuts.', 'They sit under a tree.', 'A bug runs under a nut.'] },
+        { id: 'w-nu-3', title: 'Nap Time',
+          text: 'The sun is hot. Nan has a nap under the tree. Nell hums a tune. ' +
+                'Then it is time to go. Nell and Nan run home for lunch.',
+          write: ['Nan has a nap.', 'Nell hums a tune.', 'They run home.'] }
       ]
     },
     {
       id: 'cs', pair: 'cs', letters: ['c', 's'], pairs: ['cs', 'sz'], swap: { c: 's', s: 'c' },
-      title: 'Glitch Lab', genre: 'Sci-fi', badge: 'System Fixed', tone: 'lab',
-      blurb: 'An AI in a research lab is sending garbled messages. Only someone who can read between the errors can fix it.',
+      title: 'Sam and the Cat', genre: 'Home', badge: 'Cat Friend', tone: 'home',
+      blurb: 'Sam has a cat. The cat gets into lots of fun.',
       chapters: [
-        { id: 'scr-cs', title: 'Strange Messages',
-          text: 'In the science lab, the computer screen flickered. Cass saw a strange message: send help, the circuit is sick. ' +
-                'Sam checked the cables and the socket. "Something is causing a glitch," he said. ' +
-                'The fans in the case began to hiss.',
-          write: ['Cass saw a message.', 'Sam checked the cables.', 'The fans began to hiss.'] },
-        { id: 'w-cs-2', title: 'Inside the Circuit',
-          text: 'Cass opened the case carefully. A small spider sat on a silver circuit. ' +
-                'Its web was crossing two wires and making sparks. Sam slid a cup over the spider and carried it outside. ' +
-                '"Sorry, little scientist," said Cass.',
-          write: ['Cass opened the case.', 'A spider sat on the circuit.', 'Sam carried it outside.'] },
-        { id: 'w-cs-3', title: 'System Fixed',
-          text: 'The screen came back to life with a soft click. The message said: thank you, the system is safe. ' +
-                'Cass and Sam cleaned the circuit and closed the case. The messages were clear and correct at last. ' +
-                '"Science is so cool," said Sam.',
-          write: ['The screen came back.', 'The system was safe.', 'Science is so cool.'] }
+        { id: 'scr-cs', title: 'Cat on the Mat',
+          text: 'Sam has a cat. The cat sits on a mat. Sam sits next to the cat. ' +
+                'The cat is soft. Sam is so happy.',
+          write: ['Sam has a cat.', 'The cat sits on a mat.', 'The cat is soft.'] },
+        { id: 'w-cs-2', title: 'The Sock',
+          text: 'The cat has a sock. It is Sam\'s sock! Sam says, "Cat, drop it!" ' +
+                'The cat runs. Sam runs after the cat. Sam is so silly.',
+          write: ['The cat has a sock.', 'Sam says stop.', 'Sam runs after the cat.'] },
+        { id: 'w-cs-3', title: 'The Cake',
+          text: 'Sam makes a cake. The cat smells the cake. Sam cuts the cake. ' +
+                'Sam gets a slice and the cat gets milk. They sit and smile.',
+          write: ['Sam makes a cake.', 'The cat smells the cake.', 'We sit and smile.'] }
       ]
     },
     {
       id: 'gj', pair: 'gj', letters: ['g', 'j'], pairs: ['gj', 'dg'], swap: { g: 'j', j: 'g' },
-      title: 'Jungle Expedition', genre: 'Explorer', badge: 'Discovery Logged', tone: 'jungle',
-      blurb: 'Your field journal is the only record of a species no one has seen before. Write it right — or lose the discovery.',
+      title: 'Gran\'s Jam', genre: 'Food', badge: 'Jam Maker', tone: 'kitchen',
+      blurb: 'Gran makes jam, and Jess helps. Yum!',
       chapters: [
-        { id: 'scr-gj', title: 'Into the Jungle',
-          text: 'Jess and Gus jumped off the jeep at the edge of the jungle. Giant green leaves hung over the path like umbrellas. ' +
-                'Gus carried the journal and Jess carried the jar. "Keep your eyes open for anything strange," said Jess. ' +
-                'Something jiggled in the grass.',
-          write: ['Jess jumped off the jeep.', 'Gus carried the journal.', 'The leaves were giant.'] },
-        { id: 'w-gj-2', title: 'The Glowing Frog',
-          text: 'By a gentle stream, they saw a frog that glowed like a jewel. Its legs were gold and its back was bright orange. ' +
-                'Gus began to draw it in the journal. Jess gently guided it into the jar to get a good look. ' +
-                '"Nobody has ever seen this," she gasped.',
-          write: ['The frog glowed like a jewel.', 'Gus began to draw it.', 'Jess was gentle.'] },
-        { id: 'w-gj-3', title: 'Discovery Logged',
-          text: 'Jess let the frog go back into the jungle. Gus wrote every detail in the journal: the glow, the gold legs, the gentle stream. ' +
-                'Back at camp, they gave the journal to the expedition leader. "This is a giant discovery," she said. ' +
-                'Jess and Gus grinned all the way home.',
-          write: ['Jess let the frog go.', 'Gus wrote in the journal.', 'It was a giant discovery.'] }
+        { id: 'scr-gj', title: 'The Jam Jar',
+          text: 'Gran has jam. Jess helps Gran. Jess gets the jam jar. The jam is red and sweet. ' +
+                'Jess gives Gran a hug.',
+          write: ['Gran has jam.', 'Jess gets a jar.', 'Jess gives a hug.'] },
+        { id: 'w-gj-2', title: 'Jam on Bread',
+          text: 'Gran puts jam on the bread. Jess is so glad. Jess gobbles it up. Yum! ' +
+                'Jess giggles and Gran giggles too.',
+          write: ['Gran puts jam on the bread.', 'Jess is glad.', 'Jess giggles.'] },
+        { id: 'w-gj-3', title: 'The Garden',
+          text: 'Gran has a big garden. A frog jumps in the grass. Jess giggles. ' +
+                'The frog jumps again. Jess jumps too! Gran laughs.',
+          write: ['A frog jumps in the garden.', 'Jess jumps too.', 'Gran laughs.'] }
       ]
     }
   ];
-
-  /* Word banks for free practice, one per world, full of its letters. */
-  var BANKS = {
-    bd: { starters: ['The big dog', 'Dina had a', 'Bob saw', 'Down below'],
-          who: ['Dina', 'Bob', 'the diver', 'a big fish', 'the crew'],
-          doing: ['dived', 'dashed', 'grabbed', 'found', 'decoded', 'drifted'],
-          what: ['a box', 'a badge', 'a beacon', 'some bubbles', 'a book'],
-          where: ['by the door', 'on the sea bed', 'in the dark', 'below the boat'],
-          describe: ['big', 'blue', 'bright', 'deep', 'dim'],
-          glue: ['the', 'a', 'and', 'was', 'his', 'her', '.', '!'] },
-    pq: { starters: ['The queen', 'Pia put', 'A quiet', 'Quickly,'],
-          who: ['Pia', 'Quin', 'the queen', 'a parrot', 'my pal'],
-          doing: ['pressed', 'picked up', 'peeped', 'pushed', 'played', 'popped'],
-          what: ['a pebble', 'a pin', 'a pot', 'a puzzle', 'a purple cape'],
-          where: ['in the pyramid', 'up the path', 'past the pool', 'at the palace'],
-          describe: ['quick', 'quiet', 'pale', 'painted', 'purple'],
-          glue: ['the', 'a', 'and', 'was', 'with', 'her', '.', '?'] },
-    mw: { starters: ['The wind', 'Mum went', 'We watched', 'In the morning'],
-          who: ['Max', 'Mum', 'we', 'the team', 'the mayor'],
-          doing: ['watched', 'warned', 'moved', 'made', 'waved', 'wrote'],
-          what: ['a map', 'the meter', 'some water', 'a warning', 'a window'],
-          where: ['in the meadow', 'down the road', 'near the window', 'in the van'],
-          describe: ['warm', 'wet', 'wild', 'massive', 'muddy'],
-          glue: ['the', 'a', 'and', 'went', 'was', 'into', '.', '!'] },
-    nu: { starters: ['Nina found', 'Under the', 'The man', 'At night'],
-          who: ['Nina', 'uncle Nuno', 'the man', 'a dog', 'nobody'],
-          doing: ['ran', 'found', 'turned', 'hunted', 'jumped', 'hugged'],
-          what: ['a note', 'a bun', 'some nuts', 'a drum', 'a sun hat'],
-          where: ['under the bridge', 'in the market', 'by the tent', 'up the hill'],
-          describe: ['new', 'fun', 'round', 'hot', 'blue'],
-          glue: ['the', 'a', 'and', 'in', 'on', 'was', '.', '!'] },
-    cs: { starters: ['Cass saw', 'The screen', 'In the lab', 'Six cables'],
-          who: ['Cass', 'Sam', 'the scientist', 'a spider', 'the computer'],
-          doing: ['saw', 'sent', 'cycled', 'checked', 'cleaned', 'closed'],
-          what: ['a circuit', 'a message', 'a cable', 'a cup', 'a socket'],
-          where: ['in the lab', 'on the screen', 'in the case', 'outside'],
-          describe: ['strange', 'small', 'silver', 'safe', 'cool'],
-          glue: ['the', 'a', 'and', 'was', 'so', '.', '!'] },
-    gj: { starters: ['Jess got', 'The giant', 'A green frog', 'Go and'],
-          who: ['Jess', 'Gus', 'a frog', 'a giant', 'the guide'],
-          doing: ['jumped', 'got', 'glowed', 'grinned', 'gave', 'jiggled'],
-          what: ['a jar', 'a journal', 'a jewel', 'a jeep', 'a gift'],
-          where: ['in the jungle', 'by the gate', 'in the grass', 'on the jeep'],
-          describe: ['giant', 'green', 'gentle', 'gold', 'jolly'],
-          glue: ['the', 'a', 'and', 'was', 'got', '.', '!'] }
-  };
 
   /* Memory tips for the letters — used as cues, never as titles. */
   var TIPS = {
@@ -209,18 +147,17 @@
     pq: 'p has its tail on the left. q always comes with u, like in queen.',
     mw: 'm has mountains on top. w has waves at the bottom.',
     nu: 'n is a bridge you walk over. u is a cup that holds water.',
-    cs: 'c says "k" in cat, but "s" in city, cycle and ice.',
-    gj: 'g says "g" in goat, but "j" in giant and gentle. j wears a dot like a hat.'
+    cs: 'c says "k" in cat, but "s" in city and ice.',
+    gj: 'g says "g" in goat, but "j" in jam. j wears a dot like a hat.'
   };
 
   /* ── compatibility: the shape older code expects ──────── */
   S.WORLDS.forEach(function (w, i) {
     w.index = i;
     w.tip = TIPS[w.id];
-    w.bank = BANKS[w.id];
     w.stories = w.chapters;
     w.dictation = w.chapters.reduce(function (all, c) { return all.concat(c.write); }, []);
-    w.pic = { sea: 'fish', sand: 'star', storm: 'storm', market: 'moon', lab: 'rocket', jungle: 'tree' }[w.tone];
+    w.pic = { yard: 'dog', pond: 'fish', windy: 'cloud', sunny: 'sun', home: 'cat', kitchen: 'apple' }[w.tone];
   });
   S.FAMILIES = S.WORLDS;
 
@@ -238,9 +175,8 @@
   };
 
   /* ── confusion classes ───────────────────────────────────
-     The six cells of the teacher's heatmap. Related pairs fold
-     into their world's class: b/p counts as p/q, s/z as c/s,
-     d/g as g/j. Anything else keeps its own key. */
+     The six pairs the dashboard tracks. Related pairs fold into
+     their world's class: b/p counts as p/q, s/z as c/s, d/g as g/j. */
   S.CLASSES = ['bd', 'pq', 'mw', 'nu', 'cs', 'gj'];
   var FOLD = { bp: 'pq', sz: 'cs', dg: 'gj' };
   S.classOfPair = function (key) { return FOLD[key] || key; };
@@ -250,14 +186,38 @@
     return S.WORLDS.filter(function (w) { return w.pair === k; })[0] || null;
   };
 
-  /** Which confusion class a word belongs to, preferring one class. */
-  S.classOfWord = function (word, prefer) {
+  /**
+   * Which confusion class a word belongs to (does it contain that
+   * pair's letters?). With `strict` and a preferred class, a word
+   * outside the preferred pair is an ORDINARY word (null) — that is
+   * what lets hesitation on target words be compared with hesitation
+   * on everything else.
+   */
+  S.classOfWord = function (word, prefer, strict) {
     var w = S.norm(word);
     if (!w) return null;
-    function has(cls) { var a = cls[0], b = cls[1]; return w.indexOf(a) > -1 || w.indexOf(b) > -1; }
+    function has(cls) { return w.indexOf(cls[0]) > -1 || w.indexOf(cls[1]) > -1; }
     if (prefer && has(prefer)) return prefer;
+    if (prefer && strict) return null;
     for (var i = 0; i < S.CLASSES.length; i++) if (has(S.CLASSES[i])) return S.CLASSES[i];
     return null;
+  };
+
+  /**
+   * How many words in a text contain each pair's letters — the
+   * "exposure". A child who meets 8 b/d words and slips twice is
+   * not doing worse than one who meets 40 and slips four times,
+   * so every session records how much it asked of each pair.
+   */
+  S.exposureOf = function (text) {
+    var out = {};
+    S.CLASSES.forEach(function (c) { out[c] = 0; });
+    String(text || '').split(/\s+/).forEach(function (raw) {
+      var w = S.norm(raw);
+      if (!w) return;
+      S.CLASSES.forEach(function (c) { if (w.indexOf(c[0]) > -1 || w.indexOf(c[1]) > -1) out[c]++; });
+    });
+    return out;
   };
 
   /** The confusable twin of a word: "dog" → "bog". Null if none. */
@@ -278,39 +238,63 @@
     return null;
   };
 
-  /** A story banner for each world — the picture on its card. */
+  /** A friendly picture banner for each world. */
   S.worldArt = function (w, locked) {
     var art = {
-      sea: '<rect width="320" height="120" fill="#0E2A4D"/><path d="M0 98 Q80 76 160 92 T320 88 V120 H0Z" fill="#0A2240"/>' +
-           '<ellipse cx="150" cy="62" rx="52" ry="20" fill="#2C6FD1"/><rect x="164" y="34" width="9" height="22" rx="4" fill="#4A8BEA"/>' +
-           '<circle cx="128" cy="62" r="7" fill="#7FB2FF"/><path d="M188 52 q16 -12 32 2 M192 58 q12 -9 24 1" stroke="#A9C9F5" stroke-width="3" fill="none"/>' +
-           '<circle cx="236" cy="36" r="5" fill="none" stroke="#7FB2FF" stroke-width="2"/><circle cx="252" cy="22" r="3.5" fill="none" stroke="#7FB2FF" stroke-width="2"/>',
-      sand: '<rect width="320" height="120" fill="#2A1A05"/><circle cx="40" cy="20" r="2" fill="#E9B44C"/><circle cx="270" cy="16" r="2" fill="#E9B44C"/><circle cx="200" cy="30" r="1.5" fill="#E9B44C"/>' +
-            '<path d="M80 104 L170 24 L260 104Z" fill="#5A3A10"/><path d="M170 24 L260 104 H205Z" fill="#4A300C"/>' +
-            '<rect x="158" y="80" width="24" height="24" fill="#C8963C"/><rect x="164" y="86" width="12" height="18" fill="#3A2408"/>' +
-            '<rect y="104" width="320" height="16" fill="#3A2408"/>',
-      storm: '<rect width="320" height="120" fill="#0B2B24"/><ellipse cx="120" cy="34" rx="76" ry="22" fill="#14524A"/><ellipse cx="200" cy="26" rx="70" ry="22" fill="#1B6A5E"/>' +
-             '<path d="M196 30 L180 64 H194 L184 92" stroke="#7DE0C4" stroke-width="4" fill="none" stroke-linejoin="round"/>' +
-             '<g stroke="#2E8C7A" stroke-width="2"><path d="M30 70 L70 86"/><path d="M40 90 L80 104"/><path d="M250 70 L290 84"/></g>' +
-             '<rect x="232" y="88" width="64" height="20" rx="5" fill="#1F7A68"/><circle cx="244" cy="110" r="6" fill="#0E3D35"/><circle cx="284" cy="110" r="6" fill="#0E3D35"/>',
-      market: '<rect width="320" height="120" fill="#2A0E0A"/><path d="M30 18 Q100 36 160 22 T290 20" stroke="#8C3A22" stroke-width="2" fill="none"/>' +
-              '<circle cx="70" cy="30" r="9" fill="#E59A7A"/><circle cx="130" cy="28" r="8" fill="#E8B862"/><circle cx="190" cy="26" r="9" fill="#E59A7A"/><circle cx="250" cy="22" r="7" fill="#E8B862"/>' +
-              '<rect x="0" y="60" width="44" height="60" fill="#3A140E"/><rect x="250" y="56" width="70" height="64" fill="#3A140E"/>' +
-              '<rect x="78" y="76" width="44" height="44" fill="#6A2414"/><rect x="132" y="72" width="44" height="48" fill="#6A2414"/><rect x="186" y="80" width="40" height="40" fill="#6A2414"/>' +
-              '<circle cx="56" cy="78" r="6" fill="#F3C1A8"/><path d="M56 84 V98 M56 98 l-6 8 M56 98 l6 8 M48 90 h16" stroke="#E07A4A" stroke-width="3"/>',
-      lab: '<rect width="320" height="120" fill="#120F33"/><g stroke="#221E52" stroke-width="1"><path d="M0 40 H320 M0 80 H320 M80 0 V120 M160 0 V120 M240 0 V120"/></g>' +
-           '<rect x="104" y="40" width="104" height="66" rx="8" fill="#2A2470"/><rect x="112" y="48" width="88" height="50" rx="4" fill="#15123A"/>' +
-           '<rect x="120" y="56" width="60" height="5" rx="2" fill="#8C7DF0"/><rect x="120" y="66" width="44" height="5" rx="2" fill="#8C7DF0"/><rect x="120" y="76" width="66" height="5" rx="2" fill="#6A5BD6"/>' +
-           '<rect x="96" y="22" width="56" height="10" rx="4" fill="#6A5BD6"/><circle cx="236" cy="52" r="20" fill="#2A2470"/><circle cx="236" cy="52" r="8" fill="#B9AEF8"/>',
-      jungle: '<rect width="320" height="120" fill="#1F4510"/><ellipse cx="60" cy="10" rx="80" ry="40" fill="#2D5E18"/><ellipse cx="260" cy="14" rx="90" ry="44" fill="#2D5E18"/>' +
-              '<ellipse cx="80" cy="68" rx="46" ry="26" fill="#386F1C"/><ellipse cx="240" cy="62" rx="52" ry="24" fill="#386F1C"/>' +
-              '<circle cx="96" cy="60" r="3" fill="#C8E6A0"/><circle cx="256" cy="56" r="3" fill="#C8E6A0"/><rect y="94" width="320" height="26" fill="#2D5E18"/>' +
-              '<circle cx="160" cy="80" r="7" fill="#F3C1A8"/><path d="M150 74 h20 l-4 -6 h-12z" fill="#8C5A2A"/><rect x="154" y="88" width="12" height="16" rx="3" fill="#5E8C2A"/>'
+      yard: '<rect width="320" height="120" fill="#BFE6F7"/><circle cx="272" cy="26" r="17" fill="#FFD75E"/>' +
+            '<ellipse cx="56" cy="30" rx="28" ry="10" fill="#fff"/><ellipse cx="78" cy="24" rx="20" ry="9" fill="#fff"/>' +
+            '<rect y="86" width="320" height="34" fill="#7CC36A"/>' +
+            '<rect x="206" y="58" width="62" height="40" fill="#C97B4A"/><path d="M198 60 L237 30 L276 60Z" fill="#B5473A"/>' +
+            '<path d="M225 98 V80 a12 12 0 0 1 24 0 V98Z" fill="#3A2416"/>' +
+            '<path d="M86 84 q-22 -6 -26 -26" stroke="#B07A4A" stroke-width="7" fill="none" stroke-linecap="round"/>' +
+            '<ellipse cx="116" cy="86" rx="32" ry="17" fill="#B07A4A"/><rect x="92" y="94" width="9" height="16" rx="3" fill="#8E5F38"/><rect x="130" y="94" width="9" height="16" rx="3" fill="#8E5F38"/>' +
+            '<circle cx="150" cy="68" r="15" fill="#C68A55"/><ellipse cx="163" cy="64" rx="6" ry="11" fill="#8E5F38"/>' +
+            '<circle cx="146" cy="65" r="2.6" fill="#2B2118"/><ellipse cx="158" cy="73" rx="4.5" ry="3.4" fill="#2B2118"/>' +
+            '<path d="M142 96 q8 14 18 0z" fill="#F08A8A"/>',
+      pond: '<rect width="320" height="120" fill="#CFEBFA"/><circle cx="40" cy="24" r="14" fill="#FFD75E"/>' +
+            '<rect y="88" width="320" height="32" fill="#8CCB6E"/><ellipse cx="170" cy="86" rx="110" ry="26" fill="#5BB3E6"/>' +
+            '<ellipse cx="170" cy="86" rx="90" ry="19" fill="#7CC6F0"/>' +
+            '<ellipse cx="108" cy="92" rx="16" ry="6" fill="#4FA95A"/><ellipse cx="232" cy="96" rx="14" ry="5" fill="#4FA95A"/>' +
+            '<ellipse cx="172" cy="84" rx="26" ry="16" fill="#FFD34D"/><circle cx="196" cy="68" r="12" fill="#FFD34D"/>' +
+            '<path d="M206 68 l14 4 -14 5z" fill="#F5873A"/><circle cx="199" cy="65" r="2.4" fill="#2B2118"/>' +
+            '<path d="M160 82 q10 -10 22 0" stroke="#E8B820" stroke-width="4" fill="none"/>' +
+            '<ellipse cx="38" cy="96" rx="22" ry="13" fill="#B07A4A"/><circle cx="58" cy="84" r="11" fill="#C68A55"/>' +
+            '<ellipse cx="68" cy="80" rx="5" ry="9" fill="#8E5F38"/><circle cx="58" cy="82" r="2.2" fill="#2B2118"/>',
+      windy: '<rect width="320" height="120" fill="#D6F0FF"/><ellipse cx="60" cy="28" rx="34" ry="11" fill="#fff"/><ellipse cx="86" cy="22" rx="22" ry="10" fill="#fff"/>' +
+             '<path d="M0 104 Q90 70 190 98 T320 92 V120 H0Z" fill="#7CC36A"/>' +
+             '<g stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none"><path d="M20 62 q30 -14 60 0 t50 -6"/><path d="M40 82 q26 -10 52 0"/></g>' +
+             '<path d="M226 16 L252 46 L226 76 L200 46Z" fill="#E2503A"/><path d="M226 16 V76 M200 46 H252" stroke="#fff" stroke-width="2"/>' +
+             '<path d="M226 76 q-10 14 4 24 t-8 20" stroke="#8B5E3C" stroke-width="2.5" fill="none"/>' +
+             '<path d="M229 90 l10 -4 -4 10z M222 108 l-10 -3 5 9z" fill="#F5B731"/>',
+      sunny: '<rect width="320" height="120" fill="#FFF1B8"/><g stroke="#FFC93C" stroke-width="5" stroke-linecap="round">' +
+             '<path d="M250 6 v10 M250 74 v10 M216 40 h-10 M294 40 h10 M226 16 l-7 -7 M274 64 l7 7 M274 16 l7 -7 M226 64 l-7 7"/></g>' +
+             '<circle cx="250" cy="40" r="22" fill="#FFC93C"/><circle cx="243" cy="36" r="2.6" fill="#7A4A00"/><circle cx="257" cy="36" r="2.6" fill="#7A4A00"/>' +
+             '<path d="M241 46 q9 8 18 0" stroke="#7A4A00" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+             '<path d="M0 100 Q100 70 200 96 T320 90 V120 H0Z" fill="#8FD16A"/>' +
+             '<rect x="86" y="58" width="12" height="40" fill="#8B5E3C"/><circle cx="92" cy="50" r="28" fill="#4FB06D"/><circle cx="74" cy="62" r="16" fill="#5CC27A"/><circle cx="110" cy="62" r="16" fill="#5CC27A"/>' +
+             '<circle cx="30" cy="104" r="4" fill="#E0558B"/><circle cx="46" cy="110" r="4" fill="#fff"/><circle cx="150" cy="106" r="4" fill="#E0558B"/>',
+      home: '<rect width="320" height="120" fill="#FBE8D2"/><rect y="88" width="320" height="32" fill="#D9A87A"/>' +
+            '<rect x="30" y="14" width="64" height="52" rx="3" fill="#9FD0EC" stroke="#8B5E3C" stroke-width="4"/><path d="M62 14 V66 M30 40 H94" stroke="#8B5E3C" stroke-width="3"/>' +
+            '<rect x="130" y="92" width="110" height="18" rx="8" fill="#5B7FC7"/>' +
+            '<ellipse cx="186" cy="82" rx="26" ry="18" fill="#E8894A"/><circle cx="168" cy="62" r="15" fill="#F09C5C"/>' +
+            '<path d="M156 52 l-2 -14 12 8z M178 50 l4 -14 8 12z" fill="#E8894A"/>' +
+            '<circle cx="163" cy="61" r="2.4" fill="#2B2118"/><circle cx="174" cy="61" r="2.4" fill="#2B2118"/><path d="M166 67 l2 3 2 -3z" fill="#C25A47"/>' +
+            '<path d="M210 86 q26 -6 18 -28" stroke="#E8894A" stroke-width="7" fill="none" stroke-linecap="round"/>' +
+            '<path d="M262 76 h18 v24 q-9 6 -18 0z" fill="#E2503A"/><rect x="262" y="70" width="18" height="8" fill="#fff"/>' +
+            '<rect x="276" y="84" width="22" height="18" rx="3" fill="#F5B731"/>',
+      kitchen: '<rect width="320" height="120" fill="#FFE9EE"/><rect y="84" width="320" height="36" fill="#C9936A"/>' +
+               '<rect x="20" y="30" width="110" height="6" rx="3" fill="#8B5E3C"/>' +
+               '<rect x="150" y="38" width="56" height="58" rx="10" fill="#D6243E"/><rect x="146" y="30" width="64" height="12" rx="5" fill="#E8B84C"/>' +
+               '<rect x="158" y="56" width="40" height="24" rx="4" fill="#fff"/><circle cx="178" cy="68" r="6" fill="#D6243E"/>' +
+               '<rect x="40" y="62" width="68" height="34" rx="6" fill="#F2D7A0"/><rect x="40" y="62" width="68" height="8" rx="4" fill="#C9884A"/>' +
+               '<rect x="48" y="70" width="52" height="14" rx="4" fill="#D6243E"/>' +
+               '<path d="M236 50 h30 v46 a8 8 0 0 1 -8 8 h-14 a8 8 0 0 1 -8 -8z" fill="#5B9BEA"/><path d="M266 58 q16 4 0 28" stroke="#5B9BEA" stroke-width="6" fill="none"/>' +
+               '<circle cx="292" cy="28" r="14" fill="#7CC36A"/><path d="M292 14 v-8" stroke="#8B5E3C" stroke-width="3"/>'
     }[w.tone] || '';
     return '<svg class="world-art' + (locked ? ' locked' : '') + '" viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + art + '</svg>';
   };
 
-  /* Kept for the old letter-check list: the first chapter of each world. */
+  /* Kept for older callers: the first chapter of each world. */
   S.SCREENING = S.WORLDS.map(function (w) {
     return Object.assign({ pairs: w.pairs, family: w.id, about: w.title }, w.chapters[0]);
   });

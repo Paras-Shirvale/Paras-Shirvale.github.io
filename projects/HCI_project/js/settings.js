@@ -343,14 +343,20 @@
   function confirmReset() {
     S.sheet(
       '<h2>Start over?</h2>' +
-      '<p class="sub">This clears your sparks, the words and letters Spark has learned ' +
-      'about you, and everything you have written. It cannot be undone.</p>' +
+      '<p class="sub">This clears <b>' + S.esc(S.P.name || 'your') + (S.P.name ? '\'s' : '') + '</b> worlds, badges and streak, ' +
+      'and everything Spark has kept about ' + (S.P.name ? 'them' : 'you') + ' for the teacher. ' +
+      'Nobody else\'s are touched. You will pick a name and age again. It cannot be undone.</p>' +
       '<div class="toolbar" style="margin:0">' +
-        '<button class="btn btn-rose" id="rYes">Yes, clear it</button>' +
+        '<button class="btn btn-rose" id="rYes">Yes, start over</button>' +
         '<button class="btn" data-close>Keep it</button>' +
       '</div>',
       function () {
-        S.$('#rYes').addEventListener('click', function () {
+        S.$('#rYes').addEventListener('click', async function () {
+          var b = S.$('#rYes');
+          b.disabled = true; b.textContent = 'Clearing…';
+          var id = S.P.childId;
+          S.DB.wipeLocal();                 /* this device's copy, at once */
+          await S.DB.resetRemote(id);       /* the shared copy: only this child_id */
           S.reset();
           location.reload();
         });
@@ -515,8 +521,10 @@
         go: function () { S.go('profile'); } },
       /* the grown-ups' dashboard is its own page with its own login,
          so nothing diagnostic ever appears on the child's screen */
+      { icon: 'spark',   label: 'Show me around',
+        note: 'The guided tour of where everything is', go: function () { S.startTour(); } },
       { icon: 'lock',    label: 'For grown-ups',
-        note: 'Teacher and parent dashboard (needs a login)',
+        note: 'Teacher and parent dashboard (needs the teacher password)',
         go: function () { location.href = 'teacher.html'; } }
     ];
 

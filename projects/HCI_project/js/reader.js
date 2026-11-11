@@ -110,7 +110,7 @@
     }
     R = null;
     S.$('#readWork').hidden = true;
-    if (world) S.openWorld(world); else S.go('home');
+    if (world) S.openWorld(world); else S.go('worlds');
   };
 
   S.paintLibraryIfIdle = function () {};
@@ -443,6 +443,13 @@
     });
 
     R.pauses.push({ word: token.clean, type: verdict.type, struggle: verdict.struggle });
+    /* every real difficulty pause is a row: which word, how long, and
+       why Spark judged it a difficulty (sounding it out, a word that
+       has caught them before, a long word, stuck mid-phrase) */
+    if (verdict.struggle) {
+      S.DB.pause({ word: token.clean, duration_ms: Date.now() - lastAdvance,
+                   pause_type: verdict.type, prefer: R.src.world });
+    }
 
     if (!verdict.struggle) {
       /* A natural pause. Counted, so the Progress page can show how
@@ -648,7 +655,13 @@
     if (R.helpOpen) resolveHelp(false);
     S.DB.submission({ mode: 'read', word_count: words, sentence_text: R.src.title,
       accuracy_pct: words ? (words - R.misreads.length) / words * 100 : null });
-    R.endInfo = { words: words, wpm: wpm };
+    R.endInfo = {
+      words: words, wpm: wpm,
+      exposures: S.exposureOf(R.src.text),        /* words met containing each pair */
+      natural_pauses: natural,
+      difficulty_pauses: R.stalls.length,
+      repeats: R.repeats || 0
+    };
     /* with a recording, the session stays open until Whisper has listened */
     if (!(S.modelListening() && R.rec)) S.DB.endSession(R.endInfo);
     if (R.src.world) S.chapterPartDone(R.src.world, R.src.level, 'read');
@@ -740,7 +753,13 @@
           pairs: (m.analysis.pairs || []).map(function (p) { return p.key; }), model: true });
       });
       /* exact pause lengths and word times from the model */
-      cmp.pauses.forEach(function (p) { S.DB.timing(p.word, p.seconds * 1000, { prefer: r.src.world }); });
+      var liveStalls = {};
+      r.stalls.forEach(function (x) { liveStalls[x.word] = 1; });
+      cmp.pauses.forEach(function (p) {
+        if (liveStalls[p.word]) return;
+        S.DB.pause({ word: p.word, duration_ms: p.seconds * 1000, pause_type: 'long-gap',
+                     detected_by: 'model', prefer: r.src.world });
+      });
       if (cmp.seconds) session.seconds = Math.round(cmp.seconds);
       if (cmp.wpm) { session.wpm = cmp.wpm; if (r.endInfo) r.endInfo.wpm = cmp.wpm; }
       session.misreads = session.mixups.length;

@@ -43,33 +43,48 @@ This folder starts with `_`, so GitHub Pages does **not** publish it.
 7. Commit and push. Ask Spark now talks to the model directly — no key prompt,
    no model picker.
 
-## Study database (Supabase)
+## Study database (Supabase) — many students, one teacher
 
-Every session, letter mix-up, word timing, cue card and finished sentence is
-logged as a row (`projects/HCI_project/js/db.js`). Rows always stay on the
-device; with Supabase set up they are also collected centrally, and the
-grown-ups' dashboard (`teacher.html`) can show every child, from any device.
+Every student gets **one profile**: the name and age they give on the first
+screen. That profile is locked until they press **Start over**. Everything
+they do (sessions, letter mix-ups, word timings, pauses, cue cards, sentences)
+is logged as rows tagged with their own id and name, kept on their device, and
+sent to one shared database. A teacher or parent opens the dashboard
+(`teacher.html`) from **any computer**, enters the teacher password, and sees
+**every student**, whichever device they used.
 
 1. Create a free project at **https://supabase.com**.
-2. **SQL Editor → New query**, paste [`supabase-schema.sql`](supabase-schema.sql), **Run**.
-   This creates the six tables, the security rules, and the trigger that
-   rebuilds `confusion_profile` after every session.
-3. **Authentication → Providers → Email**: turn off "Allow new users to sign up".
-   Then **Authentication → Users → Add user** for each teacher / parent / researcher.
-4. **Project Settings → API**: copy the Project URL and the `anon` public key into
+2. **SQL Editor -> New query**, paste [`supabase-schema.sql`](supabase-schema.sql), **Run**.
+   (Safe to run again whenever the file changes.)
+3. **Project Settings -> API**: copy the Project URL and the `anon` public key into
    `projects/HCI_project/js/config.js`:
 
    ```js
    SUPABASE_URL: 'https://<project>.supabase.co',
    SUPABASE_ANON_KEY: 'eyJ...',
    ```
+4. Commit and push. Done: no sign-up screens, no Supabase accounts to create.
 
-The anon key is safe to publish: the rules let it **insert** rows only — it
-cannot read, change or delete anything. Reading needs a teacher login.
+**Teacher password** is `hci123`. To change it, run in the SQL Editor:
+`update app_settings set value = 'newpassword' where key = 'teacher_password';`
 
-Without Supabase, the dashboard still works for the data on that one device,
-behind a PIN. Either way, **Export** on the dashboard downloads the raw tables
-as CSV or JSON for analysis.
+**How it stays safe.** The public key in `config.js` can only **add** rows. It
+cannot read, change or delete anything. The teacher dashboard reads through
+three functions (`teacher_children`, `teacher_child_data`, `teacher_export`)
+that check the password on the server, so the tables are never open to the
+public. **Start over** calls `reset_child`, which deletes only that one
+student's rows. If the device is offline at that moment, the request is kept
+and sent the next time the page opens.
+
+**Before using real children's data**, check what consent or ethics approval
+your study needs: the database holds each child's first name and age.
+
+Without Supabase the dashboard still works for the students who used Spark in
+that same browser (the password is the same), with a notice saying so.
+
+### Exporting for analysis
+On the dashboard: **Class summary (CSV)**, **All data (JSON)**, **any table as
+CSV for all students**, and the same for a single student.
 
 ## Natural voice (optional)
 

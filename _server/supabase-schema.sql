@@ -2,17 +2,34 @@
 -- Spark — study database (Supabase / PostgreSQL)
 --
 -- Run this once in Supabase: SQL Editor → New query → paste → Run.
+-- It is safe to run again later (it only adds what is missing).
 --
--- Security model
---   · The website uses the public "anon" key. It may only INSERT
---     rows. It can never read, change or delete anything.
---   · Teachers / parents / researchers sign in (Supabase Auth,
---     email + password) on teacher.html. Signed-in users may READ.
---     Create those accounts in Authentication → Users → Add user,
---     and switch OFF "Allow new users to sign up".
---   · confusion_profile is written only by the trigger below,
---     after each session ends.
+-- WHO CAN DO WHAT
+--   Students (the website's public "anon" key)
+--     · INSERT their own rows. Nothing else: they cannot read,
+--       change or delete any table.
+--     · reset_child(child_id): delete ONE student's rows (the
+--       "Start over" button). It touches only that child_id.
+--   Teachers / parents (teacher.html, password below)
+--     · teacher_children / teacher_child_data / teacher_export:
+--       read functions that check the teacher password. No Supabase
+--       login is needed. The password lives in app_settings, which
+--       the public key cannot read; to change it run:
+--          update app_settings set value = 'newpassword'
+--           where key = 'teacher_password';
+--
+-- Many students: every row carries child_id, and `children` holds
+-- the name and age each student gave when they started.
 -- ============================================================
+
+create table if not exists children (
+  id         uuid primary key,
+  child_id   uuid not null unique,
+  child_name text,
+  age        int,
+  avatar     text,
+  created_at timestamptz default now()
+);
 
 create table if not exists sessions (
   id           uuid primary key,
@@ -26,10 +43,18 @@ create table if not exists sessions (
   ended_at     timestamptz,
   duration_ms  int,
   completed    boolean,
-  words        int,                -- words read (read sessions)
-  wpm          int,                -- words per minute (read sessions)
+  words        int,
+  wpm          int,
+  exposures    jsonb,              -- words met that contain each pair: {"bd":12,"pq":3,...}
+  natural_pauses    int,           -- ordinary reading pauses
+  difficulty_pauses int,           -- pauses that were real difficulty
+  repeats      int,                -- words the child said again (self-corrections)
   created_at   timestamptz default now()
 );
+alter table sessions add column if not exists exposures jsonb;
+alter table sessions add column if not exists natural_pauses int;
+alter table sessions add column if not exists difficulty_pauses int;
+alter table sessions add column if not exists repeats int;
 
 create table if not exists confusion_events (
   id              uuid primary key,
@@ -41,10 +66,10 @@ create table if not exists confusion_events (
   actual_char     text,
   word            text,
   actual_word     text,
-  error_kind      text,            -- letter-confusion | word-reversal | substitution | ...
+  error_kind      text,            -- letter-confusion | word-reversal | transposition | substitution | omission | insertion | grammar
   pause_ms        int,
   self_corrected  boolean default false,   -- fixed by the child within 2 seconds
-  detected_by     text,            -- live | model (Whisper) | spelling
+  detected_by     text,            -- live | model (Whisper) | spelling | copy
   mode            text,
   created_at      timestamptz default now()
 );
@@ -54,9 +79,28 @@ create table if not exists timing_events (
   session_id      uuid,
   child_id        uuid not null,
   child_name      text,
-  confusion_class text,
+  confusion_class text,            -- a pair, or 'none' for the ordinary-word baseline
   word            text,
   ms_to_respond   int,
+  n               int default 1,   -- words behind this row (>1 for a baseline average)
+  is_target       boolean default true,
+  mode            text,
+  created_at      timestamptz default now()
+);
+alter table timing_events add column if not exists n int default 1;
+alter table timing_events add column if not exists is_target boolean default true;
+
+create table if not exists pause_events (
+  id              uuid primary key,
+  session_id      uuid,
+  child_id        uuid not null,
+  child_name      text,
+  confusion_class text,
+  word            text,
+  duration_ms     int,
+  pause_type      text,            -- decoding | word-specific | complex-word | struggle | long-gap
+  struggle        boolean,
+  detected_by     text,
   mode            text,
   created_at      timestamptz default now()
 );
@@ -96,37 +140,48 @@ create table if not exists confusion_profile (
   total_errors      int,
   self_correct_rate numeric,
   avg_pause_ms      int,
-  trend             text,          -- improving | static | regressing | not enough data
+  trend             text,
   last_updated      timestamptz,
   primary key (child_id, confusion_class)
 );
 
+create table if not exists app_settings (
+  key   text primary key,
+  value text
+);
+insert into app_settings (key, value) values ('teacher_password', 'hci123')
+  on conflict (key) do nothing;
+
 create index if not exists ce_child on confusion_events (child_id, confusion_class);
 create index if not exists te_child on timing_events (child_id, confusion_class);
 create index if not exists he_child on help_events (child_id, confusion_class);
+create index if not exists pe_child on pause_events (child_id);
 create index if not exists se_child on sessions (child_id, started_at);
+create index if not exists su_child on submissions (child_id);
 
--- ── who may touch what (table rights; row security below) ───
--- Supabase usually grants these already; stating them keeps the
--- rules explicit: the app inserts, signed-in staff read, nobody
--- updates or deletes through the API.
+-- ── table rights, then row-level security ───────────────────
 grant usage on schema public to anon, authenticated;
-revoke all on sessions, confusion_events, timing_events, help_events, submissions, confusion_profile from anon, authenticated;
-grant insert on sessions, confusion_events, timing_events, help_events, submissions to anon, authenticated;
-grant select on sessions, confusion_events, timing_events, help_events, submissions, confusion_profile to authenticated;
+revoke all on children, sessions, confusion_events, timing_events, pause_events, help_events,
+              submissions, confusion_profile, app_settings from anon, authenticated;
+grant insert on children, sessions, confusion_events, timing_events, pause_events, help_events,
+                submissions to anon, authenticated;
+grant select on children, sessions, confusion_events, timing_events, pause_events, help_events,
+                submissions, confusion_profile to authenticated;
 
--- ── row level security ──────────────────────────────────────
+alter table children          enable row level security;
 alter table sessions          enable row level security;
 alter table confusion_events  enable row level security;
 alter table timing_events     enable row level security;
+alter table pause_events      enable row level security;
 alter table help_events       enable row level security;
 alter table submissions       enable row level security;
 alter table confusion_profile enable row level security;
+alter table app_settings      enable row level security;   -- no policy: nobody but the server functions
 
 do $$
 declare t text;
 begin
-  foreach t in array array['sessions','confusion_events','timing_events','help_events','submissions'] loop
+  foreach t in array array['children','sessions','confusion_events','timing_events','pause_events','help_events','submissions'] loop
     execute format('drop policy if exists "app inserts" on %I', t);
     execute format('create policy "app inserts" on %I for insert to anon, authenticated with check (true)', t);
     execute format('drop policy if exists "staff read" on %I', t);
@@ -137,9 +192,96 @@ end $$;
 drop policy if exists "staff read" on confusion_profile;
 create policy "staff read" on confusion_profile for select to authenticated using (true);
 
--- ── the profile, rebuilt after each session ends ────────────
--- trend: errors per session over the last 3 sessions in which
--- the pair came up, against the 3 before them.
+-- ── the teacher's read functions ────────────────────────────
+create or replace function teacher_ok(p_password text) returns boolean
+language sql security definer set search_path = public as $$
+  select exists (select 1 from app_settings where key = 'teacher_password' and value = p_password);
+$$;
+
+-- One row per student, with the numbers the class overview needs.
+create or replace function teacher_children(p_password text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if not teacher_ok(p_password) then
+    raise exception 'wrong password' using errcode = '28000';
+  end if;
+  return coalesce((
+    select jsonb_agg(to_jsonb(t) order by lower(coalesce(t.name, ''))) from (
+      select ids.child_id,
+             coalesce(c.child_name, (select s.child_name from sessions s where s.child_id = ids.child_id and s.child_name <> '' limit 1)) as name,
+             c.age, c.avatar, c.created_at,
+             (select count(*) from sessions s where s.child_id = ids.child_id and s.completed) as sessions,
+             (select max(s.ended_at) from sessions s where s.child_id = ids.child_id) as last_active,
+             (select count(distinct s.world) from sessions s
+               where s.child_id = ids.child_id and s.completed and s.world in ('bd','pq','mw','nu','cs','gj')) as worlds,
+             (select coalesce(jsonb_object_agg(x.confusion_class, x.n), '{}'::jsonb)
+                from (select confusion_class, count(*) as n from confusion_events e
+                       where e.child_id = ids.child_id group by confusion_class) x) as errors
+      from (select child_id from children
+            union select child_id from sessions
+            union select child_id from confusion_events) ids
+      left join children c on c.child_id = ids.child_id
+    ) t
+  ), '[]'::jsonb);
+end $$;
+
+-- Every row for one student.
+create or replace function teacher_child_data(p_password text, p_child uuid) returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if not teacher_ok(p_password) then
+    raise exception 'wrong password' using errcode = '28000';
+  end if;
+  return jsonb_build_object(
+    'children',         (select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) from children x where x.child_id = p_child),
+    'sessions',         (select coalesce(jsonb_agg(to_jsonb(x) order by x.started_at), '[]'::jsonb) from sessions x where x.child_id = p_child),
+    'confusion_events', (select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb) from confusion_events x where x.child_id = p_child),
+    'timing_events',    (select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb) from timing_events x where x.child_id = p_child),
+    'pause_events',     (select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb) from pause_events x where x.child_id = p_child),
+    'help_events',      (select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb) from help_events x where x.child_id = p_child),
+    'submissions',      (select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb) from submissions x where x.child_id = p_child)
+  );
+end $$;
+
+-- Everything, for every student (the study export).
+create or replace function teacher_export(p_password text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if not teacher_ok(p_password) then
+    raise exception 'wrong password' using errcode = '28000';
+  end if;
+  return jsonb_build_object(
+    'children',         (select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) from children x),
+    'sessions',         (select coalesce(jsonb_agg(to_jsonb(x) order by x.started_at), '[]'::jsonb) from sessions x),
+    'confusion_events', (select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb) from confusion_events x),
+    'timing_events',    (select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb) from timing_events x),
+    'pause_events',     (select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb) from pause_events x),
+    'help_events',      (select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb) from help_events x),
+    'submissions',      (select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb) from submissions x)
+  );
+end $$;
+
+-- "Start over": deletes ONE student's rows, and only theirs.
+create or replace function reset_child(p_child uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if p_child is null then return; end if;
+  delete from help_events       where child_id = p_child;
+  delete from pause_events      where child_id = p_child;
+  delete from timing_events     where child_id = p_child;
+  delete from confusion_events  where child_id = p_child;
+  delete from submissions       where child_id = p_child;
+  delete from sessions          where child_id = p_child;
+  delete from confusion_profile where child_id = p_child;
+  delete from children          where child_id = p_child;
+end $$;
+
+revoke execute on function teacher_ok(text), teacher_children(text), teacher_child_data(text, uuid),
+                           teacher_export(text), reset_child(uuid) from public, anon, authenticated;
+grant execute on function teacher_children(text), teacher_child_data(text, uuid),
+                          teacher_export(text), reset_child(uuid) to anon, authenticated;
+
+-- ── the per-pair profile, rebuilt after each session ends ───
 create or replace function refresh_confusion_profile(p_child uuid)
 returns void language plpgsql security definer set search_path = public as $$
 begin
@@ -160,8 +302,8 @@ begin
     from confusion_events where child_id = p_child group by confusion_class
   ) e on e.confusion_class = c.cls
   left join (
-    select confusion_class, round(avg(ms_to_respond))::int avg_ms
-    from timing_events where child_id = p_child group by confusion_class
+    select confusion_class, round(sum(ms_to_respond * coalesce(n, 1))::numeric / nullif(sum(coalesce(n, 1)), 0))::int avg_ms
+    from timing_events where child_id = p_child and coalesce(is_target, true) group by confusion_class
   ) t on t.confusion_class = c.cls
   left join lateral (
     with per as (

@@ -102,7 +102,8 @@
     var STEPS = [
       { say: 'Hi! I\'m Sparky. I love reading with new friends. What\'s your name?',
         body: function () {
-          return '<input class="inp onb-name" id="nameIn" placeholder="Type your name" maxlength="20" autocomplete="given-name">';
+          return '<input class="inp onb-name" id="nameIn" placeholder="Type your name" maxlength="20" autocomplete="given-name">' +
+                 '<p class="onb-privacy" style="margin-top:8px">Check it carefully. Your name stays the same.</p>';
         },
         ready: function () { return data.name.trim().length > 0; },
         save: function () { data.name = data.name.trim().slice(0, 20); } },
@@ -160,7 +161,7 @@
             '<button class="btn btn-primary btn-lg" id="onbNext"' + (st.ready() ? '' : ' disabled') + '>' +
               (step === STEPS.length - 1 ? 'Let\'s go! ' : 'Next ') + '→</button>' +
           '</div>' +
-          (step === 0 ? '<p class="onb-privacy">Everything stays on this device.</p>' : '') +
+          (step === 0 ? '<p class="onb-privacy">Your teacher or parent can see how you are getting on.</p>' : '') +
         '</div>',
         wire
       );
@@ -225,12 +226,17 @@
       if (data.age && data.age <= 9) S.P.settings.size = 'large';
       S.P.started = S.today();
       S.save();
+      /* the name and age just chosen ARE this student's profile: it is
+         recorded for the teacher, and locked until "Start over" */
+      S.DB.registerChild();
       S.applySettings();
       S.$('#sheet').classList.remove('sheet-onb');
       S.closeSheet();
       S.paintAvatars();
       S.paintHome();
       S.paintWorlds();
+      /* then show them where everything is */
+      setTimeout(S.startTour, 500);
     }
 
     paint();
@@ -264,7 +270,7 @@
     var P = S.P;
     var badges = S.WORLDS.filter(function (w) { return P.worlds && P.worlds[w.id] && P.worlds[w.id].badge; });
     var chapters = S.WORLDS.reduce(function (n, w) { return n + S.levelsDone(w.id); }, 0);
-    var explored = S.WORLDS.filter(function (w) { return S.isUnlocked(w); }).length;
+    var explored = S.worldsExplored();
 
     S.$('#profileMain').innerHTML =
       '<div class="prof-hero">' +
@@ -329,12 +335,10 @@
     var pick = S.P.avatar || 'owl';
     S.sheet(
       '<h2>My details</h2>' +
-      '<label class="set-label" for="edName">Name</label>' +
-      '<input class="inp" id="edName" maxlength="20" value="' + S.esc(S.P.name || '') + '" style="margin-bottom:14px">' +
-      '<label class="set-label">Age</label>' +
-      '<div class="age-grid" style="margin-bottom:14px">' + [7, 8, 9, 10, 11, 12, 13, 14].map(function (n) {
-        return '<button class="age-btn" data-age="' + n + '"' + (S.P.age === n ? ' data-on="1"' : '') + '>' + n + '</button>';
-      }).join('') + '</div>' +
+      '<div class="locked-detail"><span>Name</span><b>' + S.esc(S.P.name || '') + '</b></div>' +
+      '<div class="locked-detail"><span>Age</span><b>' + (S.P.age || '—') + '</b></div>' +
+      '<p class="sub" style="margin:8px 0 14px">' + S.Pictures.icon('lock', 14) +
+        ' Your name and age can\'t be changed. To start again as someone else, use <b>Start over</b> in the menu.</p>' +
       '<label class="set-label">My picture</label>' +
       '<div class="avatar-grid">' + Object.keys(AVATARS).map(function (k) {
         return '<button class="avatar-pick" data-avatar="' + k + '"' + (pick === k ? ' data-on="1"' : '') + '>' +
@@ -345,13 +349,6 @@
         '<button class="btn" data-close>Cancel</button>' +
       '</div>',
       function () {
-        var age = S.P.age;
-        S.$$('[data-age]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            age = +b.dataset.age;
-            S.$$('[data-age]').forEach(function (x) { x.dataset.on = x === b ? '1' : ''; });
-          });
-        });
         S.$$('[data-avatar]').forEach(function (b) {
           b.addEventListener('click', function () {
             pick = b.dataset.avatar;
@@ -359,8 +356,6 @@
           });
         });
         S.$('#edSave').addEventListener('click', function () {
-          S.P.name = S.$('#edName').value.trim().slice(0, 20) || S.P.name;
-          S.P.age = age;
           S.P.avatar = pick;
           S.save();
           S.closeSheet();

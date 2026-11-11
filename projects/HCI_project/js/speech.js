@@ -209,17 +209,7 @@
      spoken. Then the whole word, at normal speed. */
   S.sayInParts = function (word) {
     var clean = String(word || '').replace(/[^A-Za-z'-]/g, '');
-    if (!clean) return;
-    S.partsFor(clean).then(function (parts) {
-      if (parts.length < 2) { S.say(clean, { rate: 0.7, onEnd: function () {
-        setTimeout(function () { S.say(clean); }, 300); } }); return; }
-      var i = 0;
-      (function next() {
-        if (i >= parts.length) { setTimeout(function () { S.say(clean); }, 380); return; }
-        var p = parts[i++];
-        S.say(p.say || p.text, { rate: 0.7, onEnd: function () { setTimeout(next, 200); } });
-      })();
-    });
+    if (clean) S.say(clean, { rate: 0.65 });
   };
 
   /** Spell a word out letter by letter — for letter-confusion work. */

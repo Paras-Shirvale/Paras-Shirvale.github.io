@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Spark — grown-ups' dashboard</title>
+<title>Spark — teacher and parent dashboard</title>
 <link rel="stylesheet" href="css/teacher.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2323835C'/%3E%3Cpath d='M12 4l1.8 5.2L19 11l-4.4 1.8L12 18l-1.8-5.2L5.2 11l5-1.5z' fill='%23fff'/%3E%3C/svg%3E">
 </head>
@@ -23,116 +23,190 @@
 
 <main class="t-main">
 
-  <!-- ── sign in ───────────────────────────────────────────── -->
+  <!-- ── password ──────────────────────────────────────────── -->
   <section id="tLogin" class="t-login">
-    <h1>Grown-ups' dashboard</h1>
-    <p class="t-sub">This page shows what Spark has measured: which letters a child
-      confuses, how they respond to help, and how that changes over time.
-      It is never shown on the child's screen.</p>
-
-    <div class="t-login-grid">
-      <form class="t-card" id="tCloudForm" hidden>
-        <h2>Sign in</h2>
-        <p class="t-sub">All children, all devices — from the study database.</p>
-        <label>Email <input type="email" id="tEmail" autocomplete="username" required></label>
-        <label>Password <input type="password" id="tPass" autocomplete="current-password" required></label>
-        <button class="t-btn" type="submit">Sign in</button>
-        <p class="t-err" id="tCloudErr"></p>
-      </form>
-
-      <form class="t-card" id="tLocalForm">
-        <h2>This device</h2>
-        <p class="t-sub" id="tPinHint">Data saved on this computer only.</p>
-        <label><span id="tPinLabel">PIN</span> <input type="password" id="tPin" inputmode="numeric" maxlength="8" minlength="4" required></label>
-        <button class="t-btn" type="submit" id="tPinBtn">Open</button>
-        <p class="t-err" id="tLocalErr"></p>
-      </form>
-    </div>
+    <h1>Teacher and parent dashboard</h1>
+    <p class="t-sub">Everything Spark measures about each student: which letters they confuse,
+      how they respond to help, and how it changes over time. Students never see this page.</p>
+    <form class="t-card t-pw" id="tPwForm">
+      <label>Password <input type="password" id="tPass" autocomplete="current-password" autofocus required></label>
+      <button class="t-btn" type="submit">Open</button>
+      <p class="t-err" id="tPwErr"></p>
+    </form>
   </section>
 
-  <!-- ── the dashboard ─────────────────────────────────────── -->
-  <section id="tDash" hidden>
+  <!-- ── all students ──────────────────────────────────────── -->
+  <section id="tOverview" hidden>
+    <div class="t-banner" id="tBanner" hidden></div>
     <div class="t-head">
       <div>
-        <label class="t-child">Child
-          <select id="tChild"></select>
-        </label>
+        <h1>All students</h1>
+        <p class="t-sub" id="tOverviewSub"></p>
       </div>
       <div class="t-exports">
-        <button class="t-btn t-ghost" id="tExportJson">Export all (JSON)</button>
-        <select id="tExportTable" aria-label="Table to export">
-          <option value="sessions">sessions</option>
-          <option value="confusion_events">confusion_events</option>
-          <option value="timing_events">timing_events</option>
-          <option value="help_events">help_events</option>
-          <option value="submissions">submissions</option>
-          <option value="confusion_profile">confusion_profile</option>
+        <button class="t-btn t-ghost" id="tExpSummary">Class summary (CSV)</button>
+        <button class="t-btn t-ghost" id="tExpAllJson">All data (JSON)</button>
+        <select id="tExpAllTable" aria-label="Table to export">
+          <option value="sessions">sessions</option><option value="confusion_events">confusion_events</option>
+          <option value="timing_events">timing_events</option><option value="pause_events">pause_events</option>
+          <option value="help_events">help_events</option><option value="submissions">submissions</option>
+          <option value="children">children</option>
         </select>
-        <button class="t-btn t-ghost" id="tExportCsv">Export CSV</button>
+        <button class="t-btn t-ghost" id="tExpAllCsv">Table (CSV)</button>
       </div>
     </div>
+
+    <div class="t-engage" id="tClassTiles"></div>
+
+    <div class="t-grid2">
+      <section class="t-card">
+        <h2>Which letters are hardest for the class</h2>
+        <p class="t-sub">Total mix-ups per letter pair, across all students.</p>
+        <div id="tClassChart"></div>
+      </section>
+      <section class="t-card">
+        <h2>Who needs attention</h2>
+        <p class="t-sub">Students with the most mix-ups, and who has not been active lately.</p>
+        <div id="tAttention"></div>
+      </section>
+    </div>
+
+    <section class="t-card">
+      <div class="t-tablehead"><h2>Students</h2><input type="search" id="tSearch" placeholder="Search by name"></div>
+      <div class="t-table-wrap">
+        <table class="t-pairs t-students">
+          <thead><tr><th>Name</th><th>Age</th><th>Last active</th><th>Sessions</th><th>Worlds explored</th><th>Most confused</th><th>Mix-ups</th></tr></thead>
+          <tbody id="tStudents"></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+
+  <!-- ── one student ───────────────────────────────────────── -->
+  <section id="tStudent" hidden>
+    <button class="t-btn t-ghost" id="tBack">← All students</button>
+    <div class="t-head" style="margin-top:14px">
+      <div class="t-who">
+        <span class="t-avatar" id="tAvatar"></span>
+        <div><h1 id="tName"></h1><p class="t-sub" id="tMeta"></p></div>
+      </div>
+      <div class="t-exports">
+        <button class="t-btn t-ghost" id="tExpJson">This student (JSON)</button>
+        <select id="tExpTable" aria-label="Table to export">
+          <option value="sessions">sessions</option><option value="confusion_events">confusion_events</option>
+          <option value="timing_events">timing_events</option><option value="pause_events">pause_events</option>
+          <option value="help_events">help_events</option><option value="submissions">submissions</option>
+        </select>
+        <button class="t-btn t-ghost" id="tExpCsv">Table (CSV)</button>
+      </div>
+    </div>
+
+    <div class="t-engage" id="tEngage"></div>
 
     <div class="t-action" id="tAction"></div>
 
-    <div class="t-grid">
-      <section class="t-card t-span2">
-        <h2>Confusion heatmap</h2>
-        <p class="t-sub">One cell per letter pair. Darker = more confused. Click a cell for every event.</p>
-        <div class="heat" id="tHeat"></div>
-      </section>
+    <section class="t-card" id="tInsightsCard">
+      <h2>What the data shows</h2>
+      <p class="t-sub" id="tInsightsSub"></p>
+      <div id="tInsights"></div>
+    </section>
 
+    <section class="t-card">
+      <h2>Letter pairs at a glance</h2>
+      <p class="t-sub">One row per pair. Click a row to see every event behind it.</p>
+      <div class="t-table-wrap">
+        <table class="t-pairs">
+          <thead><tr>
+            <th>Pair</th><th>World</th><th>Mix-ups</th><th>Per 100 words<br><small>containing the letters</small></th>
+            <th>Caught it themselves<br><small>within 2 s</small></th><th>Trend<br><small>first half vs second</small></th>
+            <th>Help needed<br><small><i class="r-prompt"></i>prompt <i class="r-cue"></i>cue <i class="r-choice"></i>choice <i class="r-supply"></i>supply</small></th>
+          </tr></thead>
+          <tbody id="tPairs"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="t-grid2">
+      <section class="t-card t-wide">
+        <h2>Mix-ups per 100 words, over time</h2>
+        <p class="t-sub">One line per letter pair. Falling lines mean that pair is getting easier. Each point is one chapter (reading and writing together), adjusted for how many words with those letters it contained.</p>
+        <div id="cRate"></div>
+      </section>
       <section class="t-card">
-        <h2>Trend</h2>
-        <p class="t-sub">Last 3 sessions vs the 3 before.</p>
-        <div id="tTrend"></div>
+        <h2>Catching their own slips</h2>
+        <p class="t-sub">Share of mix-ups fixed within 2 seconds. Rising before errors fall is a sign the skill is becoming automatic.</p>
+        <div id="cSelf"></div>
       </section>
-
       <section class="t-card">
-        <h2>Self-correct rate</h2>
-        <p class="t-sub">Of all confusions, how many the child fixed within 2 seconds. High = awareness is there; automaticity is not.</p>
-        <div id="tSelf"></div>
+        <h2>Hesitation on target words</h2>
+        <p class="t-sub">Average time per word: words with each letter pair, against all other words.</p>
+        <div id="cHes"></div>
       </section>
-
       <section class="t-card">
-        <h2>Pause duration per pair</h2>
-        <p class="t-sub">Average time on words containing the pair, and the last 5 sessions.</p>
-        <div id="tPause"></div>
+        <h2>How much help was needed</h2>
+        <p class="t-sub">Cue cards per session, by rung. Fewer, and lower rungs, means more independent.</p>
+        <div id="cHelp"></div>
       </section>
-
       <section class="t-card">
-        <h2>Help rung breakdown</h2>
-        <p class="t-sub">Which rung each pair needed. Supply-heavy pairs need targeted practice.</p>
-        <div class="rung-key"><i class="r-prompt"></i>Prompt <i class="r-cue"></i>Cue <i class="r-choice"></i>Choice <i class="r-supply"></i>Supply</div>
-        <div id="tRungs"></div>
+        <h2>Which kind of help works</h2>
+        <p class="t-sub">How often each kind of cue got the child moving again, and how often they said "Not now".</p>
+        <div id="cCue"></div>
       </section>
-
       <section class="t-card">
-        <h2>Words per minute (read)</h2>
-        <p class="t-sub">Per reading session. Context for the confusion data, not the headline.</p>
-        <div id="tWpm"></div>
+        <h2>Reading aloud vs writing</h2>
+        <p class="t-sub">Mix-ups per pair in each mode. More in writing than reading points to spelling memory, not decoding.</p>
+        <div id="cMode"></div>
       </section>
-
       <section class="t-card">
-        <h2>Dismissal rate</h2>
-        <p class="t-sub">"Not now" taps as a share of cue cards shown. High = the cue arrives at the wrong moment.</p>
-        <div id="tDismiss"></div>
+        <h2>What kind of mistakes</h2>
+        <p class="t-sub">Swapped letters, letters left out, wrong order, and so on.</p>
+        <div id="cKinds"></div>
       </section>
-
       <section class="t-card">
-        <h2>Worlds</h2>
-        <p class="t-sub">Chapters read and written.</p>
-        <div id="tWorlds"></div>
+        <h2>Why they paused</h2>
+        <p class="t-sub">Real difficulty pauses by cause, and ordinary vs difficult pauses per reading.</p>
+        <div id="cPause"></div>
       </section>
-
-      <section class="t-card t-span2" id="tEventsCard" hidden>
-        <h2 id="tEventsTitle">Events</h2>
-        <div id="tEvents"></div>
+      <section class="t-card">
+        <h2>Reading fluency</h2>
+        <p class="t-sub">Words per minute for each reading. Context for the confusion data, not the headline.</p>
+        <div id="cWpm"></div>
+      </section>
+      <section class="t-card">
+        <h2>Practice each week</h2>
+        <p class="t-sub">Sessions per week, reading and writing.</p>
+        <div id="cWeek"></div>
+      </section>
+      <section class="t-card t-wide">
+        <h2>Mix-ups by chapter</h2>
+        <p class="t-sub">Mix-ups per 100 words in chapter 1, 2 and 3 of each world. Falling across the row is the clearest before-and-after.</p>
+        <div id="cChap"></div>
+      </section>
+      <section class="t-card">
+        <h2>Hardest words</h2>
+        <p class="t-sub">Words with the most mix-ups and difficulty pauses.</p>
+        <div id="cWords"></div>
+      </section>
+      <section class="t-card">
+        <h2>Spelling in their writing</h2>
+        <p class="t-sub">What was expected, and what the child wrote.</p>
+        <div id="cSpell"></div>
       </section>
     </div>
+
+    <section class="t-card" id="tEventsCard" hidden>
+      <h2 id="tEventsTitle">Events</h2>
+      <div id="tEvents"></div>
+    </section>
   </section>
 </main>
 
+<script>
+/* Just enough of the app's shared object for the world list below. */
+window.Spark = { norm: function (w) { return String(w == null ? '' : w).toLowerCase().replace(/[^a-z']/g, ''); } };
+</script>
 <script src="js/config.js"></script>
+<script src="js/families.js"></script>
 <script src="js/teacher.js"></script>
 </body>
 </html>

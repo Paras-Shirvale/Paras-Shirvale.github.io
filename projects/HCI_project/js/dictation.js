@@ -363,7 +363,8 @@
 
   function finish() {
     var w = D.w, level = D.level;
-    S.DB.endSession();
+    S.DB.endSession({ words: D.sentences.join(' ').split(/\s+/).length,
+                      exposures: S.exposureOf(D.sentences.join(' ')) });
     var r = S.chapterPartDone(w.id, level, 'write');
     S.award(5, 'Chapter written');
     D = null;

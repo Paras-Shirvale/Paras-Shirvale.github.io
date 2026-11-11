@@ -5,11 +5,13 @@
    sentences. When both are done the chapter's pip fills in. Three
    chapters finish the world and earn its badge.
 
-   Unlocking: the first world is open. Each next world opens when
-   a chapter of the one before it is finished — and the world the
-   child most needs (from the confusion profile) is always open,
-   marked "Next adventure". The child is never told why: they see
-   an adventure, not a letter pair.
+   Every world is open, and the child picks any. The one goal is to
+   EXPLORE EVERY WORLD — at least one chapter in each — because
+   each world tests a different letter pair, and only all six
+   together show which letters this child confuses. "Next
+   adventure" points at a world not tried yet; once all six are
+   explored, it points at the one the child most needs. The child
+   is never told why: they see an adventure, not a letter pair.
    ============================================================ */
 
 (function (S) {
@@ -35,8 +37,20 @@
     return Object.keys(st.levels).some(function (n) { return st.levels[n].read || st.levels[n].write; });
   }
 
-  /** The world the child most needs, worked out from the profile. */
+  S.worldStarted = started;
+
+  /** The first chapter of a world that is not finished yet. */
+  S.nextLevel = function (id) {
+    var st = state(id);
+    for (var n = 1; n <= 3; n++) { var l = st.levels[n]; if (!(l && l.read && l.write)) return n; }
+    return 1;
+  };
+  S.worldsExplored = function () { return S.WORLDS.filter(function (w) { return started(w.id); }).length; };
+
+  /** Where to go next: an unexplored world first, then the one most needed. */
   S.recommendedWorld = function () {
+    var fresh = S.WORLDS.filter(function (w) { return !started(w.id); })[0];
+    if (fresh) return fresh.id;
     var profile = S.DB ? S.DB.computeProfile() : [];
     var need = profile.filter(function (p) { return p.total_errors > 0 && p.trend !== 'improving'; })
       .sort(function (a, b) { return b.total_errors - a.total_errors; });
@@ -49,12 +63,8 @@
   };
 
   var recCache = null;
-  S.isUnlocked = function (w) {
-    if (w.index === 0 || started(w.id)) return true;
-    var prev = S.WORLDS[w.index - 1];
-    if (prev && S.levelsDone(prev.id) >= 1) return true;
-    return recCache === w.id;
-  };
+  /* every world is always open */
+  S.isUnlocked = function () { return true; };
 
   /** What the world's button says. */
   function action(w) {
@@ -83,13 +93,25 @@
     recCache = null;
     recCache = S.recommendedWorld();
 
+    var explored = S.worldsExplored();
+    var goal = S.$('#exploreGoal');
+    if (goal) {
+      goal.innerHTML = '<div class="goal-text"><b>' + (explored >= 6 ? 'You\'ve explored every world!' : 'Explore every world') +
+        '</b><span>' + explored + ' of 6 visited</span></div>' +
+        '<div class="goal-dots">' + S.WORLDS.map(function (w) {
+          return '<i class="tone-' + w.tone + (started(w.id) ? ' on' : '') + '" title="' + S.esc(w.title) + '">' +
+            (started(w.id) ? S.Pictures.icon('check', 14) : '') + '</i>';
+        }).join('') + '</div>';
+    }
+
     host.innerHTML = S.WORLDS.map(function (w) {
-      var open = S.isUnlocked(w);
+      var open = true;
       var done = S.levelsDone(w.id);
       return '<article class="world-card tone-' + w.tone + (open ? '' : ' locked') + '" data-world="' + w.id + '">' +
         '<div class="world-banner">' + S.worldArt(w, !open) +
           '<span class="world-genre">' + S.esc(w.genre) + '</span>' +
-          (recCache === w.id && done < 3 ? '<span class="world-next">Next adventure</span>' : '') +
+          (recCache === w.id && done < 3 ? '<span class="world-next">Next adventure</span>'
+            : !started(w.id) ? '<span class="world-new">New</span>' : '') +
           (done >= 3 ? '<span class="world-badge-mini" title="' + S.esc(w.badge) + '">' + S.Pictures.icon('trophy', 16) + '</span>' : '') +
           (!open ? '<span class="world-lock">' + S.Pictures.icon('lock', 26) + '</span>' : '') +
         '</div>' +
@@ -115,12 +137,12 @@
 
   S.paintWorld = function () {
     var w = S.world(S.currentWorld);
-    if (!w) { S.go('home'); return; }
+    if (!w) { S.go('worlds'); return; }
     var st = state(w.id);
     var done = S.levelsDone(w.id);
 
     S.$('#worldMain').innerHTML =
-      '<button class="btn btn-sm" data-go="home">&larr; All worlds</button>' +
+      '<button class="btn btn-sm" data-go="worlds">&larr; All worlds</button>' +
       '<div class="world-hero tone-' + w.tone + '">' + S.worldArt(w) +
         '<div class="world-hero-text"><span class="world-genre">' + S.esc(w.genre) + '</span>' +
         '<h1>' + S.esc(w.title) + '</h1><p>' + S.esc(w.blurb) + '</p></div>' +

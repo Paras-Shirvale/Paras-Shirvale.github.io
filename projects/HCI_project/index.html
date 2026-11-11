@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="css/pages.css">
 <link rel="stylesheet" href="css/spark2.css">
 <link rel="stylesheet" href="css/worlds.css">
+<link rel="stylesheet" href="css/home.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23E09200'/%3E%3Cpath d='M12 4l1.8 5.2L19 11l-4.4 1.8L12 18l-1.8-5.2L5.2 11l5-1.5z' fill='%232A1F00'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -28,9 +29,10 @@
     </a>
 
     <nav class="tabs" id="tabs" aria-label="Sections">
-      <button class="tab" data-go="home" aria-current="page"><span class="i tab-ico" data-icon="spark" data-icon-size="20"></span><span class="tab-txt">Worlds</span></button>
-      <button class="tab" data-go="write"><span class="i tab-ico" data-icon="pencil" data-icon-size="20"></span><span class="tab-txt">Practice</span></button>
-      <button class="tab" data-go="progress"><span class="i tab-ico" data-icon="trophy" data-icon-size="20"></span><span class="tab-txt">Me</span></button>
+      <button class="tab" data-go="home" aria-current="page"><span class="i tab-ico" data-icon="home" data-icon-size="20"></span><span class="tab-txt">Home</span></button>
+      <button class="tab" data-go="worlds"><span class="i tab-ico" data-icon="book" data-icon-size="20"></span><span class="tab-txt">Let's read</span></button>
+      <button class="tab" data-go="write"><span class="i tab-ico" data-icon="pencil" data-icon-size="20"></span><span class="tab-txt">Let's write</span></button>
+      <button class="tab" data-go="progress"><span class="i tab-ico" data-icon="trophy" data-icon-size="20"></span><span class="tab-txt">Progress</span></button>
     </nav>
 
     <div class="topbar-end">
@@ -43,16 +45,60 @@
 
 <main id="main">
 
-<!-- ══ WORLDS (home) ═══════════════════════════════════════════ -->
+<!-- ══ HOME ═════════════════════════════════════════════════════ -->
 <section class="view" id="v-home">
-  <div class="hero hero-home">
+  <div class="home-hero">
     <span class="hero-avatar" id="homeAvatar"></span>
-    <div>
+    <div class="home-hello">
+      <p class="eyebrow">A little practice, your own pace</p>
       <h1 id="hiName">Hello</h1>
-      <p class="lede" style="margin:0">Choose your world.</p>
+      <div class="sparky-says"><span class="sparky-mini" id="homeSparky"></span><p id="homeTip">Let's start an adventure!</p></div>
     </div>
   </div>
-  <p class="eyebrow world-eyebrow">Choose your world</p>
+
+  <!-- the one thing to do next -->
+  <div id="homeNext"></div>
+
+  <div class="doors">
+    <button class="door door-read" data-go="worlds" id="doorRead">
+      <span class="door-ico" data-pic="book"></span>
+      <h3>Let's read</h3>
+      <p>Six story worlds. Read each chapter aloud, then write it.</p>
+      <span class="door-go">Choose a world →</span>
+    </button>
+    <button class="door door-write" data-go="write" id="doorWrite">
+      <span class="door-ico" data-pic="flower"></span>
+      <h3>Let's write</h3>
+      <p>Describe a picture with a word bank, or tell a picture story.</p>
+      <span class="door-go">Start writing →</span>
+    </button>
+    <button class="door door-prog" data-go="progress" id="doorProg">
+      <span class="door-ico" data-pic="star"></span>
+      <h3>My progress</h3>
+      <p>Your worlds, badges and streak.</p>
+      <span class="door-go">See progress →</span>
+    </button>
+  </div>
+
+  <div class="home-grid">
+    <section class="card" id="exploreHint">
+      <h2>Explore every world</h2>
+      <p class="sub">Try at least one chapter in each world.</p>
+      <div class="explore-row" id="homeExplore"></div>
+    </section>
+    <section class="card">
+      <h2>Today</h2>
+      <p class="sub">Three small things. Any order.</p>
+      <div class="today" id="todayList"></div>
+    </section>
+  </div>
+</section>
+
+<!-- ══ LET'S READ: the worlds ══════════════════════════════════ -->
+<section class="view" id="v-worlds" hidden>
+  <h1>Let's read</h1>
+  <p class="lede">Pick any world. Each one is a story in three chapters.</p>
+  <div class="explore-goal" id="exploreGoal"></div>
   <div class="world-grid" id="worldGrid"></div>
 </section>
 
@@ -133,7 +179,7 @@
         <div class="tools" id="railTools">
           <button class="tool" data-tool="picture"><i><span class="i" data-icon="picture" data-icon-size="18"></span></i><span>Picture</span></button>
           <button class="tool" data-tool="sound"><i><span class="i" data-icon="speaker" data-icon-size="18"></span></i><span>Hear it</span></button>
-          <button class="tool" data-tool="parts"><i><span class="i" data-icon="parts" data-icon-size="18"></span></i><span>Parts</span></button>
+          <button class="tool" data-tool="parts"><i><span class="i" data-icon="speaker" data-icon-size="18"></span></i><span>Say slowly</span></button>
           <button class="tool" data-tool="explain"><i><span class="i" data-icon="idea" data-icon-size="18"></span></i><span>Explain</span></button>
         </div>
       </aside>
@@ -146,13 +192,25 @@
 
   <!-- pick an activity -->
   <div id="writeLibrary">
-    <h1>Practice</h1>
-    <p class="lede">Free writing, just for fun.</p>
-    <h2 class="lib-heading">Picture story</h2>
-    <div class="lib" id="writePictureCard" style="margin-bottom:22px"></div>
-    <h2 class="lib-heading">Word banks</h2>
-    <div class="lib" id="writeFamList" style="margin-bottom:22px"></div>
-    <section class="card">
+    <h1>Let's write</h1>
+    <p class="lede">Look at a picture, then write about it. Spark helps with words.</p>
+    <div class="write-acts">
+      <button class="write-act act-describe" data-write-open="describe">
+        <span class="write-act-pic" id="actDescribePic"></span>
+        <span class="write-act-step">1</span>
+        <h3>Describe a picture</h3>
+        <p>Fill the gaps with words from the word bank. Then write it out yourself.</p>
+        <span class="lib-foot" id="actDescribeFoot"></span>
+      </button>
+      <button class="write-act act-story" data-write-open="picture">
+        <span class="write-act-pic" id="actStoryPic"></span>
+        <span class="write-act-step">2</span>
+        <h3>Picture story</h3>
+        <p>Build your own sentence in three pieces: who or what, doing, where.</p>
+        <span class="lib-foot" id="actStoryFoot"></span>
+      </button>
+    </div>
+    <section class="card" style="margin-top:20px">
       <h2>Things you've written</h2>
       <div data-saved-list></div>
     </section>
@@ -179,7 +237,7 @@
         </div>
 
         <div class="field" data-field="who">
-          <label for="fWho"><span class="piece-n pn-who">1</span> Who?
+          <label for="fWho"><span class="piece-n pn-who">1</span> Who or what?
             <button class="icon-xs" data-say="Who or what is in the picture?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
           </label>
           <div class="field-row">
@@ -236,7 +294,8 @@
     </div>
   </div>
 
-  <!-- activity 2: word bank sentences (filled by wordbank.js) -->
+  <!-- activity 2: describe a picture (filled by describe.js) -->
+  <div id="writeDescribe" hidden></div>
   <div id="writeBank" hidden></div>
 
   <!-- activity 3: listen and write (filled by dictation.js) -->
@@ -270,7 +329,6 @@
   <div class="wc-choice" id="wcChoice"></div>
   <div class="wc-acts">
     <button class="btn btn-sm" id="wcSay"><span class="i" data-icon="speaker" data-icon-size="18"></span> Hear it</button>
-    <button class="btn btn-sm" id="wcSlow"><span class="i" data-icon="parts" data-icon-size="18"></span> Bit by bit</button>
     <button class="btn btn-sm wc-notnow" id="wcNotNow" hidden>Not now</button>
   </div>
 </div>
@@ -393,12 +451,13 @@
 <script src="js/exercises.js"></script>
 <script src="js/reader.js"></script>
 <script src="js/write.js"></script>
-<script src="js/wordbank.js"></script>
+<script src="js/describe.js"></script>
 <script src="js/dictation.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/worlds.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/tour.js"></script>
 <script src="js/app.js"></script>
 
 <!-- If the stylesheets or scripts did not load, this page would render as

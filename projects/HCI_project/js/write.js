@@ -42,7 +42,8 @@
   S.paintWrite = function () {
     S.$('#writeLibrary').hidden = mode !== null;
     S.$('#writePicture').hidden = mode !== 'picture';
-    S.$('#writeBank').hidden    = mode !== 'bank';
+    S.$('#writeBank').hidden    = true;
+    S.$('#writeDescribe').hidden = mode !== 'describe';
     S.$('#writeDictation').hidden = mode !== 'dictation';
 
     if (mode === null) paintWriteLibrary();
@@ -59,11 +60,10 @@
 
   S.openWriteActivity = function (which) {
     mode = which;
-    if (which !== 'bank' && S.closeBank) S.closeBank(true);
     if (which === 'picture') S.DB.startSession({ world: 'practice', mode: 'write' });
     /* writing a chapter belongs to Worlds, not to Practice */
     S.$$('.tab').forEach(function (t) {
-      var on = t.dataset.go === (which === 'dictation' ? 'home' : 'write');
+      var on = t.dataset.go === (which === 'dictation' ? 'worlds' : 'write');
       if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
     });
     S.paintWrite();
@@ -71,50 +71,30 @@
   };
 
   S.resetWriteMode = function () {
-    if (mode === 'picture' || mode === 'bank') S.DB.endSession();
+    if (mode === 'picture') S.DB.endSession();
+    if (mode === 'describe' && S.closeDescribe) S.closeDescribe();
     if (mode === 'dictation' && S.closeDictation) S.closeDictation();
     mode = null;
   };
 
   S.closeWriteActivity = function () {
     S.stopSaying();
-    if (mode === 'picture' || mode === 'bank') S.DB.endSession();
-    if (S.closeBank) S.closeBank(true);
+    if (mode === 'picture') S.DB.endSession();
+    if (S.closeDescribe) S.closeDescribe();
     if (S.closeDictation) S.closeDictation();
     mode = null;
     S.paintWrite();
   };
 
-  /* Word banks, one per world, named by the world — never by letters. */
-  function paintFamilies() {
-    var host = S.$('#writeFamList');
-    if (!host) return;
-    var bd = S.P.bankDone || {};
-    host.innerHTML = S.WORLDS.map(function (w) {
-      var b = bd['bank-' + w.id];
-      return '<button class="lib-card bank-card tone-' + w.tone + '" data-bank="' + w.id + '">' +
-        '<span class="bank-art">' + S.worldArt(w) + '</span>' +
-        '<h3>' + S.esc(w.title) + ' words</h3>' +
-        '<p>Build sentences from the ' + S.esc(w.title) + ' word bank.</p>' +
-        '<span class="lib-foot">' + (b ? b + ' sentence' + (b > 1 ? 's' : '') + ' made' : 'Start building') + '</span>' +
-      '</button>';
-    }).join('');
-  }
-
+  /* Two activities, numbered, each saying plainly what to do. */
   function paintWriteLibrary() {
-    paintFamilies();
-    var done = S.P.writings.filter(function (w) { return w.kind === 'picture'; }).length;
-    S.$('#writePictureCard').innerHTML =
-      '<button class="lib-card" data-write-open="picture">' +
-        '<div class="lib-top">' +
-          '<span class="lib-pic scene-thumb">' + S.Pictures.scene(S.PROMPTS[0].scene) + '</span>' +
-          '<span class="badge' + (done ? ' badge-done' : '') + '">' +
-            (done ? done + ' written' : 'Picture') + '</span>' +
-        '</div>' +
-        '<h3>Say what you see</h3>' +
-        '<p>Look at a picture. Build a sentence in 3 pieces.</p>' +
-        '<span class="lib-foot">Who? · Doing? · Where?</span>' +
-      '</button>';
+    var dd = S.P.describeDone || {};
+    var described = Object.keys(dd).length;
+    var stories = S.P.writings.filter(function (w) { return w.kind === 'picture'; }).length;
+    S.$('#actDescribePic').innerHTML = S.Pictures.scene(S.PROMPTS[3].scene);
+    S.$('#actStoryPic').innerHTML = S.Pictures.scene(S.PROMPTS[0].scene);
+    S.$('#actDescribeFoot').textContent = described ? described + ' of ' + S.DESCRIBE.length + ' pictures described' : '6 pictures to describe';
+    S.$('#actStoryFoot').textContent = stories ? stories + ' sentence' + (stories > 1 ? 's' : '') + ' written' : 'Who or what? · Doing? · Where?';
   }
 
   function resetLadders() {
@@ -367,11 +347,14 @@
     /* the ladder, and anything the rungs offer */
     S.$('#v-write').addEventListener('click', function (e) {
       var open = e.target.closest('[data-write-open]');
-      if (open) { S.openWriteActivity(open.dataset.writeOpen); return; }
+      if (open) {
+        if (open.dataset.writeOpen === 'describe') S.openDescribe();
+        else S.openWriteActivity(open.dataset.writeOpen);
+        return;
+      }
       var dict = e.target.closest('[data-dictation]');
       if (dict) { S.openDictation(dict.dataset.dictation); return; }
-      var bankBtn = e.target.closest('#writeFamList [data-bank]');
-      if (bankBtn) { S.openBank(bankBtn.dataset.bank); return; }
+
       if (e.target.closest('[data-write-back]')) { S.closeWriteActivity(); return; }
 
       var stuck = e.target.closest('[data-stuck]');
