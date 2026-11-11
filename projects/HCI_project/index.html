@@ -245,14 +245,14 @@
         </div>
 
         <div class="piece-head">
-          <p class="eyebrow">Build it in 3 pieces</p>
+          <p class="eyebrow">Answer 3 questions</p>
           <span class="piece-tip">Try first. <b>Stuck?</b> = help</span>
-          <button class="icon-xs" data-say="Build your sentence in three pieces. Try on your own first. Tap Stuck if you need help." aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+          <button class="icon-xs" data-say="Answer the three questions about the picture. Try on your own first. Tap Stuck if you need help." aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
         </div>
 
         <div class="field" data-field="who">
-          <label for="fWho"><span class="piece-n pn-who">1</span> Who or what?
-            <button class="icon-xs" data-say="Who or what is in the picture?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+          <label for="fWho"><span class="piece-n pn-who">1</span> <span class="qtext" id="qWho">Question 1</span>
+            <button class="icon-xs" id="qWhoSay" data-say="" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
           </label>
           <div class="field-row">
             <input class="inp" id="fWho" autocomplete="off">
@@ -263,8 +263,8 @@
         </div>
 
         <div class="field" data-field="what">
-          <label for="fWhat"><span class="piece-n pn-what">2</span> Doing?
-            <button class="icon-xs" data-say="What is happening?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+          <label for="fWhat"><span class="piece-n pn-what">2</span> <span class="qtext" id="qWhat">Question 2</span>
+            <button class="icon-xs" id="qWhatSay" data-say="" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
           </label>
           <div class="field-row">
             <input class="inp" id="fWhat" autocomplete="off">
@@ -275,8 +275,8 @@
         </div>
 
         <div class="field" data-field="where">
-          <label for="fWhere"><span class="piece-n pn-where">3</span> Where?
-            <button class="icon-xs" data-say="Where is it happening?" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
+          <label for="fWhere"><span class="piece-n pn-where">3</span> <span class="qtext" id="qWhere">Question 3</span>
+            <button class="icon-xs" id="qWhereSay" data-say="" aria-label="Hear"><span class="i" data-icon="speaker" data-icon-size="18"></span></button>
           </label>
           <div class="field-row">
             <input class="inp" id="fWhere" autocomplete="off">
@@ -449,6 +449,7 @@
 <!-- ══ SCRIPTS (order matters) ══════════════════════════════════ -->
 <script src="js/config.js"></script>
 <script src="js/avatars.js"></script>
+<script src="js/human.js"></script>
 <script src="js/store.js"></script>
 <script src="js/lexicon.js"></script>
 <script src="js/pictures.js"></script>
@@ -462,6 +463,7 @@
 <script src="js/ai.js"></script>
 <script src="js/sense.js"></script>
 <script src="js/content.js"></script>
+<script src="js/questions.js"></script>
 <script src="js/families.js"></script>
 <script src="js/db.js"></script>
 <script src="js/ui.js"></script>

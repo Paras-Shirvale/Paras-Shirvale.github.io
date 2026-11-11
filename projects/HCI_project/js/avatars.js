@@ -66,6 +66,7 @@ window.Spark = window.Spark || {};
   S.AVATARS = AVATARS;
 
   S.avatarSVG = function (key, size) {
+    if (/^h:/.test(key || '') && S.humanSVG) return S.humanSVG(key, size);   /* a person someone made */
     var a = AVATARS[key] || AVATARS.owl;
     var px = size || 48;
     return '<svg class="avatar" viewBox="0 0 64 64" width="' + px + '" height="' + px + '" role="img" aria-label="' +

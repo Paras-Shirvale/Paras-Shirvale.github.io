@@ -9,6 +9,7 @@ a reviewer will ask.
 | # | Model / method | Purpose | Where it runs | Code |
 |---|---|---|---|---|
 | 1 | **Llama 3.3 70B** (Groq; fallbacks `gpt-oss-20b`, `llama-3.1-8b-instant`) | Word meaning **in its sentence**; how to pronounce it in that sentence (tense); what to search a picture for; syllable splits with a "say" respelling; comprehension questions; spelling explanations; Ask Spark chat | Cloudflare Worker `POST /` | `js/sense.js`, `js/lexicon.js`, `js/exercises.js`, `js/ai.js` |
+| 1b | **Llama 3.3 70B** (same model, same Worker route) | Writes the **three specific questions for each picture story** from the facts known to be true of that picture; the answer goes into a sentence frame ("The cat is {orange}."). Output is validated; a hand-written set is used when the model is off or the answer is malformed | Worker `POST /` | `js/questions.js` |
 | 2 | **Llama 4 Scout** (vision, Groq) | Looks at a candidate photograph and says whether it shows this meaning of the word **and** is fine for a 7-year-old | Worker `POST /judge-image` | `_server/spark-proxy-worker.js`, `js/pictures.js` |
 | 3 | **Whisper large-v3** (Groq) | Second, accurate listen after reading: what the child actually said, with a time for every word | Worker `POST /transcribe` | `js/listen.js` |
 | 4 | **gpt-4o-mini-tts** (OpenAI) | Expressive voice. Steered with `instructions` (warm / calm / lively / storyteller). Single words and word-parts use a separate "say only this, clearly" instruction | Worker `POST /tts` | `js/speech.js` |

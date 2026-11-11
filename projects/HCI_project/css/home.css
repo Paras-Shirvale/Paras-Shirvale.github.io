@@ -130,3 +130,4 @@
 .tour-tip p{font-size:14.5px;margin:0 0 12px}
 .tour-foot{display:flex;align-items:center;gap:6px}
 .tour-foot span{flex:1}
+.teacher-mode #btnProfile,.teacher-mode #homeAvatar{display:none}

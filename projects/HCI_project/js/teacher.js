@@ -117,7 +117,9 @@
           : { apikey: CLOUD.key, 'Content-Type': 'application/json' },
         body: JSON.stringify(args)
       }).then(function (res) {
-        if (res.ok) return res.json();
+        /* a function that returns nothing (like removing a student) sends an
+           empty body, which is not an error */
+        if (res.ok) return res.text().then(function (t) { return t ? JSON.parse(t) : null; });
         return res.json().catch(function () { return {}; }).then(function (j) {
           throw new Error(/wrong password/i.test(String(j.message || '')) ? 'wrong password'
             : 'Could not reach the study database (' + res.status + ').');

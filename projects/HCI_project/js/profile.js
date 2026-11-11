@@ -54,13 +54,8 @@
           }).join('') + '</div>';
         },
         ready: function () { return !!data.age; } },
-      { say: 'Pick a buddy to be your picture!',
-        body: function () {
-          return '<div class="avatar-grid">' + Object.keys(AVATARS).map(function (k) {
-            return '<button class="avatar-pick" data-avatar="' + k + '"' + (data.avatar === k ? ' data-on="1"' : '') + '>' +
-              S.avatarSVG(k, 64) + '<span>' + AVATARS[k].name + '</span></button>';
-          }).join('') + '</div>';
-        },
+      { say: 'Now make a picture of you! Pick your skin, hair and clothes. Or choose an animal.',
+        body: function () { return '<div id="apHost"></div>'; },
         ready: function () { return !!data.avatar; } },
       { say: 'Which of these is easier for your eyes to read?',
         body: function () {
@@ -82,10 +77,21 @@
 
     function line() { var s = STEPS[step].say; return typeof s === 'function' ? s() : s; }
 
+    /* A whole page of its own, not a pop-up over the home page: there is
+       nothing behind it to click, and it cannot be closed. The only ways
+       out are to finish, or to go back to the login page. */
+    var page = document.getElementById('signup');
+    if (!page) { page = document.createElement('div'); page.id = 'signup'; page.className = 'signup'; document.body.appendChild(page); }
+
     function paint() {
       var st = STEPS[step];
-      S.sheet(
-        '<div class="onb">' +
+      page.innerHTML =
+        '<div class="signup-top">' +
+          '<span class="signup-brand">' + S.mascot(30) + ' Spark</span>' +
+          '<a href="login.html?switch=1">&larr; Back to login</a>' +
+        '</div>' +
+        '<div class="signup-card onb">' +
+          '<h1>' + (step === STEPS.length - 1 ? 'All done!' : 'Student sign-up') + '</h1>' +
           '<div class="onb-dots">' + STEPS.map(function (x, i) {
             return '<i data-on="' + (i <= step ? '1' : '') + '"></i>';
           }).join('') + '</div>' +
@@ -99,13 +105,12 @@
           '<div class="onb-foot">' +
             (step > 0 && step < STEPS.length - 1 ? '<button class="btn" id="onbBack">&larr; Back</button>' : '<span></span>') +
             '<button class="btn btn-primary btn-lg" id="onbNext"' + (st.ready() ? '' : ' disabled') + '>' +
-              (step === STEPS.length - 1 ? 'Let\'s go! ' : 'Next ') + '→</button>' +
+              (step === STEPS.length - 1 ? "Let's go! " : 'Next ') + '→</button>' +
           '</div>' +
           (step === 0 ? '<p class="onb-privacy">Your teacher or parent can see how you are getting on.</p>' : '') +
-        '</div>',
-        wire
-      );
-      S.$('#sheet').classList.add('sheet-onb');
+        '</div>';
+      wire();
+      page.scrollTop = 0;
       if (step === STEPS.length - 1) S.confetti();
     }
 
@@ -127,13 +132,8 @@
           refresh();
         });
       });
-      S.$$('[data-avatar]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          data.avatar = b.dataset.avatar;
-          S.$$('[data-avatar]').forEach(function (x) { x.dataset.on = x === b ? '1' : ''; });
-          refresh();
-        });
-      });
+      var ap = S.$('#apHost');
+      if (ap) S.avatarPicker(ap, data.avatar, function (code) { data.avatar = code; refresh(); });
       S.$$('button[data-font]').forEach(function (b) {
         b.addEventListener('click', function () {
           data.font = b.dataset.font;
@@ -170,8 +170,7 @@
          recorded for the teacher, and locked until "Start over" */
       S.DB.registerChild();
       S.applySettings();
-      S.$('#sheet').classList.remove('sheet-onb');
-      S.closeSheet();
+      if (page.parentNode) page.parentNode.removeChild(page);
       S.paintAvatars();
       S.paintHome();
       S.paintWorlds();
@@ -278,21 +277,13 @@
       '<p class="sub" style="margin:8px 0 14px">' + S.Pictures.icon('lock', 14) +
         ' Your name and age can\'t be changed. To start again as someone else, use <b>Start over</b> in the menu.</p>' +
       '<label class="set-label">My picture</label>' +
-      '<div class="avatar-grid">' + Object.keys(AVATARS).map(function (k) {
-        return '<button class="avatar-pick" data-avatar="' + k + '"' + (pick === k ? ' data-on="1"' : '') + '>' +
-          S.avatarSVG(k, 56) + '<span>' + AVATARS[k].name + '</span></button>';
-      }).join('') + '</div>' +
+      '<div id="edPick"></div>' +
       '<div class="toolbar" style="margin:18px 0 0">' +
         '<button class="btn btn-primary" id="edSave" style="flex:1">Save</button>' +
         '<button class="btn" data-close>Cancel</button>' +
       '</div>',
       function () {
-        S.$$('[data-avatar]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            pick = b.dataset.avatar;
-            S.$$('[data-avatar]').forEach(function (x) { x.dataset.on = x === b ? '1' : ''; });
-          });
-        });
+        S.avatarPicker(S.$('#edPick'), pick, function (code) { pick = code; });
         S.$('#edSave').addEventListener('click', function () {
           S.P.avatar = pick;
           S.save();

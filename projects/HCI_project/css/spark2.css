@@ -331,3 +331,30 @@ button.mix-chip:hover{border-color:var(--violet)}
   .fam-grid{grid-template-columns:1fr}
   .avatar-grid{grid-template-columns:repeat(3,1fr)}
 }
+
+/* avatar picker (make a person, or pick an animal) */
+.ap-tabs{display:flex;gap:6px;margin-bottom:12px;background:var(--surface-2);padding:4px;border-radius:999px}
+.ap-tab{flex:1;padding:9px 12px;border:0;border-radius:999px;background:transparent;font:inherit;font-weight:700;color:var(--ink-2);cursor:pointer}
+.ap-tab[data-on="1"]{background:var(--surface);color:var(--violet);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.ap-me{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:start}
+.ap-preview{display:flex;flex-direction:column;align-items:center;gap:10px;position:sticky;top:0}
+.ap-controls{min-width:0}
+.ap-label{margin:10px 0 5px;font-size:12.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+.ap-label:first-child{margin-top:0}
+.ap-row{display:flex;flex-wrap:wrap;gap:7px}
+.ap-sw{width:32px;height:32px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 2px var(--line);cursor:pointer;padding:0}
+.ap-sw[data-on="1"]{box-shadow:0 0 0 3px var(--violet)}
+.ap-pill{padding:8px 16px;border-radius:999px;border:2px solid var(--line);background:var(--surface);font:inherit;font-weight:700;cursor:pointer;color:inherit}
+.ap-pill[data-on="1"]{border-color:var(--violet);background:var(--violet-soft);color:var(--violet)}
+.ap-mini{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 6px;border-radius:12px;border:2px solid var(--line);background:var(--surface);cursor:pointer;font:inherit;color:inherit;font-size:11.5px;font-weight:700}
+.ap-mini[data-on="1"]{border-color:var(--violet);background:var(--violet-soft)}
+@media (max-width:560px){.ap-me{grid-template-columns:1fr}.ap-preview{position:static}}
+
+/* the sign-up page: a whole page, not a pop-up */
+.signup{position:fixed;inset:0;z-index:400;background:var(--bg);overflow:auto;display:flex;flex-direction:column}
+.signup-top{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;max-width:920px;width:100%;margin:0 auto;box-sizing:border-box}
+.signup-brand{display:inline-flex;align-items:center;gap:8px;font-size:22px;font-weight:800}
+.signup-top a{color:var(--ink-2);font-weight:700;text-decoration:none}
+.signup-top a:hover{text-decoration:underline}
+.signup-card{width:100%;max-width:640px;margin:8px auto 40px;background:var(--surface);border:2px solid var(--line);border-radius:26px;padding:26px;box-sizing:border-box}
+.signup-card h1{font-size:23px;margin:0 0 14px;text-align:center}

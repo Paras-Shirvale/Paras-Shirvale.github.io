@@ -112,6 +112,8 @@
       document.body.classList.add('teacher-mode');
       var ts = document.getElementById('tabStudents'); if (ts) ts.hidden = false;
       var st = document.getElementById('teacherStrip'); if (st) st.hidden = false;
+      /* the teacher's tour, once per login */
+      try { if (!sessionStorage.getItem('spark.teacher.toured')) setTimeout(S.startTour, 700); } catch (e) {}
     }
 
     S.applySettings();

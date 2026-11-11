@@ -10,7 +10,7 @@
 (function (S) {
   'use strict';
 
-  var STEPS = [
+  var STUDENT_STEPS = [
     { sel: null, title: 'Welcome to Spark!',
       text: 'Let me show you around. It only takes a minute.' },
     { sel: '.tab[data-go="home"]', title: 'Home',
@@ -33,6 +33,25 @@
       text: 'Try at least one chapter in every world. Have fun!' }
   ];
 
+  /* A teacher or parent looking round gets their own tour: the same
+     website, then the Students page and where to sign out. No streak,
+     profile picture or goals, because those belong to a student. */
+  var TEACHER_STEPS = [
+    { sel: null, title: 'Welcome, teacher!',
+      text: 'This is the same website your students use. Look around: nothing you do here is saved or counted as theirs.' },
+    { sel: '.tab[data-go="worlds"]', title: "Let's read",
+      text: 'The six story worlds your students read aloud. Try a chapter to see exactly what they see.' },
+    { sel: '.tab[data-go="write"]', title: "Let's write",
+      text: 'The two writing activities: describing a picture with a word bank, and answering three questions about a picture.' },
+    { sel: '.tab[data-go="progress"]', title: 'Progress',
+      text: 'The page a student sees about their own worlds and badges.' },
+    { sel: '#tabStudents', title: 'Students',
+      text: 'This is yours. Every student from every device: charts, letter mix-ups, what help worked, and exports. You can also remove a student here.' },
+    { sel: '#btnMenu', title: 'Menu',
+      text: 'Reading settings, voices, this tour again, the Students page, and Sign out.' }
+  ];
+
+  function steps() { return S.teacherMode ? TEACHER_STEPS : STUDENT_STEPS; }
   var at = 0, layer = null;
 
   S.startTour = function () {
@@ -61,21 +80,21 @@
         '</div>' +
       '</div>';
     document.body.appendChild(layer);
-    layer.querySelector('#tourNext').addEventListener('click', function () { if (at < STEPS.length - 1) { at++; show(); } else end(); });
+    layer.querySelector('#tourNext').addEventListener('click', function () { if (at < steps().length - 1) { at++; show(); } else end(); });
     layer.querySelector('#tourBack').addEventListener('click', function () { if (at > 0) { at--; show(); } });
     layer.querySelector('#tourSkip').addEventListener('click', end);
-    layer.querySelector('#tourHear').addEventListener('click', function () { S.say(STEPS[at].text); });
+    layer.querySelector('#tourHear').addEventListener('click', function () { S.say(steps()[at].text); });
     window.addEventListener('resize', function () { if (layer && !layer.hidden) place(); });
   }
 
   function show() {
-    var st = STEPS[at];
+    var st = steps()[at];
     if (st.go) S.go(st.go);
-    layer.querySelector('#tourCount').textContent = 'Step ' + (at + 1) + ' of ' + STEPS.length;
+    layer.querySelector('#tourCount').textContent = 'Step ' + (at + 1) + ' of ' + steps().length;
     layer.querySelector('#tourTitle').textContent = st.title;
     layer.querySelector('#tourText').textContent = st.text;
     layer.querySelector('#tourBack').hidden = at === 0;
-    layer.querySelector('#tourNext').textContent = at === STEPS.length - 1 ? 'Let\'s go!' : 'Next →';
+    layer.querySelector('#tourNext').textContent = at === steps().length - 1 ? 'Let\'s go!' : 'Next →';
     var el = target(st);
     if (el) el.scrollIntoView({ block: 'center', behavior: 'instant' in document.body.style ? 'instant' : 'auto' });
     setTimeout(place, 60);
@@ -90,7 +109,7 @@
 
   /* Put the light on the target, and the bubble beside it. */
   function place() {
-    var st = STEPS[at], el = target(st);
+    var st = steps()[at], el = target(st);
     var spot = layer.querySelector('#tourSpot'), tip = layer.querySelector('#tourTip');
     if (!el) {
       spot.style.cssText = 'left:50%;top:40%;width:0;height:0;';
@@ -112,6 +131,7 @@
     S.stopSaying();
     S.P.tourDone = S.today();
     S.save();
+    try { if (S.teacherMode) sessionStorage.setItem('spark.teacher.toured', '1'); } catch (e) {}
     S.go('home');
   }
 

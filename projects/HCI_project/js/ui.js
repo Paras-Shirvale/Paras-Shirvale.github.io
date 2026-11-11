@@ -304,7 +304,7 @@
       S.closeWordCard();
       S.closeSheet();
       var chat = S.$('#chat');
-      if (chat.dataset.open === '1') chat.dataset.open = '';
+      if (chat && chat.dataset.open === '1') chat.dataset.open = '';
     });
 
     /* one delegated click handler for the whole app */

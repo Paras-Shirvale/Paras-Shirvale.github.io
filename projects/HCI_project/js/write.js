@@ -36,12 +36,36 @@
 
   function current() { return S.PROMPTS[storyIdx() % S.PROMPTS.length]; }
 
-  /* Which activities suit the child's age: 7 to 11 do "Describe a
-     picture" only; 12 and over do both. */
-  S.writeActivities = function () {
-    return (S.P.age && S.P.age >= 12) ? ['describe', 'story'] : ['describe'];
-  };
+  /* Both writing activities are open to every child. */
+  S.writeActivities = function () { return ['describe', 'story']; };   /* everyone gets both */
   var FIELD_ID = { who: 'fWho', what: 'fWhat', where: 'fWhere' };
+  var FIELDS = ['who', 'what', 'where'];     /* the three answer boxes, in order */
+
+  /* the three questions for the picture on screen, and the ladder for one */
+  function qs() { return S.pictureQs(storyIdx()); }
+  function qOf(field) { return qs()[FIELDS.indexOf(field)]; }
+  function ladderOf(field) { return qOf(field).ladder; }
+
+  /* put this picture's own questions on the page */
+  function paintQuestions() {
+    var q = qs();
+    [['qWho', 0], ['qWhat', 1], ['qWhere', 2]].forEach(function (x) {
+      S.$('#' + x[0]).textContent = q[x[1]].q;
+      S.$('#' + x[0] + 'Say').dataset.say = q[x[1]].q;
+    });
+  }
+
+  /* the model writes better, picture-specific questions; swap them in
+     only if the child has not started answering */
+  function upgradeQuestions() {
+    var at = storyIdx();
+    if (S.P.storyQs && S.P.storyQs[at % S.PROMPTS.length]) return;
+    S.refreshPictureQs(at).then(function (got) {
+      if (!got || mode !== 'picture' || storyIdx() !== at) return;
+      var untouched = FIELDS.every(function (f) { return !S.$('#' + FIELD_ID[f]).value.trim() && !rung[f]; });
+      if (untouched) { paintQuestions(); build(); }
+    });
+  }
 
   /* ── which activity is open ──────────────────────────
      Write opens on a list of activities, the way Read opens on
@@ -62,6 +86,8 @@
          is actually in the picture */
       S.$('#writePic').innerHTML = S.Pictures.scene(p.scene);
       S.$('#writeQ').textContent = p.q;
+      paintQuestions();
+      upgradeQuestions();
       /* "Next picture" only appears once this one is written */
       S.$('#btnNewPrompt').hidden = !storyDone();
       build();
@@ -72,6 +98,12 @@
   S.openWriteActivity = function (which) {
     mode = which;
     if (which === 'picture') S.DB.startSession({ world: 'practice', mode: 'write' });
+    /* every visit starts with empty boxes and no help showing */
+    if (which === 'picture') {
+      FIELDS.forEach(function (f) { S.$('#' + FIELD_ID[f]).value = ''; });
+      tidied = null;
+      resetLadders();
+    }
     /* writing a chapter belongs to Worlds, not to Practice */
     S.$$('.tab').forEach(function (t) {
       var on = t.dataset.go === (which === 'dictation' ? 'worlds' : 'write');
@@ -109,7 +141,7 @@
     S.$('.act-story').hidden = acts.indexOf('story') < 0;
     S.$('.write-acts').classList.toggle('one', acts.length === 1);
     S.$('#actDescribeFoot').textContent = described ? described + ' of ' + S.DESCRIBE.length + ' pictures described' : '6 pictures to describe';
-    S.$('#actStoryFoot').textContent = stories ? stories + ' sentence' + (stories > 1 ? 's' : '') + ' written' : 'Who or what? · Doing? · Where?';
+    S.$('#actStoryFoot').textContent = stories ? stories + ' picture' + (stories > 1 ? 's' : '') + ' written' : '3 questions about each picture';
   }
 
   function resetLadders() {
@@ -121,7 +153,7 @@
   /* ── the help ladder ────────────────────────────────── */
 
   function climb(field) {
-    var ladder = current().ladder && current().ladder[field];
+    var ladder = ladderOf(field);
     if (!ladder) return;
 
     rung[field] = Math.min(4, rung[field] + 1);
@@ -184,7 +216,7 @@
 
   /** Show the clue the child picked: a picture, or the clue spoken. */
   function showClue(field, kind) {
-    var ladder = current().ladder[field];
+    var ladder = ladderOf(field);
     var host = S.$('[data-help="' + field + '"] [data-clueout]');
     if (!host) return;
     S.$$('[data-help="' + field + '"] [data-clue]').forEach(function (b) {
@@ -217,7 +249,7 @@
   var helpOpen = {};
   function logHelp(field, rungName, cueType) {
     (helpOpen[field] = helpOpen[field] || []).push(
-      S.DB.help({ rung: rungName, cue_type: cueType, word: field, confusion_class: 'none' }));
+      S.DB.help({ rung: rungName, cue_type: cueType, word: qOf(field).q, confusion_class: 'none' }));
   }
   function settleHelp(field, how) {
     (helpOpen[field] || []).forEach(function (h) { h[how](); });
@@ -238,16 +270,15 @@
 
   /* ── assembling the sentence ────────────────────────── */
   function build() {
-    var who   = S.$('#fWho').value.trim();
-    var what  = S.$('#fWhat').value.trim();
-    var where = S.$('#fWhere').value.trim();
-
-    var parts = [who, what, where].filter(Boolean);
+    /* each answer goes into its own frame: "The cat is {orange}." */
+    var q = qs();
+    var parts = FIELDS.map(function (f, i) {
+      var v = S.$('#' + FIELD_ID[f]).value.trim().replace(/[.!?]+$/, '');
+      if (!v) return '';
+      var sentence = q[i].frame.replace('{}', v);
+      return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+    }).filter(Boolean);
     var s = parts.join(' ');
-    if (s) {
-      s = s.charAt(0).toUpperCase() + s.slice(1);
-      if (!/[.!?]$/.test(s)) s += '.';
-    }
 
     tidied = null;
     S.$('#fixList').innerHTML = '';
@@ -414,7 +445,7 @@
       var replay = e.target.closest('[data-replay]');
       if (replay) {
         var f3 = replay.closest('[data-field]').dataset.field;
-        S.say(current().ladder[f3].cue.audio);
+        S.say(ladderOf(f3).cue.audio);
       }
     });
 
