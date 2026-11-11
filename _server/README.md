@@ -11,8 +11,18 @@ website's files, so visitors can't find it.
 | `/transcribe` | Groq — Whisper large-v3             | double-checking what the child read aloud        | `GROQ_API_KEY`    |
 | `/tts`        | OpenAI — gpt-4o-mini-tts (optional) | a natural, lively reading voice                  | `OPENAI_API_KEY`  |
 
-**After changing the Worker code, paste it into Cloudflare again and Deploy** —
-the website only gets the new routes once the Worker is redeployed.
+> **Already made the worker? Don't make another.** Open your existing
+> `spark-proxy` worker → **Edit code** → replace everything with
+> [`spark-proxy-worker.js`](spark-proxy-worker.js) → **Deploy**. Your existing
+> `GROQ_API_KEY` and `ALLOWED_ORIGINS` settings stay as they are; nothing new is
+> needed for the Whisper route. Skipping this is safe: word meanings keep
+> working, and the app simply doesn't use the extra Whisper re-listen or the
+> lively voice.
+>
+> **The student data and teacher dashboard (Supabase) don't use the worker at
+> all.** They are set up separately, in "Study database" below.
+
+The numbered steps below are only for someone setting the worker up from scratch.
 
 This folder starts with `_`, so GitHub Pages does **not** publish it.
 
