@@ -10,25 +10,40 @@
 (function (S) {
   'use strict';
 
+  /* What is where, and HOW to use it. Steps with no target (sel: null) are
+     plain how-to cards, for parts of the app that are only on screen while
+     you are reading or writing. */
   var STUDENT_STEPS = [
     { sel: null, title: 'Welcome to Spark!',
-      text: 'Let me show you around. It only takes a minute.' },
+      text: 'Let me show you around, and how to use everything. It only takes a few minutes.' },
     { sel: '.tab[data-go="home"]', title: 'Home',
       text: 'Your start page. It always shows what to do next.' },
     { sel: '#homeNext', go: 'home', title: 'Your next adventure',
-      text: 'Tap here to carry on with your story. Easy!' },
+      text: 'Press Start here to carry on with your story. Easy!' },
     { sel: '.tab[data-go="worlds"]', title: 'Let\'s read',
-      text: 'Six story worlds. Pick any one. Read a chapter out loud, then write a little of it.' },
+      text: 'Six story worlds. Tap this to pick one.' },
+    { sel: null, go: 'worlds', title: 'Choosing a story',
+      text: 'Each world has three chapters. Press Read on a chapter, read it out loud, then write it. Finish all three chapters and the world\'s badge turns from grey to colour.' },
+    { sel: null, go: 'worlds', title: 'When you read',
+      text: 'Press Start and read out loud. Each word lights up as you say it. Spark waits for you and never interrupts. Press Finish when you are done, or Stop to pause.' },
+    { sel: null, go: 'worlds', title: 'Stuck on a word?',
+      text: 'Type the word in the "Stuck on a word?" box, or tap it in the story. Then pick one: Picture shows what it is. Hear it says the word. Say it: you say the word and Spark listens. Split it breaks the word into chunks. Use whichever helps you!' },
+    { sel: null, go: 'worlds', title: 'Point at a word',
+      text: 'Move your mouse over any word in the story (or touch it) to see a bigger picture and how it breaks up. Move away and it goes.' },
     { sel: '.tab[data-go="write"]', title: 'Let\'s write',
-      text: 'Describe pictures with a word bank, and write your own picture stories.' },
+      text: 'Two ways to write. Tap here to see them.' },
+    { sel: null, go: 'write', title: 'Describe a picture',
+      text: 'Tap a word in the word bank, then tap the gap where it fits. Press the speaker to hear your sentence. Then look at it, cover it, and write it from memory.' },
+    { sel: null, go: 'write', title: 'Picture story',
+      text: 'Answer three questions about the picture. Stuck? gives a little help at a time. The speaker reads your answer to you. Check my spelling fixes your words, then Save it. Spark tells you which answers are right and shows you the right one if not.' },
     { sel: '.tab[data-go="progress"]', title: 'Progress',
-      text: 'See the worlds you\'ve explored, your badges and your streak.' },
+      text: 'See the worlds you have explored, your badges and your streak.' },
     { sel: '.streak-chip', title: 'Your streak',
-      text: 'Do one thing every day to keep your streak growing.' },
+      text: 'Finish something each day, like a story, a chapter or a writing exercise, to keep your streak growing.' },
     { sel: '#btnProfile', title: 'Your profile',
-      text: 'Change your name and picture here.' },
+      text: 'Change your picture here, and choose Light, Dark or Auto colours.' },
     { sel: '#btnMenu', title: 'Menu',
-      text: 'Text size, voices, and this tour again if you need it.' },
+      text: 'Text size, voices, colours, and this tour again. Choose "Try it out" to practise everything safely: nothing you do there counts.' },
     { sel: '#exploreHint', go: 'home', title: 'Your goal',
       text: 'Try at least one chapter in every world. Have fun!' }
   ];
@@ -46,7 +61,7 @@
     { sel: '.tab[data-go="progress"]', title: 'Progress',
       text: 'The page a student sees about their own worlds and badges.' },
     { sel: '#tabStudents', title: 'Students',
-      text: 'This is yours. Every student from every device: charts, letter mix-ups, what help worked, and exports. You can also remove a student here.' },
+      text: 'This is yours: every student from every device. Press "Let\'s go!" at the end and I will show you round that page too.' },
     { sel: '#btnMenu', title: 'Menu',
       text: 'Reading settings, voices, this tour again, the Students page, and Sign out.' }
   ];
@@ -80,7 +95,7 @@
         '</div>' +
       '</div>';
     document.body.appendChild(layer);
-    layer.querySelector('#tourNext').addEventListener('click', function () { if (at < steps().length - 1) { at++; show(); } else end(); });
+    layer.querySelector('#tourNext').addEventListener('click', function () { if (at < steps().length - 1) { at++; show(); } else end(true); });
     layer.querySelector('#tourBack').addEventListener('click', function () { if (at > 0) { at--; show(); } });
     layer.querySelector('#tourSkip').addEventListener('click', end);
     layer.querySelector('#tourHear').addEventListener('click', function () { S.say(steps()[at].text); });
@@ -126,12 +141,14 @@
     tip.style.left = S.clamp(r.left + r.width / 2 - tip.offsetWidth / 2, 12, innerWidth - tip.offsetWidth - 12) + 'px';
   }
 
-  function end() {
+  function end(finished) {
     layer.hidden = true;
     S.stopSaying();
     S.P.tourDone = S.today();
     S.save();
     try { if (S.teacherMode) sessionStorage.setItem('spark.teacher.toured', '1'); } catch (e) {}
+    /* a teacher who finished the website tour carries on to the Students page */
+    if (finished === true && S.teacherMode) { location.href = 'teacher.html?tour=1'; return; }
     S.go('home');
   }
 

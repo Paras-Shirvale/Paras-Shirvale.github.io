@@ -539,6 +539,9 @@
         go: function () { S.go('profile'); } },
       /* the grown-ups' dashboard is its own page with its own login,
          so nothing diagnostic ever appears on the child's screen */
+      { icon: 'pencil',  label: 'Try it out',
+        note: 'Practise reading and writing. Nothing you do there counts.',
+        go: function () { if (S.practiceMode) S.endPractice(); else S.startPractice(); } },
       { icon: 'spark',   label: 'Show me around',
         note: 'The guided tour of where everything is', go: function () { S.startTour(); } },
     ];

@@ -23,7 +23,9 @@
   'use strict';
 
   var S = window.Spark;
-  var $ = function (s) { return document.querySelector(s); };
+  /* A missing element must never crash the page (for example an old cached
+     script meeting a newer page): it gets a harmless stand-in instead. */
+  var $ = function (s) { return document.querySelector(s) || document.createElement('div'); };
   var CFG = window.SPARK_CONFIG || {};
   var CLOUD = CFG.SUPABASE_URL && CFG.SUPABASE_ANON_KEY
     ? { url: CFG.SUPABASE_URL.replace(/\/$/, ''), key: CFG.SUPABASE_ANON_KEY } : null;
@@ -189,6 +191,7 @@
     load().then(function () {
       $('#tChecking').hidden = true;
       showOverview();
+      maybeTour();
     }, function (err) {
       if (/wrong password/.test(err.message)) { sessionStorage.removeItem('spark.teacher.pw'); toLogin(); return; }
       $('#tChecking').textContent = err.message;
@@ -940,5 +943,119 @@
     if (table === 'all') { workbook(current.data, ORDER, 'spark-' + safe(current.kid.name) + '-all-data.xlsx'); return; }
     download('spark-' + safe(current.kid.name) + '-' + table + '.csv', toCsv(current.data[table] || []), 'text/csv');
   };
+  /* ══ a tour of this page ═════════════════════════════════
+     Lights up each part and says what it is and how to use it. It opens a
+     student on the way (the first one in the list) so the student page can
+     be shown too. Runs after the website tour, and from "Show me around". */
+  var tour = null;
+
+  function waitFor(test, ms) {
+    return new Promise(function (resolve) {
+      var t0 = Date.now();
+      (function look() { if (test() || Date.now() - t0 > (ms || 4000)) resolve(); else setTimeout(look, 120); })();
+    });
+  }
+  function toOverview() { current = null; showOverview(); return Promise.resolve(); }
+  function toFirstStudent() {
+    if (!kids.length) return Promise.resolve();
+    if (current && current.kid.child_id === kids[0].child_id && !$('#tStudent').hidden) return Promise.resolve();
+    openStudent(kids[0].child_id);
+    return waitFor(function () { return current && !$('#tStudent').hidden && $('#tEngage').children.length; });
+  }
+  var hasKids = function () { return kids.length > 0; };
+
+  var TOUR = [
+    { title: 'The Students page', text: 'Everything Spark measures about every student, from any device. This quick tour shows what each part is and how to use it.' },
+    { sel: '.t-nav', title: 'Three pages', text: 'Students is this page. Removed students keeps the history of anyone you have removed. Website is the regular site your students use, so you can see exactly what they see.' },
+    { sel: '#tClassTiles', before: toOverview, title: 'The class at a glance', text: 'How many students, how many were active this week, sessions completed, mix-ups recorded, and how many of the six story worlds they have explored on average.' },
+    { sel: '#tClassChart', title: 'Which letters are hardest', text: 'Total mix-ups for each pair of letters that are easy to swap (b and d, p and q, and so on), added up across every student. Tall bars show where the whole class needs practice.' },
+    { sel: '#tAttention', title: 'Who needs attention', text: 'Students with the most mix-ups, and students who have not been active for over a week. Their picture is the one they chose. Click a name to open them.' },
+    { sel: '.t-students', title: 'All students', text: 'One row per student: age, when they last used the website (today shows the time, then Yesterday, then the date), worlds explored, the letter pair they find hardest, mix-ups and sessions. Click any row to open that student.' },
+    { sel: '#tSearch', title: 'Search', text: 'Type part of a name to find a student quickly.' },
+    { sel: '.t-exports', title: 'Download the data', text: 'Choose what to download from the list, then press Download. "Everything" gives one Excel file with a tab for each kind of data. The others give a single CSV table. You can also get all the data as JSON.' },
+    { sel: '#tName', before: toFirstStudent, when: hasKids, title: 'One student', text: 'This is the first student\'s own page. Press Back at the top to return to the list.' },
+    { sel: '#tEngage', when: hasKids, title: 'Engagement', text: 'Day streak, worlds explored, chapters done out of 18, badges earned, words read this week, sentences written and minutes of practice. This is how much they are using Spark.' },
+    { sel: '#tAction', when: hasKids, title: 'Recommended', text: 'One plain sentence on what to do next with this student, worked out from their data.' },
+    { sel: '#tInsightsCard', when: hasKids, title: 'What the data shows', text: 'Plain-language findings, each with what it is based on: practice habit, which help gets them moving again, whether they often need the answer given, and more.' },
+    { sel: '#tPairs', when: hasKids, title: 'Letter pairs at a glance', text: 'One row per pair. Mix-ups per 100 words allows a fair comparison between chapters. Caught it themselves is the share they fixed within 2 seconds. Trend compares the first half of their chapters with the second. Click a row to see every event behind it.' },
+    { sel: '.t-explain', when: hasKids, title: 'What the columns mean', text: 'Open this for the full meaning of every column, and of the four kinds of help: prompt, cue, choice and supply, from the lightest to the most.' },
+    { sel: '#cRate', when: hasKids, title: 'Charts over time', text: 'Mix-ups per 100 words over time for each letter pair. Falling lines mean that pair is getting easier. Below are charts for catching their own slips, hesitation, how much help they needed, which kind of help works, reading against writing, pauses, speed and hardest words.' },
+    { sel: '#cCue', when: hasKids, title: 'Which help works', text: 'For each kind of help the child chose (picture, hearing the word, saying it, splitting it), how often they carried on reading straight afterwards. It shows what they tend to reach for and what gets them moving, not a label.' },
+    { sel: '#tRemove', when: hasKids, title: 'Removing a student', text: 'Removes this student from the list. Nothing is deleted: their history moves to Removed students, and their own device signs out and has to make a new account.' },
+    { sel: '#navRemoved', before: toOverview, title: 'Removed students', text: 'Everyone you have removed, with all their history still open to look at. The count is shown on that page.' },
+    { sel: '#tLogout', title: 'Signing out', text: 'Sign out here when you are done. "Show me around" brings this tour back any time.' }
+  ];
+
+  function tourBuild() {
+    tour = document.createElement('div');
+    tour.className = 'tt';
+    tour.innerHTML = '<div class="tt-spot" id="ttSpot"></div><div class="tt-tip" id="ttTip" role="dialog">' +
+      '<small id="ttCount"></small><b id="ttTitle"></b><p id="ttText"></p>' +
+      '<div class="tt-foot"><button class="t-btn t-ghost" id="ttSkip">Skip</button><span></span>' +
+      '<button class="t-btn t-ghost" id="ttBack">Back</button><button class="t-btn" id="ttNext">Next</button></div></div>';
+    document.body.appendChild(tour);
+    window.addEventListener('resize', function () { if (tour && !tour.hidden) ttPlace(); });
+  }
+
+  var ttAt = 0, ttList = [];
+  function ttShow() {
+    var st = ttList[ttAt];
+    var ready = st.before ? st.before() : Promise.resolve();
+    ready.then(function () {
+      tour.querySelector('#ttCount').textContent = 'Step ' + (ttAt + 1) + ' of ' + ttList.length;
+      tour.querySelector('#ttTitle').textContent = st.title;
+      tour.querySelector('#ttText').textContent = st.text;
+      tour.querySelector('#ttBack').hidden = ttAt === 0;
+      tour.querySelector('#ttNext').textContent = ttAt === ttList.length - 1 ? 'Done' : 'Next';
+      var el = st.sel ? document.querySelector(st.sel) : null;
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center' });
+      setTimeout(ttPlace, 80);
+    });
+  }
+  function ttPlace() {
+    var st = ttList[ttAt], el = st && st.sel ? document.querySelector(st.sel) : null;
+    var spot = tour.querySelector('#ttSpot'), tip = tour.querySelector('#ttTip');
+    if (!el || !el.offsetParent) {
+      spot.style.cssText = 'left:50%;top:40%;width:0;height:0;';
+      tip.style.left = Math.max(12, (innerWidth - tip.offsetWidth) / 2) + 'px';
+      tip.style.top = Math.max(12, innerHeight * 0.3) + 'px';
+      return;
+    }
+    var r = el.getBoundingClientRect(), pad = 8;
+    spot.style.cssText = 'left:' + (r.left - pad) + 'px;top:' + (r.top - pad) + 'px;width:' + (r.width + pad * 2) + 'px;height:' + (r.height + pad * 2) + 'px;';
+    var below = r.bottom + 16, above = r.top - tip.offsetHeight - 16;
+    tip.style.top = (below + tip.offsetHeight < innerHeight - 8 ? below : Math.max(8, above)) + 'px';
+    tip.style.left = Math.min(Math.max(12, r.left + r.width / 2 - tip.offsetWidth / 2), innerWidth - tip.offsetWidth - 12) + 'px';
+  }
+  function ttEnd() {
+    tour.hidden = true;
+    try { sessionStorage.setItem('spark.teacher.toured2', '1'); } catch (e) {}
+    toOverview();
+  }
+
+  function startTour() {
+    if (!tour) {
+      tourBuild();
+      tour.querySelector('#ttNext').addEventListener('click', function () { if (ttAt < ttList.length - 1) { ttAt++; ttShow(); } else ttEnd(); });
+      tour.querySelector('#ttBack').addEventListener('click', function () { if (ttAt > 0) { ttAt--; ttShow(); } });
+      tour.querySelector('#ttSkip').addEventListener('click', ttEnd);
+    }
+    ttList = TOUR.filter(function (st) { return !st.when || st.when(); });
+    ttAt = 0;
+    tour.hidden = false;
+    ttShow();
+  }
+  $('#tTour').addEventListener('click', startTour);
+  window.__sparkTeacherTour = startTour;
+
+  /* after the website tour, or the first time here in this login */
+  function maybeTour() {
+    var asked = /[?&]tour=1/.test(location.search);
+    var first = false;
+    try { first = !sessionStorage.getItem('spark.teacher.toured2'); } catch (e) {}
+    if (asked) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
+    if (asked || first) setTimeout(startTour, 500);
+  }
+
   start();
 })();

@@ -35,6 +35,8 @@
   'use strict';
 
   var KEY = 'spark.db.v1';
+  /* A teacher looking round, or a student in "Try it out", records nothing. */
+  S.noRecord = function () { return !!(S.teacherMode || S.practiceMode); };
   var RESET_KEY = 'spark.reset.pending';
   var MAX_ROWS = 6000;
   var TABLES = ['children', 'sessions', 'confusion_events', 'timing_events', 'pause_events',
@@ -48,7 +50,7 @@
   store.queue = store.queue || [];
 
   function persist() {
-    if (S.teacherMode) return;           /* a teacher looking round records nothing */
+    if (S.noRecord()) return;           /* a teacher looking round records nothing */
     try { localStorage.setItem(KEY, JSON.stringify(store)); }
     catch (e) {
       /* storage full: drop the oldest half of every table */
@@ -96,7 +98,7 @@
      Called once, when the welcome finishes. After this the name
      and age are locked until "Start over". */
   DB.registerChild = function () {
-    if (S.teacherMode || S.P.registered || !S.P.name) return;
+    if (S.noRecord() || S.P.registered || !S.P.name) return;
     S.P.registered = true;
     S.save();
     DB.log('children', { age: S.P.age || null, avatar: S.P.avatar || '' });
@@ -313,7 +315,7 @@
   }
 
   function scheduleSync() {
-    if (!cfg() || S.teacherMode) return;
+    if (!cfg() || S.noRecord()) return;
     clearTimeout(syncTimer);
     syncTimer = setTimeout(DB.sync, 2500);
   }
@@ -341,7 +343,7 @@
 
   DB.sync = async function () {
     var c = cfg();
-    if (!c || S.teacherMode || syncing || wiped || !store.queue.length || navigator.onLine === false) return;
+    if (!c || S.noRecord() || syncing || wiped || !store.queue.length || navigator.onLine === false) return;
     syncing = true;
     var batch = store.queue.slice(0, 200);
     var byTable = {};
@@ -435,7 +437,7 @@
   var removedHandled = false;
   DB.checkRemoved = async function () {
     var c = cfg(), id = S.P.childId;
-    if (S.teacherMode || !c || !id || removedHandled || navigator.onLine === false) return false;
+    if (S.noRecord() || !c || !id || removedHandled || navigator.onLine === false) return false;
     try {
       var res = await fetch(c.url + '/rest/v1/rpc/child_status', {
         method: 'POST', headers: authHeaders(c.key), body: JSON.stringify({ p_child: id })
@@ -457,7 +459,7 @@
   var lastTouch = 0;
   DB.touch = function (force) {
     var c = cfg();
-    if (S.teacherMode || !c || !S.P.childId || !S.P.registered || navigator.onLine === false) return;
+    if (S.noRecord() || !c || !S.P.childId || !S.P.registered || navigator.onLine === false) return;
     if (!force && Date.now() - lastTouch < 60000) return;
     lastTouch = Date.now();
     fetch(c.url + '/rest/v1/rpc/touch_child', { method: 'POST', headers: authHeaders(c.key),
@@ -468,7 +470,7 @@
   /* ── a changed picture reaches the teacher's list ─────── */
   DB.syncAvatar = function () {
     var c = cfg();
-    if (S.teacherMode || !c || !S.P.childId || !S.P.registered || navigator.onLine === false) return;
+    if (S.noRecord() || !c || !S.P.childId || !S.P.registered || navigator.onLine === false) return;
     if (!S.P.avatar || S.P.avatarSent === S.P.avatar) return;
     var sent = S.P.avatar;
     fetch(c.url + '/rest/v1/rpc/set_child_avatar', { method: 'POST', headers: authHeaders(c.key),

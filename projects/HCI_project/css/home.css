@@ -131,3 +131,18 @@
 .tour-foot{display:flex;align-items:center;gap:6px}
 .tour-foot span{flex:1}
 .teacher-mode #btnProfile,.teacher-mode #homeAvatar{display:none}
+.tour-tip{max-height:calc(100vh - 24px);overflow:auto}
+
+/* "Try it out" */
+.practice-bar{position:sticky;top:0;z-index:260;background:#5B4BD6;color:#fff;font-weight:700;font-size:14px;text-align:center;padding:7px 14px}
+.practice-bar .btn{margin-left:10px}
+.practice-panel{position:fixed;left:14px;bottom:14px;z-index:250;width:min(340px,calc(100vw - 28px));max-height:70vh;overflow:auto;
+  background:var(--surface);border:2px solid #5B4BD6;border-radius:18px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.pr-title{font-size:17px}
+.pr-sub{margin:4px 0 10px;font-size:13.5px;color:var(--ink-2)}
+.pr-list{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:8px}
+.pr-list li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+.pr-tick{flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff}
+.pr-list li.done .pr-tick{background:#23835C;border-color:#23835C}
+.pr-list li.done .pr-text{color:var(--ink-2);text-decoration:line-through}
+.pr-text{flex:1;min-width:140px}

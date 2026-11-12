@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Spark — teacher and parent dashboard</title>
-<link rel="stylesheet" href="css/teacher.css">
+<link rel="stylesheet" href="css/teacher.css?v=20261112a">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2323835C'/%3E%3Cpath d='M12 4l1.8 5.2L19 11l-4.4 1.8L12 18l-1.8-5.2L5.2 11l5-1.5z' fill='%23fff'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -20,6 +20,7 @@
     </nav>
     <span class="t-flex"></span>
     <span class="t-source" id="tSource"></span>
+    <button class="t-btn t-ghost" id="tTour">Show me around</button>
     <button class="t-btn t-ghost" id="tLogout">Sign out</button>
   </div>
 </header>
@@ -227,11 +228,11 @@
 /* Just enough of the app's shared object for the world list below. */
 window.Spark = { norm: function (w) { return String(w == null ? '' : w).toLowerCase().replace(/[^a-z']/g, ''); } };
 </script>
-<script src="js/config.js"></script>
-<script src="js/xlsx.js"></script>
-<script src="js/avatars.js"></script>
-<script src="js/human.js"></script>
-<script src="js/families.js"></script>
-<script src="js/teacher.js"></script>
+<script src="js/config.js?v=20261112a"></script>
+<script src="js/xlsx.js?v=20261112a"></script>
+<script src="js/avatars.js?v=20261112a"></script>
+<script src="js/human.js?v=20261112a"></script>
+<script src="js/families.js?v=20261112a"></script>
+<script src="js/teacher.js?v=20261112a"></script>
 </body>
 </html>

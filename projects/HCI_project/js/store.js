@@ -166,7 +166,7 @@ window.Spark = window.Spark || {};
   }
 
   S.save = function () {
-    if (S.teacherMode) return;
+    if (S.teacherMode || S.practiceMode) return;     /* "Try it out" never touches the real profile */
     try { localStorage.setItem(KEY, JSON.stringify(S.P)); }
     catch (e) { /* storage full or blocked; the session still works */ }
   };
