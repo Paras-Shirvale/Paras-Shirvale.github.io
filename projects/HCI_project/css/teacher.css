@@ -115,8 +115,7 @@ small{font-size:11.5px}
   font:inherit;font-weight:700;color:var(--ink-2);cursor:pointer;text-decoration:none}
 .t-navb:hover{background:var(--surface-2,#eee)}
 .t-navb.on{background:var(--teal,#23835C);color:#fff}
-.t-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#E2678C;color:#fff;font-size:12px}
-.t-count[hidden]{display:none}
+.t-removed-count{margin:2px 0 6px;font-size:15px;font-weight:700;color:var(--ink)}
 .t-av{width:auto;height:auto;background:none;border-radius:0;margin-right:9px;vertical-align:middle;display:inline-flex}
 .t-av svg{display:block;border-radius:50%}
 .t-chip{flex-direction:row;align-items:center;gap:10px}

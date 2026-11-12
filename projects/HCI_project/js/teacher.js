@@ -179,8 +179,6 @@
     return Source.children(password).then(function (list) {
       kids = list.filter(function (k) { return !k.removed_at; });
       removedKids = list.filter(function (k) { return k.removed_at; });
-      var n = $('#navRemovedN');
-      n.hidden = !removedKids.length; n.textContent = removedKids.length;
       $('#tSource').textContent = Source.label;
     });
   }
@@ -551,6 +549,8 @@
     setNav('removed');
     $('#tStudent').hidden = true; $('#tOverview').hidden = true; $('#tRemoved').hidden = false;
     window.scrollTo(0, 0);
+    /* the count is shown here, on the page itself, not on the tab */
+    $('#tRemovedCount').textContent = removedKids.length + ' removed student' + (removedKids.length === 1 ? '' : 's');
     $('#tRemovedRows').innerHTML = removedKids.length ? removedKids.map(function (k) {
       return '<tr data-kid="' + esc(k.child_id) + '"><td>' + avatarChip(k) + esc(k.name) + '</td>' +
         '<td>' + (k.age || '—') + '</td><td>' + esc(ago(k.removed_at)) + '</td><td>' + esc(ago(k.last_active)) + '</td>' +
