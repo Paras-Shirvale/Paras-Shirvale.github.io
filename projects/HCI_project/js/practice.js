@@ -60,17 +60,52 @@
     if (changed) paintPanel();
   }
 
-  S.startPractice = function () {
-    if (S.practiceMode || S.teacherMode) return;
-    try { if (S.stopReading) S.stopReading(); S.stopSaying(); } catch (e) {}
+  /* ── the sandbox ──────────────────────────────────────
+     A throw-away profile, and nothing recorded. Used by "Try it out" and by
+     the tour (which opens stories and writing pages to show how they work). */
+  var realProfile = null, dbSnap = null;
 
+  S.sandboxEnter = function () {
+    if (S.practiceMode || S.teacherMode) return false;
+    try { if (S.stopReading) S.stopReading(); S.stopSaying(); } catch (e) {}
     /* a throw-away profile: who they are, but none of their progress */
     var real = S.P, fresh = S.blankProfile();
     fresh.name = real.name; fresh.age = real.age; fresh.avatar = real.avatar;
     fresh.registered = true; fresh.tourDone = real.tourDone;
     fresh.settings = JSON.parse(JSON.stringify(real.settings));
+    realProfile = real;
+    dbSnap = S.DB.snapshot();
     S.practiceMode = true;
     S.P = fresh;
+    return true;
+  };
+
+  /* Back to the real profile, exactly as it was. opts.reload === false puts
+     everything back in place without reloading (used by the tour); otherwise
+     the page is reloaded so nothing from the sandbox is left anywhere. */
+  S.sandboxLeave = function (opts) {
+    opts = opts || {};
+    if (!realProfile) return;
+    S.P = realProfile; realProfile = null;
+    S.practiceMode = false;
+    if (dbSnap) S.DB.restore(dbSnap);
+    dbSnap = null;
+    if (opts.tourDone) S.P.tourDone = S.today();
+    S.save();
+    if (opts.reload === false) {
+      S.go('home');
+      if (S.paintHome) S.paintHome();
+      if (S.paintWorlds) S.paintWorlds();
+      if (S.paintAvatars) S.paintAvatars();
+      return;
+    }
+    location.href = location.pathname + '#home';
+    location.reload();
+  };
+
+  S.startPractice = function () {
+    if (S.practiceMode || S.teacherMode) return;
+    if (!S.sandboxEnter()) return;
     done = {};
 
     document.body.classList.add('practice-mode');

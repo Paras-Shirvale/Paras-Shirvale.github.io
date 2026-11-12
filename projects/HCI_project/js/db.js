@@ -90,6 +90,17 @@
     return full;
   };
 
+  /* For the sandbox (tour, "Try it out"): remember the recorded rows as they
+     are now, and put them back afterwards, so nothing done in the sandbox
+     stays in memory to be saved or sent later. */
+  DB.snapshot = function () { return JSON.stringify(store); };
+  DB.restore = function (snap) {
+    try { store = JSON.parse(snap); } catch (e) { return; }
+    TABLES.forEach(function (t) { store.tables[t] = store.tables[t] || []; });
+    store.queue = store.queue || [];
+    open = null; openHelp = [];
+  };
+
   DB.rows = function (table) { return store.tables[table] || []; };
   DB.all = function () { return store.tables; };
   DB.pending = function () { return store.queue.length; };
