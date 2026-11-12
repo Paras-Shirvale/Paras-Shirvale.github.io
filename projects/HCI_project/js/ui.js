@@ -346,18 +346,35 @@
        the moment the pointer is not over a word, the tip goes. */
     var hoverTimer = null;
     var hoverWord = null;
+    var leaveTimer = null;
 
     function hideTip() {
       clearTimeout(hoverTimer);
+      clearTimeout(leaveTimer);
       hoverWord = null;
       var tip = S.$('#hovertip');
       if (tip) { tip.style.display = 'none'; tip.innerHTML = ''; }
     }
     S.hideHoverTip = hideTip;
 
+    /* Leaving the word does not make the tip vanish at once: there is a
+       small gap between the word and the tip, and the Hear-it button has
+       to be reachable. It goes a moment after the pointer is on neither
+       the word nor the tip. */
+    function cancelHide() { clearTimeout(leaveTimer); }
+    function scheduleHide() {
+      var tip = S.$('#hovertip');
+      if (!tip || tip.style.display !== 'flex') { hideTip(); return; }   /* nothing showing yet: just cancel */
+      clearTimeout(leaveTimer);
+      leaveTimer = setTimeout(hideTip, 450);
+    }
+
     document.addEventListener('pointerover', function (e) {
+      /* the pointer is on the tip itself (to press Hear it): keep it */
+      if (e.target.closest && e.target.closest('#hovertip')) { cancelHide(); return; }
       var w = e.target.closest ? e.target.closest('.w') : null;
-      if (!w) { if (hoverWord) hideTip(); return; }
+      if (!w) { if (hoverWord) scheduleHide(); return; }
+      cancelHide();
       if (w === hoverWord) return;
 
       clearTimeout(hoverTimer);
@@ -419,7 +436,12 @@
             var slotNow = tip.querySelector('[data-tippic]');
             if (hoverWord !== w || !slotNow) return;
             if (hit && hit.url) {
-              slotNow.innerHTML = S.Pictures.instant(shown, 96, sentence) || '';
+              /* show exactly what the lookup found (it is already checked
+                 for this word's meaning and for child-safety) */
+              slotNow.innerHTML = '<img class="pic" src="' + S.esc(hit.url) + '" alt="' + S.esc(shown) +
+                                  '" width="96" height="96">';
+              var im = slotNow.querySelector('img');
+              im.onerror = function () { slotNow.remove(); };
             } else {
               slotNow.remove();
             }
@@ -438,11 +460,11 @@
        anywhere all dismiss it — the tip must never be left behind. */
     document.addEventListener('pointerout', function (e) {
       var to = e.relatedTarget;
-      if (to && to.closest && to.closest('.w') === hoverWord && hoverWord) return;
+      if (to && to.closest && to.closest('.w') === hoverWord && hoverWord) { cancelHide(); return; }
       /* moving INTO the tip must not dismiss it, or the Hear-it
          button could never be reached */
-      if (to && to.closest && to.closest('#hovertip')) return;
-      hideTip();
+      if (to && to.closest && to.closest('#hovertip')) { cancelHide(); return; }
+      scheduleHide();
     });
 
     /* Hear it, straight from the tip. This also tells the cue engine
