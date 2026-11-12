@@ -117,7 +117,6 @@
   S.openVoiceSettings = function () {
     var st = S.P.settings;
     var line = S.CALIBRATION[Math.floor(Math.random() * S.CALIBRATION.length)];
-    var cloudOn = S.cloudVoiceState && S.cloudVoiceState() === 'on';
 
     S.sheet(
       '<h2>Voices</h2>' +
@@ -135,8 +134,7 @@
         }).join('') +
       '</div>' +
       '<p class="srow-note" style="margin-top:8px">' +
-        (cloudOn ? 'Using Spark\'s natural voice.'
-                 : 'Using: ' + S.esc(S.voiceName(st.voice || 'woman') || 'this computer\'s voice')) +
+        'Using: ' + S.esc(S.voiceName(st.voice || 'woman') || 'this computer\'s voice') +
       '</p>' +
 
       '<div class="srow" style="margin-top:14px"><label>Speaking speed</label>' +

@@ -9,7 +9,7 @@ website's files, so visitors can't find it.
 |---------------|-------------------------------------|--------------------------------------------------|-------------------|
 | `/`           | Groq — Llama 3.3 70B                | word meanings, word parts, spelling explanations | `GROQ_API_KEY`    |
 | `/transcribe` | Groq — Whisper large-v3             | double-checking what the child read aloud        | `GROQ_API_KEY`    |
-| `/tts`        | OpenAI — gpt-4o-mini-tts (optional) | a natural, lively reading voice                  | `OPENAI_API_KEY`  |
+| `/judge-image`| Groq — Llama 4 Scout (vision)       | checking each web photo is right and child-safe  | `GROQ_API_KEY`    |
 
 > **Already made the worker? Don't make another.** Open your existing
 > `spark-proxy` worker → **Edit code** → replace everything with
@@ -17,7 +17,7 @@ website's files, so visitors can't find it.
 > `GROQ_API_KEY` and `ALLOWED_ORIGINS` settings stay as they are; nothing new is
 > needed for the Whisper route. Skipping this is safe: word meanings keep
 > working, and the app simply doesn't use the extra Whisper re-listen or the
-> lively voice.
+> picture check.
 >
 > **The student data and teacher dashboard (Supabase) don't use the worker at
 > all.** They are set up separately, in "Study database" below.
@@ -96,13 +96,12 @@ that same browser (the password is the same), with a notice saying so.
 On the dashboard: **Class summary (CSV)**, **All data (JSON)**, **any table as
 CSV for all students**, and the same for a single student.
 
-## Natural voice (optional)
+## Voices (free, nothing to set up)
 
-Without it, Spark uses the best voice the browser has (Edge's "Natural" voices
-are good; Chrome's Google voices are fine). For a consistently lively,
-correctly-pronounced voice everywhere, add a Secret `OPENAI_API_KEY`
-(platform.openai.com — paid, but a few cents covers many hours of reading).
-Spark detects it automatically; nothing in the website needs changing.
+Spark reads aloud with the voices built into the browser, so there is no voice
+key and no cost. Edge's "Natural" voices (Ava, Andrew, Ana and others) are the
+best of them; Chrome's Google voices are fine. Use Edge on the students'
+devices for the nicest sound.
 
 ## Notes
 

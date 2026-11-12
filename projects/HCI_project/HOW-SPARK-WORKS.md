@@ -233,14 +233,13 @@ transcription only when a model reading check is used.
 | 2 | **Whisper large-v3** (Groq) | Accurate second listen with word times | Worker `/transcribe` |
 | 3 | **Llama 3.3 70B** (Groq; fallbacks `gpt-oss-20b`, `llama-3.1-8b`) | Meaning and pronunciation in context; picture search term; syllable respellings; the three picture-story questions; judging answers; comprehension questions; spelling explanations; Ask Spark | Worker `/` |
 | 4 | **Llama 4 Scout** vision (Groq) | Checks each photograph | Worker `/judge-image` |
-| 5 | **gpt-4o-mini-tts** (OpenAI) | Expressive voice (styled warm, calm, lively, storyteller; isolated words in a "say only this" mode) | Worker `/tts` |
-| 6 | Browser speech synthesis | Fallback voices | Browser |
-| 7 | **LanguageTool** | Spelling check | Public API |
-| 8 | Voiceprint (formants + MFCC) | Same reader? Child or adult? | Browser |
-| 9 | Pause classifier (rules + prosody) | Natural or difficulty | Browser |
-| 10 | Letter-confusion analysis and answer matching | Detect slips; recognise right answers | Browser |
+| 5 | Browser speech synthesis | All of Spark's voices (free; Edge's neural voices preferred) | Browser |
+| 6 | **LanguageTool** | Spelling check | Public API |
+| 7 | Voiceprint (formants + MFCC) | Same reader? Child or adult? | Browser |
+| 8 | Pause classifier (rules + prosody) | Natural or difficulty | Browser |
+| 9 | Letter-confusion analysis and answer matching | Detect slips; recognise right answers | Browser |
 
-Only models 2, 3, 4, 5 and 7 are AI services. Items 8, 9 and 10 are our own signal-processing and rules; they are
+Only models 2, 3, 4 and 6 are external services (all with free tiers). Items 7, 8 and 9 are our own signal-processing and rules; they are
 described as such and not dressed up as AI.
 
 ## 16. Novelty

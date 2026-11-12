@@ -1,14 +1,11 @@
 /* ============================================================
    speech.js — Spark's voice and Spark's ears.
 
-   VOICE. Three sources, best first:
+   VOICE. The browser's own voices, free and with no server. Two tiers:
 
-     1  A neural voice from the site's server (/tts), when one is
-        set up. Lively, natural, and pronounces words correctly.
-     2  The browser's own NATURAL voices. Edge ships excellent
-        neural voices (Ava, Andrew, Emma, Ana…), Chrome has Google's.
-        These are strongly preferred.
-     3  Anything else the system has. The old Windows desktop voices
+     1  The NATURAL voices. Edge ships excellent neural voices (Ava,
+        Andrew, Emma, Ana…), Chrome has Google's. Strongly preferred.
+     2  Anything else the system has. The old Windows desktop voices
         (David, Zira, Mark) are what made Spark sound robotic, so
         they are only used when nothing better exists.
 
@@ -24,30 +21,24 @@
 (function (S) {
   'use strict';
 
-  /* ── the four characters ────────────────────────────────
-     `prefer` is matched against system voice names, in order.
-     `cloud` is the server voice used when /tts is available. */
+  /* ── the six characters ─────────────────────────────────
+     `prefer` is matched against system voice names, in order. */
   S.VOICES = {
-    woman: { label: 'Ava', who: 'bright and friendly', want: 'female', cloud: 'coral', style: 'warm',
-             prefer: ['ava', 'emma', 'jenny', 'aria', 'sonia', 'libby', 'google uk english female',
+    woman: { label: 'Ava', who: 'bright and friendly', want: 'female', prefer: ['ava', 'emma', 'jenny', 'aria', 'sonia', 'libby', 'google uk english female',
                       'google us english', 'samantha', 'serena', 'karen'],
              pitch: 1.08, rate: 1.02, sample: 'Hi! I\'m Ava. Let\'s read something fun together!' },
-    man:   { label: 'Andrew', who: 'warm and calm', want: 'male', cloud: 'ash', style: 'steady',
-             prefer: ['andrew', 'brian', 'guy', 'ryan', 'christopher', 'eric', 'thomas',
+    man:   { label: 'Andrew', who: 'warm and calm', want: 'male', prefer: ['andrew', 'brian', 'guy', 'ryan', 'christopher', 'eric', 'thomas',
                       'google uk english male', 'daniel', 'alex'],
              pitch: 1.0, rate: 1.0, sample: 'Hello! I\'m Andrew. I can\'t wait to read with you.' },
-    girl:  { label: 'Ana', who: 'a cheerful girl', want: 'female', cloud: 'nova', style: 'lively', child: /ana|maisie/i,
+    girl:  { label: 'Ana', who: 'a cheerful girl', want: 'female', child: /ana|maisie/i,
              prefer: ['ana', 'maisie', 'emma', 'ava', 'jenny', 'google uk english female', 'samantha'],
              pitch: 1.18, rate: 1.04, sample: 'Hiya! I\'m Ana. Reading is more fun with a friend!' },
-    boy:   { label: 'Ravi', who: 'a lively boy', want: 'male', cloud: 'verse', style: 'lively',
-             prefer: ['brian', 'andrew', 'ryan', 'guy', 'eric', 'google uk english male', 'daniel'],
+    boy:   { label: 'Ravi', who: 'a lively boy', want: 'male', prefer: ['brian', 'andrew', 'ryan', 'guy', 'eric', 'google uk english male', 'daniel'],
              pitch: 1.14, rate: 1.04, sample: 'Hey! I\'m Ravi. Let\'s go — this is going to be great!' }
     ,
-    story: { label: 'Nora', who: 'a calm storyteller', want: 'female', cloud: 'sage', style: 'calm',
-             prefer: ['sonia', 'libby', 'maisie', 'aria', 'google uk english female', 'serena', 'emma'],
+    story: { label: 'Nora', who: 'a calm storyteller', want: 'female', prefer: ['sonia', 'libby', 'maisie', 'aria', 'google uk english female', 'serena', 'emma'],
              pitch: 0.98, rate: 0.96, sample: "Hello. I am Nora. Settle in, and let me read you a story." },
-    chief: { label: 'Max', who: 'a big, friendly storyteller', want: 'male', cloud: 'fable', style: 'story',
-             prefer: ['ryan', 'thomas', 'brian', 'andrew', 'google uk english male', 'christopher', 'daniel'],
+    chief: { label: 'Max', who: 'a big, friendly storyteller', want: 'male', prefer: ['ryan', 'thomas', 'brian', 'andrew', 'google uk english male', 'christopher', 'daniel'],
              pitch: 0.92, rate: 0.98, sample: "Well hello there! I am Max. Shall we find out what happens next?" }
   };
 
@@ -104,56 +95,6 @@
 
   S.speechAvailable = !!window.speechSynthesis;
 
-  /* ── the server's neural voice ──────────────────────────
-     Tried once; if the server has no voice model it says so (501)
-     and Spark quietly stays on the browser's voices. */
-  var cloud = { state: 'unknown', audio: null, cache: {} };
-
-  function cloudURL() { return S.serverURL ? S.serverURL('/tts') : ''; }
-  function cloudOn() {
-    return cloud.state !== 'off' && !!cloudURL() && S.P.settings.cloudVoice !== false;
-  }
-  S.cloudVoiceState = function () { return cloudURL() ? cloud.state : 'off'; };
-
-  async function cloudAudio(text, key, opts) {
-    var c = S.VOICES[key] || S.VOICES.woman;
-    var mode = (opts && opts.mode) || 'story';
-    var id = c.cloud + '|' + mode + '|' + text;
-    if (cloud.cache[id]) return cloud.cache[id];
-    var res = await fetch(cloudURL(), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text, voice: c.cloud, style: c.style, mode: mode })
-    });
-    if (!res.ok) {
-      if (res.status === 501 || res.status === 400 || res.status === 404) cloud.state = 'off';
-      throw new Error('tts ' + res.status);
-    }
-    cloud.state = 'on';
-    var url = URL.createObjectURL(await res.blob());
-    cloud.cache[id] = url;
-    return url;
-  }
-
-  var playToken = 0;
-  function playCloud(text, opts) {
-    var token = ++playToken;
-    var key = S.P.settings.voice || 'woman';
-    return cloudAudio(text, key, opts).then(function (url) {
-      if (token !== playToken) return;            /* something newer was asked for */
-      stopAudio();
-      var a = new Audio(url);
-      a.playbackRate = S.clamp((opts.rate != null ? opts.rate : S.P.settings.rate) / 0.95, 0.6, 1.5);
-      a.preservesPitch = true;
-      cloud.audio = a;
-      if (opts.onEnd) a.onended = opts.onEnd;
-      return a.play().then(function () { return a; });
-    });
-  }
-
-  function stopAudio() {
-    if (cloud.audio) { try { cloud.audio.pause(); } catch (e) {} cloud.audio.onended = null; cloud.audio = null; }
-  }
-
   /* ── saying things ──────────────────────────────────── */
   function browserSay(text, opts) {
     if (!window.speechSynthesis) { if (opts.onEnd) opts.onEnd(); return; }
@@ -175,20 +116,10 @@
     opts = opts || {};
     if (!text) return;
     try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
-    stopAudio();
-    if (cloudOn()) {
-      playCloud(String(text), opts).catch(function () {
-        if (cloud.state !== 'off' && cloud.state !== 'on') cloud.state = 'off';
-        browserSay(text, opts);
-      });
-      return;
-    }
     browserSay(text, opts);
   };
 
   S.stopSaying = function () {
-    playToken++;
-    stopAudio();
     try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
   };
 
@@ -203,7 +134,6 @@
 
   /** Which real voice a character is using, for Settings. */
   S.voiceName = function (key) {
-    if (cloud.state === 'on') return 'Spark\'s natural voice';
     var v = voiceFor(key);
     return v ? v.name.replace(/^Microsoft\s+|\s+-\s+English.*$|\s+Online|\s+\(Natural\)/gi, '') : '';
   };
@@ -247,45 +177,8 @@
     var re = /\S+/g, m;
     while ((m = re.exec(text)) !== null) starts.push(m.index);
 
-    if (cloudOn()) return cloudReadAlong(text, opts);
     return browserReadAlong(text, opts, starts);
   };
-
-  function cloudReadAlong(text, opts) {
-    var words = text.split(/\s+/).filter(Boolean);
-    var stopped = false, raf = 0;
-    S.stopSaying();
-    var token = playToken;
-    var handle = { stop: function () { stopped = true; cancelAnimationFrame(raf); S.stopSaying(); } };
-
-    cloudAudio(text, S.P.settings.voice || 'woman').then(function (url) {
-      if (stopped || token !== playToken) return;
-      var a = new Audio(url);
-      a.playbackRate = S.clamp(S.P.settings.rate / 0.95, 0.6, 1.5);
-      cloud.audio = a;
-      var weights = words.map(function (w) { return w.length + 2 + (/[.!?]$/.test(w) ? 5 : /[,;:]$/.test(w) ? 2 : 0); });
-      var total = weights.reduce(function (x, y) { return x + y; }, 0);
-      var cum = [], acc = 0;
-      weights.forEach(function (w) { cum.push(acc / total); acc += w; });
-      var last = -1;
-      function tick() {
-        if (stopped || !a.duration) { if (!stopped) raf = requestAnimationFrame(tick); return; }
-        var f = a.currentTime / a.duration, i = 0;
-        while (i + 1 < cum.length && cum[i + 1] <= f) i++;
-        if (i !== last) { last = i; if (opts.onWord) opts.onWord(i); }
-        if (!a.ended) raf = requestAnimationFrame(tick);
-      }
-      a.onended = function () { cancelAnimationFrame(raf); if (!stopped && opts.onEnd) opts.onEnd(true); };
-      a.play().then(tick).catch(function () { if (opts.onEnd) opts.onEnd(false); });
-    }).catch(function () {
-      if (stopped) return;
-      var starts = [], re = /\S+/g, m;
-      while ((m = re.exec(text)) !== null) starts.push(m.index);
-      var h = browserReadAlong(text, opts, starts);
-      handle.stop = function () { stopped = true; if (h) h.stop(); };
-    });
-    return handle;
-  }
 
   function browserReadAlong(text, opts, starts) {
     if (!window.speechSynthesis) { if (opts.onEnd) opts.onEnd(false); return null; }

@@ -14,12 +14,11 @@ a reviewer will ask.
 | 1b | **Llama 3.3 70B** (same model, same Worker route) | Writes the **three specific questions for each picture story** from the facts known to be true of that picture; the answer goes into a sentence frame ("The cat is {orange}."). Output is validated; a hand-written set is used when the model is off or the answer is malformed | Worker `POST /` | `js/questions.js` |
 | 2 | **Llama 4 Scout** (vision, Groq) | Looks at a candidate photograph and says whether it shows this meaning of the word **and** is fine for a 7-year-old | Worker `POST /judge-image` | `_server/spark-proxy-worker.js`, `js/pictures.js` |
 | 3 | **Whisper large-v3** (Groq) | Second, accurate listen after reading: what the child actually said, with a time for every word | Worker `POST /transcribe` | `js/listen.js` |
-| 4 | **gpt-4o-mini-tts** (OpenAI) | Expressive voice. Steered with `instructions` (warm / calm / lively / storyteller). Single words and word-parts use a separate "say only this, clearly" instruction | Worker `POST /tts` | `js/speech.js` |
-| 5 | Browser **Web Speech API** (recognition + synthesis) | Live word-by-word following while reading; fallback voices (Edge neural voices preferred) | The browser | `js/speech.js`, `js/align.js` |
-| 6 | **LanguageTool** | Spelling and grammar check for writing | Public API, from the browser | `js/spell.js` |
-| 7 | **ARASAAC**, **Wikipedia**, bundled drawings | Picture sources, in that safety order (see 3.1) | Browser | `js/pictures.js` |
-| 8 | **Voiceprint** (our own DSP: MFCC + LPC formants) | "Is it still the same reader?" and "is this a child or an adult?" | Browser, no audio leaves the device | `js/voiceprint.js`, `js/speaker.js` |
-| 9 | **Pause classifier** (our own, prosody + phrasing + the child's own rhythm) | Natural pause versus difficulty | Browser | `js/analysis.js` |
+| 4 | Browser **Web Speech API** (recognition + synthesis) | Live word-by-word following while reading; **all** of Spark's voices (free; Edge's neural voices preferred) | The browser | `js/speech.js`, `js/align.js` |
+| 5 | **LanguageTool** | Spelling and grammar check for writing | Public API, from the browser | `js/spell.js` |
+| 6 | **ARASAAC**, **Wikipedia**, bundled drawings | Picture sources, in that safety order (see 3.1) | Browser | `js/pictures.js` |
+| 7 | **Voiceprint** (our own DSP: MFCC + LPC formants) | "Is it still the same reader?" and "is this a child or an adult?" | Browser, no audio leaves the device | `js/voiceprint.js`, `js/speaker.js` |
+| 8 | **Pause classifier** (our own, prosody + phrasing + the child's own rhythm) | Natural pause versus difficulty | Browser | `js/analysis.js` |
 
 Keys live only in the Worker as secrets. The browser never holds one.
 
@@ -60,17 +59,14 @@ Old cached pictures were chosen by the bare word; the cache key was bumped (`v4`
 Limit: this needs the Worker redeployed (new `/judge-image` route) and `GROQ_API_KEY` set. Until then only layers 1
 and 2 apply and no photographs are shown. Pictograms are not photographs but can still be abstract.
 
-### 2.4 Monotone voice, and voice variety
+### 2.4 The voice
 
-Cause: the old instruction was one flat line for every voice. Now each character has a delivery style sent to the
-voice model (intonation rising on questions, falling on statements, slowing for tricky words, a breath at commas,
-dialogue given its own feeling). There are **six** characters instead of four (added Nora, a calm storyteller, and
-Max, a big friendly storyteller), each on a different underlying voice. When the Worker voice is off, the browser's
-voices are used and Edge's neural voices are chosen first; those cannot be steered.
+Spark uses the browser's own voices, so it is free and needs no key. Edge's neural voices (Ava, Andrew, Ana and others)
+are chosen first; the old Windows desktop voices only if nothing better exists. There are **six** characters, each
+asking for a different kind of voice by name (added: Nora, a calm storyteller, and Max, a big friendly storyteller).
 
-Honest limit: no hosted voice is a real child. OpenAI's voices are adult voices; "Ana" and "Ravi" are bright adult
-voices with a lively style. A genuine child-sounding voice needs a different provider (ElevenLabs has them, with
-licensing and paid-tier terms to check). The change would be confined to the Worker `/tts` route.
+Honest limit: browser voices cannot be steered for emotion, so all six sound fairly similar in tone, and none is a real
+child. A hosted expressive voice would fix that, but every good one costs money, so it was left out on purpose.
 
 ### 2.5 Is it a child? Is it the same person? (the voice check)
 
@@ -138,10 +134,10 @@ app now collects (pause + type + whether the child then continued) are exactly t
 
 ## 4. What to do for better models (in order)
 
-1. Redeploy the Worker (new `/judge-image` route and expressive TTS). Set `GROQ_API_KEY` and `OPENAI_API_KEY`.
+1. Redeploy the Worker (new `/judge-image` route). Set `GROQ_API_KEY`.
 2. Real recordings: run the voice check on 5-10 children and 5 adults reading the same paragraph, then re-tune the
    five thresholds at the top of `js/speaker.js`.
-3. If the voices still feel flat: try ElevenLabs (child voices, finer emotion control) behind `/tts`.
+3. If the voices still feel flat: use Edge on every device. A hosted voice is the only real fix, and all good ones cost money.
 4. If the voice check is not accurate enough on real data: switch the MFCC part to a WavLM speaker-embedding model
    through Transformers.js.
 5. If sense or pictures are still wrong on some words: raise the text model (a larger model on the same Worker) and
