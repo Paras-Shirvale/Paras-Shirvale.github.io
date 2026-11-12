@@ -124,7 +124,7 @@
       text: 'I typed the word "bed" and pressed Picture. You can type a word you are stuck on, or tap it in the story. Picture shows you what it is.' },
     { sel: '.help-box', act: function () { return useHelp('split', 'basket'); }, title: 'Hear it, Say it, Split it',
       text: 'Now I pressed Split it: the word breaks into chunks. Hear it says the word. Say it: you say the word and Spark listens. Use whichever helps you.' },
-    { sel: '#prose p:first-child .w:nth-of-type(4)', act: pointAtWord, title: 'Point at a word',
+    { sel: '#prose p:first-child .w:nth-of-type(4)', act: openStory, after: pointAtWord, title: 'Point at a word',
       text: 'I pointed at a word. Move your mouse over any word in the story (or touch it) to see a bigger picture and how it breaks up. Move away and it goes.' },
     { sel: '.tab[data-go="write"]', go: 'write', act: tidy, title: 'Let\'s write',
       text: 'I opened Let\'s write. There are two ways to write. Tap one to start.' },
@@ -229,6 +229,9 @@
       var t = target(st);
       if (t) t.scrollIntoView({ block: 'center', behavior: 'instant' in document.body.style ? 'instant' : 'auto' });
       setTimeout(place, 60);
+      /* something that must happen AFTER the page has scrolled to the target
+         (pointing at a word: scrolling hides a hover tip) */
+      if (st.after) setTimeout(function () { if (mine === shown) { try { st.after(); } catch (e) {} } }, 250);
     });
   }
 

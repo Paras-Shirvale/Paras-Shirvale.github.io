@@ -366,7 +366,7 @@
       var tip = S.$('#hovertip');
       if (!tip || tip.style.display !== 'flex') { hideTip(); return; }   /* nothing showing yet: just cancel */
       clearTimeout(leaveTimer);
-      leaveTimer = setTimeout(hideTip, 450);
+      leaveTimer = setTimeout(hideTip, 1000);
     }
 
     document.addEventListener('pointerover', function (e) {
@@ -401,8 +401,7 @@
         var bits = [];
         /* There is ALWAYS a visual. A picture where one exists or
            is on its way; otherwise the coloured shape of the word. */
-        var lookable = !picture && !S.Pictures.SKIP[S.norm(shown)] &&
-                       S.P.settings.pictures !== 'off';
+        var lookable = !picture && S.P.settings.pictures !== 'off';
         bits.push({ cue: 'picture',
           html: '<span class="tip-pic" data-tippic>' +
                 (picture || (lookable ? '<span class="pic-wait sm"></span>' : '')) +

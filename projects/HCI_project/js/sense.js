@@ -103,6 +103,73 @@
     return inflight[k];
   };
 
+  /**
+   * The sense of several words of one sentence in ONE model call (instead of
+   * one call per word), kept for when they are hovered.
+   */
+  S.senseBatch = async function (sentence, words) {
+    if (!sentence || !S.AI || !S.AI.ready) return;
+    var todo = [];
+    (words || []).forEach(function (w) {
+      var n = S.norm(w);
+      if (n.length >= 3 && todo.indexOf(n) < 0 && !cache[S.senseKey(n, sentence)]) todo.push(n);
+    });
+    todo = todo.slice(0, 14);
+    if (!todo.length) return;
+    try {
+      var out = await S.AI.askJSON(
+        'A child with dyslexia is reading this sentence:\n"' + String(sentence).slice(0, 240) + '"\n' +
+        'For EACH of these words, as used in that sentence: ' + todo.join(', ') + '\n' +
+        'Reply with only a JSON object whose keys are those words and whose values are ' +
+        '{"meaning":string,"say":string,"query":string,"draw":boolean}.\n' +
+        '- "meaning": what the word means HERE, under 12 words, simple.\n' +
+        '- "say": the word spelled so a speech engine says it correctly in THIS sentence (past-tense "read" is "red"); otherwise the word itself.\n' +
+        '- "query": 1 to 3 plain words to search a picture library for THIS meaning, naming the thing it belongs to, ' +
+        'using the base form ("dig" for "digs").\n' +
+        '- "draw": true ONLY if one clear, harmless picture of an object, animal, place or action would show this ' +
+        'meaning to a 7-year-old; false for feelings, ideas, grammar words, and anything whose natural picture would show ' +
+        'a person\'s body or bare skin.',
+        { maxTokens: 900, temperature: 0 });
+      todo.forEach(function (w) {
+        var c = clean(out && out[w], w);
+        if (c) cache[S.senseKey(w, sentence)] = c;
+      });
+      keep();
+    } catch (e) { /* the per-word call will still work when a word is hovered */ }
+  };
+
+  /**
+   * Get the pictures for a passage ready in the background, so hovering a
+   * word shows its picture straight away. One model call per sentence, then
+   * the pictures themselves a few at a time. A new passage cancels the old.
+   */
+  var warmToken = 0;
+  S.warmPassage = function (sentences) {
+    if (S.P.settings.pictures === 'off') return;
+    var mine = ++warmToken;
+    (async function () {
+      for (var i = 0; i < (sentences || []).length && mine === warmToken; i++) {
+        var sent = sentences[i];
+        var words = sent.split(/\s+/).map(S.norm).filter(function (w) { return w.length >= 2; });
+        var content = words.filter(function (w) { return !S.Pictures.SKIP[w]; });
+        await S.senseBatch(sent, content);
+        var todo = words.filter(function (w, k) { return words.indexOf(w) === k && !S.Pictures.instant(w, 96, sent); });
+        var running = 0;
+        await new Promise(function (done) {
+          var idx = 0;
+          function pump() {
+            if (mine !== warmToken || (idx >= todo.length && running === 0)) { done(); return; }
+            while (running < 3 && idx < todo.length) {
+              running++;
+              S.Pictures.lookup(todo[idx++], { sentence: sent }).catch(function () {}).then(function () { running--; pump(); });
+            }
+          }
+          pump();
+        });
+      }
+    })();
+  };
+
   /** What was already worked out (no waiting), or null. */
   S.senseCached = function (word, sentence) {
     return (sentence && cache[S.senseKey(word, sentence)]) || null;

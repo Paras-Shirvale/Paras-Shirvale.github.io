@@ -88,7 +88,7 @@
     renderProse();
     /* fetch pictures for the passage in the background, so every
        word has its visual ready the moment it is hovered or tapped */
-    S.Pictures.warm(R.tokens.map(function (t) { return t.clean; }));
+    S.warmPassage(R.sentences);
     /* ask the AI helper for how each longer word breaks and sounds,
        so "Parts" says them correctly the first time */
     S.prepareParts(R.tokens.map(function (t) { return t.clean; }));

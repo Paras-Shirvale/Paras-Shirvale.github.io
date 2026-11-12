@@ -49,7 +49,7 @@
         save: function () { data.name = data.name.trim().slice(0, 20); } },
       { say: function () { return 'Nice to meet you, ' + data.name + '! How old are you?'; },
         body: function () {
-          return '<div class="age-grid">' + [7, 8, 9, 10, 11, 12, 13, 14].map(function (n) {
+          return '<div class="age-grid">' + [9, 10, 11, 12, 13, 14].map(function (n) {
             return '<button class="age-btn" data-age="' + n + '"' + (data.age === n ? ' data-on="1"' : '') + '>' + n + '</button>';
           }).join('') + '</div>';
         },

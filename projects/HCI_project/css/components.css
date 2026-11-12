@@ -326,7 +326,7 @@ canvas{display:block;width:100%;height:auto}
 .meter i{display:block;height:100%;width:0;background:var(--amber);border-radius:999px;transition:width .5s ease}
 
 /* age picker on the setup sheet */
-.age-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.age-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
 .age-btn{
   padding:12px 0;border-radius:var(--r);
   border:1px solid var(--line);background:var(--surface);

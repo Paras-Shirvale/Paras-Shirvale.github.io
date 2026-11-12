@@ -407,13 +407,23 @@
   }
 
   /* ARASAAC — pictograms drawn for communication and learning support. */
-  async function fromArasaac(word) {
+  /* exact = only a pictogram whose own keyword IS this word. Used for little
+     words ("the", "and", "his") and for the stem of an inflected word, where
+     "best match" would otherwise be a guess. */
+  async function fromArasaac(word, exact) {
     var r = await fetch('https://api.arasaac.org/v1/pictograms/en/bestsearch/' +
                         encodeURIComponent(word), { mode: 'cors' });
     if (!r.ok) return null;
     var list = await r.json();
     if (!Array.isArray(list) || !list.length) return null;
-    var id = list[0]._id || list[0].id;
+    var pick = list[0];
+    if (exact) {
+      pick = list.filter(function (x) {
+        return (x.keywords || []).some(function (k) { return String(k.keyword || '').toLowerCase() === word; });
+      })[0];
+    }
+    if (!pick) return null;
+    var id = pick._id || pick.id;
     if (!id) return null;
     return {
       url: 'https://static.arasaac.org/pictograms/' + id + '/' + id + '_300.png',
@@ -509,11 +519,29 @@
    *
    * Each word (in its sentence) is fetched once per browser.
    */
+  /* "digs" has no picture but "dig" does: the likely bases of an inflected word */
+  function stems(w) {
+    var c = [];
+    if (/ies$/.test(w)) c.push(w.slice(0, -3) + 'y');
+    if (/(sses|xes|ches|shes)$/.test(w)) c.push(w.slice(0, -2));
+    if (/s$/.test(w) && !/ss$/.test(w)) c.push(w.slice(0, -1));
+    if (/ed$/.test(w)) { c.push(w.slice(0, -2)); c.push(w.slice(0, -1)); if (/(.)\1ed$/.test(w)) c.push(w.slice(0, -3)); }
+    if (/ing$/.test(w)) { var b = w.slice(0, -3); c.push(b); c.push(b + 'e'); if (/(.)\1$/.test(b)) c.push(b.slice(0, -1)); }
+    return c.filter(function (x, i) { return x.length >= 3 && x !== w && c.indexOf(x) === i; });
+  }
+
   P.lookup = async function (word, ctx) {
     var w = S.norm(word);
     if (!w || w.length < 2) return null;
     if (S.P.settings.pictures === 'off') return null;
-    if (P.SKIP[w]) return null;
+
+    /* Little words ("the", "and", "his"): a pictogram only when ARASAAC has
+       one made for exactly this word. No guessing, no photographs. */
+    if (P.SKIP[w]) {
+      if (Object.prototype.hasOwnProperty.call(cache, w)) return cache[w] || null;
+      try { var lh = await fromArasaac(w, true); remember(w, lh || null); return lh || null; }
+      catch (e) { return null; }
+    }
 
     var sentence = ctx && ctx.sentence;
     var sense = null;
@@ -550,6 +578,18 @@
         return hit;
       } catch (e) {
         /* offline or blocked — try the next source */
+      }
+    }
+
+    /* an inflected word with no picture of its own: try its base ("digs" -> "dig") */
+    if (!sense) {
+      var cands = stems(w);
+      for (var k = 0; k < cands.length; k++) {
+        try {
+          var sh = await fromArasaac(cands[k], true);
+          reachedOne = true;
+          if (sh) { remember(ck, sh); return sh; }
+        } catch (e) { /* offline: leave it */ }
       }
     }
 
@@ -709,7 +749,7 @@
     if (svg) return svg;
     /* with a sentence and a model, only a result for THIS sense counts;
        the bare-word cache is where wrong-meaning pictures came from */
-    if (sentence && !sense && S.AI && S.AI.ready) return '';
+    if (sentence && !sense && S.AI && S.AI.ready && !P.SKIP[w]) return '';
     var hit = cache[sense ? S.senseKey(w, sentence) : w];
     if (hit && hit.url) {
       return '<img class="pic" src="' + hit.url + '" alt="' + S.esc(word) +
