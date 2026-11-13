@@ -50,7 +50,8 @@
   var CUE_LABEL = {
     picture: 'Picture (seeing what the word is)', audio: 'Hearing it (Spark says the word)',
     speak: 'Saying it (the child says it)', split: 'Splitting the word into chunks',
-    visual: 'Visual clue (writing help)', choice: 'Choice (pick the right one)'
+    visual: 'Visual clue (writing help)', choice: 'Choice (pick the right one)',
+    popup: 'Cue shown automatically after a pause'
   };
 
   /* ── small helpers ──────────────────────────────────── */

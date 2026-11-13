@@ -210,6 +210,7 @@
   };
 
   S.stopReading = function () {
+    endStallCue(false);
     if (mic) { mic.stop(); mic = null; }
     if (S.voiceCheck) S.voiceCheck.stop();
     clearTimeout(stallTimer);
@@ -260,6 +261,13 @@
           if (tok && !tok.el.classList.contains('skipped')) {
             tok.el.classList.remove('at');
             tok.el.classList.add('done');
+          }
+          /* the word the cue was for has been read: the cue goes. (A word said
+             wrongly does not move the reader on, so the cue stays until the
+             word is said right.) It counts as having helped unless the word
+             was skipped. */
+          if (R.cue && R.cue.idx === j) {
+            endStallCue(!(tok && tok.el.classList.contains('skipped')));
           }
           /* said wrongly, then said right within 2 seconds: the child
              caught it themselves */
@@ -477,11 +485,56 @@
     /* needed help here — step in a little sooner next time */
     S.P.patience = S.clamp(S.P.patience - 0.25, 2.5, 9);
 
-    /* Deliberately no pop-up here. A card appearing in the middle of a
-       sentence is a distraction, so a pause is only recorded for the
-       teacher. Help is there when the child asks for it. */
+    /* A real struggle: a cue appears beside the word (its picture, how it
+       breaks up, and a speaker). It goes by itself as soon as the child
+       reads the word. */
+    showStallCue(R.idx);
     S.save();
   }
+
+  /* ── the cue after a pause ───────────────────────────────
+     Appears only for a struggle pause (never a normal one), beside the word
+     the child is stuck on. It goes as soon as the word is read, so the child
+     can carry on. It is logged as one help row, marked helped if the word was
+     then read without a slip. */
+  function stallEl() { return S.$('#stallcue'); }
+
+  function showStallCue(idx) {
+    var token = R.tokens[idx], tip = stallEl();
+    if (!token || !tip) return;
+    endStallCue(false);
+    var mine = { idx: idx, word: token.clean, closed: false };
+    var shown = S.Pictures && S.fillWordCue(tip, token.el, function () { return R && R.cue === mine; },
+                                            'Need a hand?', true);
+    if (!shown) return;
+    tip.insertAdjacentHTML('beforeend', '<button class="tip-close" data-closecue aria-label="Close">&times;</button>');
+    mine.h = S.DB.help({ rung: 'cue', cue_type: 'popup', word: token.clean, prefer: R.src.world });
+    R.cue = mine;
+  }
+
+  /* read = true when the word was then read correctly (the cue worked) */
+  function endStallCue(read) {
+    var tip = stallEl();
+    if (tip) { tip.style.display = 'none'; tip.innerHTML = ''; }
+    if (R && R.cue) {
+      var c = R.cue; R.cue = null;
+      if (c.h) { if (read) c.h.resolve(); else c.h.close(); }
+    }
+  }
+
+  /* keep the cue beside its word if the page moves */
+  function keepCueInPlace() {
+    var tip = stallEl();
+    if (R && R.cue && tip && tip.style.display === 'flex' && R.tokens[R.cue.idx]) S.placeCue(tip, R.tokens[R.cue.idx].el, true);
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('[data-closecue]')) endStallCue(false);
+  });
+  window.addEventListener('scroll', keepCueInPlace, true);
+  window.addEventListener('resize', keepCueInPlace);
+
+  /* test hook: show the pause cue on the current word */
+  S._showStallCue = function () { if (R) showStallCue(R.idx); };
 
   /* ── help the child asks for ────────────────────────────
      Every use of "Stuck on a word?" is a row for the teacher, with how
@@ -561,6 +614,7 @@
   /* ── finishing ──────────────────────────────────────── */
   S.finishReading = function () {
     if (!R || R.finished) return;
+    endStallCue(false);
     R.finished = true;
     S.stopReading();
 
@@ -824,6 +878,12 @@
      microphone, which no automated test has. */
   S._armStall = armStall;
   S._stillTrying = stillTrying;
+  /* test hook: behave as if the child had been silent for `ago` ms */
+  S._stallNow = function (ago) {
+    if (!R) return;
+    lastAdvance = Date.now() - ago; R.listening = true; R.lastVoiceAt = 0;
+    onStall();
+  };
   S._readerFeed = function (results) { if (R && !R.aligner) { R.aligner = S.makeAligner(R.tokens); } onResults(results); };
 
   /* ── is this still the same reader? ─────────────────────

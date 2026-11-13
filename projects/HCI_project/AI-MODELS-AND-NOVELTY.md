@@ -8,19 +8,35 @@ a reviewer will ask.
 
 ## 1. Every model, and where it is used
 
-| # | Model / method | Purpose | Where it runs | Code |
-|---|---|---|---|---|
-| 1 | **Llama 3.3 70B** (Groq; fallbacks `gpt-oss-20b`, `llama-3.1-8b-instant`) | Word meaning **in its sentence**; how to pronounce it in that sentence (tense); what to search a picture for; syllable splits with a "say" respelling; comprehension questions; spelling explanations; Ask Spark chat | Cloudflare Worker `POST /` | `js/sense.js`, `js/lexicon.js`, `js/exercises.js`, `js/ai.js` |
-| 1b | **Llama 3.3 70B** (same model, same Worker route) | Writes the **three specific questions for each picture story** from the facts known to be true of that picture; the answer goes into a sentence frame ("The cat is {orange}."). Output is validated; a hand-written set is used when the model is off or the answer is malformed | Worker `POST /` | `js/questions.js` |
-| 2 | **Llama 4 Scout** (vision, Groq) | Looks at a candidate photograph and says whether it shows this meaning of the word **and** is fine for a 7-year-old | Worker `POST /judge-image` | `_server/spark-proxy-worker.js`, `js/pictures.js` |
-| 3 | **Whisper large-v3** (Groq) | Second, accurate listen after reading: what the child actually said, with a time for every word | Worker `POST /transcribe` | `js/listen.js` |
-| 4 | Browser **Web Speech API** (recognition + synthesis) | Live word-by-word following while reading; **all** of Spark's voices (free; Edge's neural voices preferred) | The browser | `js/speech.js`, `js/align.js` |
-| 5 | **LanguageTool** | Spelling and grammar check for writing | Public API, from the browser | `js/spell.js` |
-| 6 | **ARASAAC**, **Wikipedia**, bundled drawings | Picture sources, in that safety order (see 3.1) | Browser | `js/pictures.js` |
-| 7 | **Voiceprint** (our own DSP: MFCC + LPC formants) | "Is it still the same reader?" and "is this a child or an adult?" | Browser, no audio leaves the device | `js/voiceprint.js`, `js/speaker.js` |
-| 8 | **Pause classifier** (our own, prosody + phrasing + the child's own rhythm) | Natural pause versus difficulty | Browser | `js/analysis.js` |
+**AI models (called through our own server, so no key is ever in the website)**
+- **Llama 3.3 70B** (Groq) - understands words and writes text. Used for:
+  - the meaning of a word in its sentence, and how to say it there
+  - what picture to search for
+  - how to split a word into sayable chunks
+  - the 3 questions for each picture story
+  - marking the child's written answers
+  - questions after a story
+  - Backup models if it is down: gpt-oss-20b, then Llama 3.1 8B
+- **Llama 4 Scout** (Groq, vision) - checks each web photo: right meaning, safe for a child. No photo is shown if it can't check.
+- **Whisper large-v3** (Groq) - listens again after reading. Gives the words said and the time of every word.
 
-Keys live only in the Worker as secrets. The browser never holds one.
+**Built into the browser (free, nothing sent to us)**
+- **Web Speech API** - hears the child live and lights up each word. It is also the voice for everything Spark says.
+
+**Public service**
+- **LanguageTool** - checks spelling in the child's writing.
+
+**Picture sources (not models)**
+- Our drawings first, then ARASAAC pictograms, then Wikipedia photos (only if Llama 4 Scout approves).
+
+**Our own code (not AI)**
+- **Letter-confusion analyser** - finds which letters were swapped.
+- **Pause classifier** - normal pause or struggle.
+- **Voiceprint** - is the same person still reading? Child or adult? Runs on the device, no audio leaves it.
+- **Answer matcher** - first check for written answers, before Llama is asked.
+- **Help ranking** - which kind of help works best for this child.
+
+Keys live only in the server as secrets. The browser never holds one.
 
 ## 2. Problems you reported, and how each is handled
 

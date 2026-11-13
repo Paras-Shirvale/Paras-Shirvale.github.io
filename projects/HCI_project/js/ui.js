@@ -348,6 +348,78 @@
     var hoverWord = null;
     var leaveTimer = null;
 
+    /* Put a word's cue into a floating box: a picture where there is one,
+       the word split into its chunks, and a speaker to hear it. Used by the
+       hover tip and by the cue that appears after a struggle pause.
+       still() says whether the box is still about this word, so a late
+       picture is never dropped into the wrong place. Returns false for a
+       word too short to help with. */
+    S.fillWordCue = function (tip, w, still, label, below) {
+      var shown = w.textContent.replace(/[^A-Za-z'-]/g, '');
+      if (shown.length < 2) return false;
+      var parts = S.syllables(shown);
+      /* only what can be drawn immediately: waiting on a fetch inside a
+         tip reads as the app being broken */
+      var sentence = S.sentenceOf(w);
+      var picture = S.Pictures.instant(shown, 96, sentence);
+      var phon = S.phonetic(shown);
+
+      var bits = [];
+      /* There is ALWAYS a visual: a picture where one exists or is on its
+         way; otherwise the coloured shape of the word. */
+      var lookable = !picture && S.P.settings.pictures !== 'off';
+      bits.push({ cue: 'picture',
+        html: '<span class="tip-pic" data-tippic>' +
+              (picture || (lookable ? '<span class="pic-wait sm"></span>' : '')) + '</span>' });
+      bits.push({ cue: 'shape',
+        html: '<span class="tip-shape">' + S.Pictures.wordVisual(shown, { small: true }) + '</span>' });
+      if (parts.length === 1 && phon) bits.push({ cue: 'parts',
+        html: '<span class="tip-parts">' + S.esc(phon) + '</span>' });
+      bits.push({ cue: 'sound',
+        html: '<button class="tip-say" data-hearword="' + S.esc(shown) + '" data-sent="' + S.esc(sentence) + '" ' +
+              'aria-label="Hear it">' + S.Pictures.icon('speaker', 17) + '</button>' });
+
+      /* Whichever kind of help has been working for this child goes first. */
+      var fav = S.favourite();
+      bits.sort(function (a, b) { return (b.cue === fav ? 1 : 0) - (a.cue === fav ? 1 : 0); });
+
+      tip.innerHTML = (label ? '<span class="tip-label">' + S.esc(label) + '</span>' : '') +
+                      bits.map(function (x) { return x.html; }).join('');
+      tip.style.display = 'flex';
+
+      var slot = tip.querySelector('[data-tippic]');
+      if (!picture && !lookable && slot) slot.remove();
+      if (lookable) {
+        S.Pictures.lookup(shown, { sentence: sentence }).then(function (hit) {
+          var slotNow = tip.querySelector('[data-tippic]');
+          if (!still() || !slotNow) return;
+          if (hit && hit.url) {
+            /* exactly what the lookup found (already checked for this word's
+               meaning and for child-safety) */
+            slotNow.innerHTML = '<img class="pic" src="' + S.esc(hit.url) + '" alt="' + S.esc(shown) +
+                                '" width="96" height="96">';
+            slotNow.querySelector('img').onerror = function () { slotNow.remove(); };
+          } else {
+            slotNow.remove();
+          }
+          S.placeCue(tip, w, below);
+        });
+      }
+      S.placeCue(tip, w, below);
+      return true;
+    };
+
+    /* below = true puts it under the word when there is room (the pause cue,
+       so it does not cover the buttons above the story) */
+    S.placeCue = function (tip, w, below) {
+      var b = w.getBoundingClientRect();
+      tip.style.left = S.clamp(b.left + b.width / 2 - tip.offsetWidth / 2,
+                               8, window.innerWidth - tip.offsetWidth - 8) + 'px';
+      var above = b.top - tip.offsetHeight - 9, under = b.bottom + 9;
+      var fitsUnder = under + tip.offsetHeight < window.innerHeight - 8;
+      tip.style.top = (below ? (fitsUnder ? under : above) : (above > 8 ? above : under)) + 'px';
+    };
+
     function hideTip() {
       clearTimeout(hoverTimer);
       clearTimeout(leaveTimer);
@@ -386,72 +458,7 @@
         var shown = w.textContent.replace(/[^A-Za-z'-]/g, '');
         if (shown.length < 2) return;
 
-        var parts = S.syllables(shown);
-        /* only what can be drawn immediately — waiting on a fetch
-           inside a hover reads as the app being broken */
-        var sentence = S.sentenceOf(w);
-        var picture = S.Pictures.instant(shown, 96, sentence);
-        var phon = S.phonetic(shown);
-
-        /* The tip always has something in it. Bailing out on short
-           words — the old behaviour — meant hovering "cat" did
-           nothing at all, which a child reads as the feature being
-           broken rather than as the word being easy. Every word can
-           at least be heard. */
-        var bits = [];
-        /* There is ALWAYS a visual. A picture where one exists or
-           is on its way; otherwise the coloured shape of the word. */
-        var lookable = !picture && S.P.settings.pictures !== 'off';
-        bits.push({ cue: 'picture',
-          html: '<span class="tip-pic" data-tippic>' +
-                (picture || (lookable ? '<span class="pic-wait sm"></span>' : '')) +
-                '</span>' });
-        bits.push({ cue: 'shape',
-          html: '<span class="tip-shape">' + S.Pictures.wordVisual(shown, { small: true }) + '</span>' });
-        if (parts.length === 1 && phon) bits.push({ cue: 'parts',
-          html: '<span class="tip-parts">' + S.esc(phon) + '</span>' });
-        bits.push({ cue: 'sound',
-          html: '<button class="tip-say" data-hearword="' + S.esc(shown) + '" data-sent="' + S.esc(sentence) + '" ' +
-                'aria-label="Hear it">' + S.Pictures.icon('speaker', 17) + '</button>' });
-
-        /* Whichever kind of help has been working for this child goes
-           first, where the eye lands. This is the adaptive part, and
-           it stays silent: no badge, no "recommended", just order. */
-        var fav = S.favourite();
-        bits.sort(function (a, b) {
-          return (b.cue === fav ? 1 : 0) - (a.cue === fav ? 1 : 0);
-        });
-
-        var tip = S.$('#hovertip');
-        tip.innerHTML = bits.map(function (x) { return x.html; }).join('');
-        tip.style.display = 'flex';
-
-        /* Fetch the picture now and drop it in if the pointer is
-           still on the same word when it arrives. */
-        var slot = tip.querySelector('[data-tippic]');
-        if (!picture && !lookable && slot) slot.remove();
-        if (lookable) {
-          S.Pictures.lookup(shown, { sentence: sentence }).then(function (hit) {
-            var slotNow = tip.querySelector('[data-tippic]');
-            if (hoverWord !== w || !slotNow) return;
-            if (hit && hit.url) {
-              /* show exactly what the lookup found (it is already checked
-                 for this word's meaning and for child-safety) */
-              slotNow.innerHTML = '<img class="pic" src="' + S.esc(hit.url) + '" alt="' + S.esc(shown) +
-                                  '" width="96" height="96">';
-              var im = slotNow.querySelector('img');
-              im.onerror = function () { slotNow.remove(); };
-            } else {
-              slotNow.remove();
-            }
-          });
-        }
-
-        var b = w.getBoundingClientRect();
-        tip.style.left = S.clamp(b.left + b.width / 2 - tip.offsetWidth / 2,
-                                 8, window.innerWidth - tip.offsetWidth - 8) + 'px';
-        var above = b.top - tip.offsetHeight - 9;
-        tip.style.top = (above > 8 ? above : b.bottom + 9) + 'px';
+        S.fillWordCue(S.$('#hovertip'), w, function () { return hoverWord === w; });
       }, 260);
     });
 

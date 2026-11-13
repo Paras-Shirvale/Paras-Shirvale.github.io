@@ -485,3 +485,20 @@ canvas{display:block;width:100%;height:auto}
 
 #hovertip .tip-pic .pic{width:96px;height:96px;border-radius:10px}
 #hovertip{align-items:center;gap:10px}
+
+/* the cue that appears after a struggle pause: like the hover tip, but it
+   stays until the word is read, and it can be pressed */
+#stallcue{
+  position:fixed;z-index:64;display:none;align-items:center;gap:10px;
+  background:var(--ink);color:var(--bg);
+  padding:9px 12px;border-radius:14px;border:2px solid var(--amber);
+  pointer-events:auto;white-space:nowrap;box-shadow:var(--shadow);
+}
+#stallcue .tip-pic{display:flex;line-height:0}
+#stallcue .tip-pic .pic{width:96px;height:96px;border-radius:10px;background:#fff}
+#stallcue .tip-pic:empty{display:none}
+#stallcue .tip-parts{font-family:var(--font-read);font-size:14px;font-weight:600}
+#stallcue .tip-shape .wv{background:var(--surface);border-radius:8px;padding:3px 7px}
+#stallcue .tip-label{font-size:12px;font-weight:800;color:var(--amber);align-self:flex-start;max-width:90px;white-space:normal;line-height:1.25}
+#stallcue .tip-close{border:0;background:transparent;color:inherit;font-size:20px;line-height:1;cursor:pointer;align-self:flex-start;padding:0 2px;opacity:.7}
+#stallcue .tip-close:hover{opacity:1}

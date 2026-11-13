@@ -72,6 +72,11 @@ Everybody pauses. Treating all pauses as trouble produces nonsense, so `Analysis
 The verdict has a type and a reason. Only difficulty pauses feed the child's profile and the teacher's table; natural
 ones are counted separately (so the teacher can see "12 pauses, 9 were ordinary phrasing").
 
+**What happens on a struggle.** Only a struggle pause (never a normal one) brings up a **cue beside the stuck word**: its
+picture, how it breaks into chunks, and a speaker to hear it. It goes by itself as soon as the child reads the word, so they can
+carry on. It can also be closed with a small cross. A word said wrongly does not make it go; saying it right does. Each cue is
+logged as one help row ("cue shown automatically after a pause") and marked helped when the word was then read.
+
 After reading, Whisper's exact word times go through the same classifier.
 
 **Honest note:** this is a transparent rule-and-prosody classifier, not a trained model. There is no off-the-shelf model
@@ -136,9 +141,8 @@ learner".
 | The teacher's "Recommended" line | Rules over this child's data (explore every world, then the pair with the highest rate, noting the trend) | `teacher.js` `recommend` |
 
 What does **not** adapt: the passages are fixed, there is no per-child difficulty engine, and no model is trained per
-child. The earlier "wait longer before offering help" adjustment (`S.P.patience`) now only changes when Spark *checks* for
-a stall, because help no longer pops up on its own; it is a leftover, and the honest answer is that it adapts nothing a
-child can see.
+child. One small adaptation does exist: how long Spark waits before showing the pause cue (`S.P.patience`, 2.5 to 9 s,
+starting at 4.5 s) grows when the child reads smoothly and shrinks after a struggle.
 
 ## 8. Is there live correction? How?
 
@@ -146,9 +150,9 @@ There is live **detection**, not live **correction**, and that is by design.
 
 - Live: the highlight follows the voice, and slips, repeats, skipped words and pauses are detected and logged as they
   happen.
-- Not live: Spark does **not** interrupt to correct, and no card pops up mid-sentence. A child with dyslexia who is
-  interrupted mid-word is the most discouraging moment possible, and a pop-up was distracting. Help is there when the
-  child asks for it (the box, or hovering a word).
+- Help after a struggle: when a pause is classified as a struggle, a cue appears beside the stuck word and goes when the
+  child reads it. Normal pauses never bring it up, and nothing interrupts to correct a mistake. Other help is there when
+  the child asks for it (the box, or hovering a word).
 - After: a Whisper second pass; in writing, spelling is checked when the child asks, and answers are judged on Save.
 
 ## 9. How is a voice change detected? Child or adult?
