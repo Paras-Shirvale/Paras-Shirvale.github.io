@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Spark — teacher and parent dashboard</title>
-<link rel="stylesheet" href="css/teacher.css?v=20261113a">
+<link rel="stylesheet" href="css/teacher.css?v=20261113d">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2323835C'/%3E%3Cpath d='M12 4l1.8 5.2L19 11l-4.4 1.8L12 18l-1.8-5.2L5.2 11l5-1.5z' fill='%23fff'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -150,21 +150,6 @@
     </section>
 
     <div class="t-grid2">
-      <section class="t-card t-wide">
-        <h2>Mix-ups per 100 words, over time</h2>
-        <p class="t-sub">One line per letter pair. Falling lines mean that pair is getting easier. Each point is one chapter (reading and writing together), adjusted for how many words with those letters it contained.</p>
-        <div id="cRate"></div>
-      </section>
-      <section class="t-card">
-        <h2>Catching their own slips</h2>
-        <p class="t-sub">Share of mix-ups fixed within 2 seconds. Rising before errors fall is a sign the skill is becoming automatic.</p>
-        <div id="cSelf"></div>
-      </section>
-      <section class="t-card">
-        <h2>Hesitation on target words</h2>
-        <p class="t-sub">Average time per word: words with each letter pair, against all other words.</p>
-        <div id="cHes"></div>
-      </section>
       <section class="t-card">
         <h2>How much help was needed</h2>
         <p class="t-sub">Cue cards per session, by rung. Fewer, and lower rungs, means more independent.</p>
@@ -174,11 +159,6 @@
         <h2>Which kind of help works</h2>
         <p class="t-sub">How often each kind of cue got the child moving again, and how often they said "Not now".</p>
         <div id="cCue"></div>
-      </section>
-      <section class="t-card">
-        <h2>Reading aloud vs writing</h2>
-        <p class="t-sub">Mix-ups per pair in each mode. More in writing than reading points to spelling memory, not decoding.</p>
-        <div id="cMode"></div>
       </section>
       <section class="t-card">
         <h2>What kind of mistakes</h2>
@@ -199,11 +179,6 @@
         <h2>Practice each week</h2>
         <p class="t-sub">Sessions per week, reading and writing.</p>
         <div id="cWeek"></div>
-      </section>
-      <section class="t-card t-wide">
-        <h2>Mix-ups by chapter</h2>
-        <p class="t-sub">Mix-ups per 100 words in chapter 1, 2 and 3 of each world. Falling across the row is the clearest before-and-after.</p>
-        <div id="cChap"></div>
       </section>
       <section class="t-card">
         <h2>Hardest words</h2>
@@ -228,11 +203,11 @@
 /* Just enough of the app's shared object for the world list below. */
 window.Spark = { norm: function (w) { return String(w == null ? '' : w).toLowerCase().replace(/[^a-z']/g, ''); } };
 </script>
-<script src="js/config.js?v=20261113a"></script>
-<script src="js/xlsx.js?v=20261113a"></script>
-<script src="js/avatars.js?v=20261113a"></script>
-<script src="js/human.js?v=20261113a"></script>
-<script src="js/families.js?v=20261113a"></script>
-<script src="js/teacher.js?v=20261113a"></script>
+<script src="js/config.js?v=20261113d"></script>
+<script src="js/xlsx.js?v=20261113d"></script>
+<script src="js/avatars.js?v=20261113d"></script>
+<script src="js/human.js?v=20261113d"></script>
+<script src="js/families.js?v=20261113d"></script>
+<script src="js/teacher.js?v=20261113d"></script>
 </body>
 </html>

@@ -24,7 +24,11 @@
 .door-read{background:var(--violet-soft)}
 .door-write{background:var(--rose-soft)}
 .door-hw{background:var(--moss-soft)}
-.door-ico{line-height:0;margin-bottom:3px}
+.door-ico{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;line-height:0;margin-bottom:6px;color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.door-read .door-ico{background:var(--violet)}
+.door-write .door-ico{background:var(--rose)}
+.door-prog .door-ico{background:var(--moss)}
+h2 .h-ico{vertical-align:-4px;margin-right:4px;color:var(--violet)}
 .door-ico .pic{width:38px;height:38px}
 .lib-pic{line-height:0}
 .lib-pic .pic{width:40px;height:40px}

@@ -46,9 +46,10 @@ body::before{
   padding:7px 13px;border-radius:999px;
   font-size:14px;font-weight:700;color:var(--ink-2);white-space:nowrap;
 }
-/* The icons are for the phone bar below; on a wide screen the
-   words alone are clearer and the row stays compact. */
-.tab-ico{display:none}
+/* A small picture beside each word: a house for Home, a book for Let's read,
+   a pencil for Let's write, a trophy for Progress. */
+.tab{display:inline-flex;align-items:center;gap:7px}
+.tab-ico{display:inline-flex;line-height:0;flex-shrink:0}
 .tab:hover{background:var(--surface-2);color:var(--ink)}
 .tab[aria-current="page"]{background:var(--violet-soft);color:var(--violet)}
 

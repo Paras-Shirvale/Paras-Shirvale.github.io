@@ -738,30 +738,6 @@
   }
 
   function charts(M, list) {
-    /* 1 · the learning curve */
-    $('#cRate').innerHTML = lineChart({
-      labels: M.unitLabels, unit: ' per 100 words', w: 1120, h: 260, empty: 'Appears after a few chapters have been completed.',
-      series: list.filter(function (x) { return x.points; }).map(function (x) {
-        return { name: x.pair.label, colour: x.pair.colour, vals: x.rate.map(function (r) { return r ? r.y : null; }) };
-      })
-    });
-
-    /* 2 · catching their own slips, per session */
-    var self = M.sessions.map(function (s) {
-      var ev = M.ce.filter(function (e) { return e.session_id === s.session_id; });
-      return ev.length ? 100 * ev.filter(function (e) { return e.self_corrected; }).length / ev.length : null;
-    });
-    $('#cSelf').innerHTML = lineChart({ labels: M.labels, max: 100, unit: '%', fmt: function (v) { return Math.round(v) + '%'; },
-      series: [{ name: 'Fixed within 2 s', colour: '#3FBF9B', vals: self }], empty: 'Appears once there are mix-ups to fix.' });
-
-    /* 3 · hesitation: target words against everything else */
-    var withTime = list.filter(function (x) { return x.avgTarget; });
-    $('#cHes').innerHTML = withTime.length
-      ? groupedBars({ groups: withTime.map(function (x) { return x.pair.label; }), unit: ' s',
-          series: [{ name: 'Words with these letters', colour: '#E2678C', vals: withTime.map(function (x) { return x.avgTarget / 1000; }) },
-                   { name: 'All other words', colour: '#5B9BEA', vals: withTime.map(function () { return M.baseline != null ? M.baseline / 1000 : null; }) }] })
-      : none('Appears after the first reading or writing session.');
-
     /* 4 · help dependency */
     var hs = M.sessions.map(function (s) { return M.he.filter(function (h) { return h.session_id === s.session_id; }); });
     $('#cHelp').innerHTML = stackedBars({ cols: M.labels, empty: 'No cue cards were needed yet. That is good news.',
@@ -780,14 +756,6 @@
         '<div class="hbar"><span class="hb-label">Helped</span><span class="hb-track"><i style="width:' + ok + '%;background:#3FBF9B"></i></span><span class="hb-val">' + ok + '%</span></div>' +
         '<div class="hbar"><span class="hb-label">Not now</span><span class="hb-track"><i style="width:' + no + '%;background:#E2678C"></i></span><span class="hb-val">' + no + '%</span></div></div>';
     }).join('') + '</div>' : none('Appears once cue cards have been shown.');
-
-    /* 6 · reading against writing */
-    var wm = list.filter(function (x) { return x.total; });
-    $('#cMode').innerHTML = wm.length
-      ? groupedBars({ groups: wm.map(function (x) { return x.pair.label; }), fmt: function (v) { return Math.round(v); },
-          series: [{ name: 'Reading aloud', colour: '#8C7DF0', vals: wm.map(function (x) { return x.read; }) },
-                   { name: 'Writing', colour: '#E2678C', vals: wm.map(function (x) { return x.write; }) }] })
-      : none('No mix-ups yet.');
 
     /* 7 · what kinds of mistake */
     var kinds2 = {};
@@ -836,26 +804,6 @@
     $('#cWeek').innerHTML = stackedBars({ cols: wkeys.map(shortDate), empty: 'No sessions yet.',
       parts: [{ name: 'Reading', colour: '#8C7DF0', vals: wkeys.map(function (k) { return weeks[k].read; }) },
               { name: 'Writing', colour: '#E2678C', vals: wkeys.map(function (k) { return weeks[k].write; }) }] });
-
-    /* 11 · chapter by chapter */
-    var cells = [], cmax = 0.01;
-    var rows = PAIRS.map(function (p) {
-      var r = [1, 2, 3].map(function (n) {
-        var ss = M.sessions.filter(function (s) { return s.world === p.id && s.level === n && s.completed; });
-        var ex = sum(ss.map(function (s) { return (s.exposures && s.exposures[p.k]) || 0; }));
-        var er = M.ce.filter(function (e) { return e.confusion_class === p.k && ss.some(function (s) { return s.session_id === e.session_id; }); }).length;
-        var v = ex > 0 ? 100 * er / ex : null; if (v != null) cmax = Math.max(cmax, v); return v;
-      });
-      cells.push(r); return p;
-    });
-    $('#cChap').innerHTML = cells.some(function (r) { return r.some(function (v) { return v != null; }); })
-      ? '<table class="t-pairs t-chap"><thead><tr><th>World</th><th>Chapter 1</th><th>Chapter 2</th><th>Chapter 3</th></tr></thead><tbody>' +
-        rows.map(function (p, i) {
-          return '<tr><td><span class="pair-dot" style="background:' + p.colour + '"></span>' + esc(p.world) + ' <small class="t-none">' + p.label + '</small></td>' +
-            cells[i].map(function (v) {
-              return v == null ? '<td class="t-none">—</td>' : '<td><span class="heat-chip" style="--a:' + (v ? 0.15 + 0.85 * v / cmax : 0) + '">' + f1(v) + '</span></td>';
-            }).join('') + '</tr>';
-        }).join('') + '</tbody></table>' : none('Appears as chapters are completed.');
 
     /* 12 · hardest words */
     var words = {};
@@ -979,7 +927,7 @@
     { sel: '#tInsightsCard', when: hasKids, title: 'What the data shows', text: 'Plain-language findings, each with what it is based on: practice habit, which help gets them moving again, whether they often need the answer given, and more.' },
     { sel: '#tPairs', when: hasKids, title: 'Letter pairs at a glance', text: 'One row per pair. Mix-ups per 100 words allows a fair comparison between chapters. Caught it themselves is the share they fixed within 2 seconds. Trend compares the first half of their chapters with the second. Click a row to see every event behind it.' },
     { sel: '.t-explain', when: hasKids, title: 'What the columns mean', text: 'Open this for the full meaning of every column, and of the four kinds of help: prompt, cue, choice and supply, from the lightest to the most.' },
-    { sel: '#cRate', when: hasKids, title: 'Charts over time', text: 'Mix-ups per 100 words over time for each letter pair. Falling lines mean that pair is getting easier. Below are charts for catching their own slips, hesitation, how much help they needed, which kind of help works, reading against writing, pauses, speed and hardest words.' },
+    { sel: '#cHelp', when: hasKids, title: 'Charts', text: 'How much help was needed in each session, which kinds of mistake, why they paused, reading speed, practice each week, the hardest words and the spelling in their writing.' },
     { sel: '#cCue', when: hasKids, title: 'Which help works', text: 'For each kind of help the child chose (picture, hearing the word, saying it, splitting it), how often they carried on reading straight afterwards. It shows what they tend to reach for and what gets them moving, not a label.' },
     { sel: '#tRemove', when: hasKids, title: 'Removing a student', text: 'Removes this student from the list. Nothing is deleted: their history moves to Removed students, and their own device signs out and has to make a new account.' },
     { sel: '#navRemoved', before: toOverview, title: 'Removed students', text: 'Everyone you have removed, with all their history still open to look at. The count is shown on that page.' },
