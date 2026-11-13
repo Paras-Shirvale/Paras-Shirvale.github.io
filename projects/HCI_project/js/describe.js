@@ -43,10 +43,19 @@
   S.DESCRIBE = PICTURES;
 
   /** The first picture not finished yet, so the tile shows what will open. */
-  S.describeNext = function () {
+  /* The order the pictures are shown in: the busy bee, the boat and lighthouse,
+     the sleepy cat, then the rest. (Progress is kept by each picture's own
+     number, so reordering never changes what a child has already done.) */
+  var ORDER = [1, 2, 0, 3, 4, 5];
+
+  function nextUndone() {
     var dd = S.P.describeDone || {};
-    var i = PICTURES.findIndex(function (p, k) { return !dd[k]; });
-    return i < 0 ? 0 : i;
+    for (var k = 0; k < ORDER.length; k++) if (!dd[ORDER[k]]) return ORDER[k];
+    return -1;
+  }
+  S.describeNext = function () {
+    var i = nextUndone();
+    return i < 0 ? ORDER[0] : i;
   };
 
   var COLOURS = ['c-teal', 'c-amber', 'c-green', 'c-orange', 'c-yellow', 'c-blue', 'c-coral', 'c-peach'];
@@ -118,7 +127,7 @@
       '<div class="desc-top">' +
         '<span class="desc-star">' + S.Pictures.icon('spark', 20) + '</span>' +
         '<div class="desc-bar"><i style="width:' + Math.round((Object.keys(done()).length) / n * 100) + '%"></i></div>' +
-        '<span class="desc-count">' + (X.index + 1) + ' / ' + n + '</span>' +
+        '<span class="desc-count">' + (ORDER.indexOf(X.index) + 1) + ' / ' + n + '</span>' +
       '</div>' +
       '<div class="desc-steps">' + ['Fill the gaps', 'Listen', 'Write it yourself'].map(function (t, i) {
         return '<span class="dstep" data-state="' + (i + 1 < X.step ? 'done' : i + 1 === X.step ? 'now' : '') + '"><i>' + (i + 1) + '</i>' + t + '</span>';
@@ -131,9 +140,7 @@
         '</div>' +
         '<aside class="desc-side">' +
           '<div class="helper">' +
-            '<div class="helper-bubble"><p id="dsHelperText">' + helperText() + '</p>' +
-              (X.step === 1 ? '<button class="btn btn-sm btn-primary" id="dsHint">Give me a hint</button>' : '') +
-            '</div>' +
+            '<div class="helper-bubble"><p id="dsHelperText">' + helperText() + '</p></div>' +
             '<span class="helper-bot">' + S.mascot(84, 'bob') + '</span>' +
           '</div>' +
         '</aside>' +
@@ -142,8 +149,6 @@
     host.querySelector('#dsHearAll').addEventListener('click', function () {
       S.say(X.step === 1 ? fullText().replace(/…/g, 'blank') : fullText());
     });
-    var hint = host.querySelector('#dsHint');
-    if (hint) hint.addEventListener('click', giveHint);
 
     if (X.step === 1) paintFill();
     else if (X.step === 2) paintListen();
@@ -151,7 +156,7 @@
   }
 
   function helperText() {
-    if (X.step === 1) return 'Need help? I can suggest a word!';
+    if (X.step === 1) return 'Tap a word, then tap the gap where it fits.';
     if (X.step === 2) return 'Listen. Does it sound like the picture?';
     return 'Look at it, cover it, then write it. You can peek!';
   }
@@ -233,18 +238,6 @@
     /* read the whole sentence back, with the new word in it */
     S.say(sentence(X.gaps[id].li).replace(/…/g, 'blank'));
     paintFill();
-  }
-
-  function giveHint() {
-    var gap = X.gaps.filter(function (g) { return !X.fill[g.id]; })[0];
-    if (!gap) { S.$('#dsHelperText').textContent = 'Every gap is filled! Press Done.'; return; }
-    var used = Object.keys(X.fill).map(function (k) { return X.fill[k]; });
-    var word = gap.fits.filter(function (w) { return used.indexOf(w) < 0; })[0] || gap.fits[0];
-    X.help.push(S.DB.help({ rung: 'cue', cue_type: 'visual', word: word, confusion_class: 'none' }));
-    S.$('#dsHelperText').textContent = 'Try "' + word + '" in the glowing gap!';
-    S.say('Try ' + word + '.');
-    S.$$('#dsBody .gap').forEach(function (g) { g.classList.toggle('ready', +g.dataset.gap === gap.id); });
-    S.$$('#dsBody .chip-word').forEach(function (c) { c.classList.toggle('hint', c.dataset.word === word); });
   }
 
   /* ── step 2: listen ──────────────────────────────────── */
@@ -392,7 +385,7 @@
     S.award(5, 'Picture described');
     var idx = X.index;
     X = null;
-    var next = PICTURES.findIndex(function (p, i) { return !done()[i]; });
+    var next = nextUndone();
     S.$('#writeDescribe').innerHTML =
       '<section class="card done-card">' +
         '<span class="done-mascot">' + S.mascot(90, 'happy') + '</span>' +

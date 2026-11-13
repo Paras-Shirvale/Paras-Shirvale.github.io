@@ -1,0 +1,232 @@
+% Augmented Humans 2027 -- Full/Short Paper submission (review version)
+% Format per the call: ACM Primary Article Template, single column, double-blind.
+%   \documentclass[manuscript, review, anonymous]{acmart}
+% Full paper: up to 16 pages, short paper: up to 8 pages, both excluding references.
+% Compile with pdflatex + bibtex (or upload main.tex and references.bib to Overleaf).
+
+\documentclass[manuscript, screen, review, anonymous]{acmart}
+
+% The official template says: do not change margins, type sizes, spacing or
+% lists, and do not use \vspace. So no extra list/spacing packages are loaded.
+\usepackage{booktabs}
+
+% Rights and conference block. After acceptance, replace these with the exact
+% commands from the ACM rights form (TAPS workflow); placeholders are fine for review.
+\setcopyright{none}
+\acmConference[AHs '27]{Augmented Humans International Conference 2027}{2027}{Location to be announced}
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+\begin{document}
+
+\title{Spark: A Help-on-Request Reading and Writing Companion for Children with Dyslexia that Records What Helps, Not Only What Goes Wrong}
+
+\author{Anonymous Author(s)}
+\affiliation{%
+  \institution{Anonymous Institution}
+  \country{Anonymous}}
+
+\begin{abstract}
+Children with dyslexia are usually supported by adults who can see how often a child makes mistakes but not which kind of help gets the child moving again. We present Spark, a free web application in which a child reads stories aloud and writes short texts while the system follows the voice, detects letter confusions (such as b/d and p/q), classifies pauses, and offers help only when the child asks for it: a picture, the word said aloud, the child saying the word, or the word split into chunks. Every use of help is logged on a four-level scale from a nudge to being told the answer, and is credited as helpful if the child carries on reading straight afterwards. A teacher dashboard turns the log into per-letter-pair rates normalised by exposure, trends, and plain-language findings. Three technical choices are new to this setting: letter-swap detection that survives the tendency of speech recognisers to ``correct'' a slip; pause classification that combines phrase position, how the voice ended, and the child's own rhythm; and an on-device check of whether the reader has changed, based on vocal-tract formants rather than pitch. Language and vision models are used only for meaning-in-context, picture screening and answer judging, never for deciding what a child can do. We report a technical verification (automated browser tests and a synthetic-voice experiment) and state plainly that no study with children has yet been run. We discuss what the logged signals can and cannot support, in particular why we make no learning-style claim, and outline a pilot protocol.
+\end{abstract}
+
+\begin{CCSXML}
+<ccs2012>
+<concept>
+<concept_id>10003120.10011738</concept_id>
+<concept_desc>Human-centered computing~Accessibility</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10010405.10010489</concept_id>
+<concept_desc>Applied computing~Education</concept_desc>
+<concept_significance>300</concept_significance>
+</concept>
+<concept>
+<concept_id>10003120.10003121</concept_id>
+<concept_desc>Human-centered computing~Human computer interaction (HCI)</concept_desc>
+<concept_significance>300</concept_significance>
+</concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Human-centered computing~Accessibility}
+\ccsdesc[300]{Applied computing~Education}
+\ccsdesc[300]{Human-centered computing~Human computer interaction (HCI)}
+
+\keywords{dyslexia, reading support, speech recognition, letter confusion, help-seeking, prosody, speaker change detection, teacher dashboard}
+
+\maketitle
+
+%--------------------------------------------------------------------
+\section{Introduction}
+Dyslexia affects how accurately and fluently a child decodes written words. Support in school typically combines extra reading time with an adult's judgement of where the child struggles. Technology can add two things an adult cannot supply alone: continuous measurement while the child reads aloud, and help that is available at the moment of need. Existing tools tend to do one of these. Reading tutors that listen \cite{mostow2001listen} follow the child and intervene; reading aids change the page (fonts, spacing) \cite{rello2016font,zorzi2012spacing} but record little. Neither tells a teacher \emph{which kind of help} a particular child uses and benefits from.
+
+This paper describes Spark, a web application for children roughly aged 7 to 14 that we built to explore that gap. Its premise is that when help is requested by the child rather than pushed by the system, \emph{the request itself is data}: which word, which kind of help, how much help, and whether reading resumed. Interruption is also avoided on principle, because an unprompted card mid-sentence is distracting and discouraging for a reader already working hard to decode.
+
+\paragraph{Contributions.} (1) A help-on-request interaction (``Stuck on a word?'') with four tools mapped to a four-level help scale, with a simple, stated rule for crediting a tool as helpful (Section~\ref{sec:help}). (2) A letter-confusion detector that is not defeated by speech recognisers that silently correct slips, with self-correction and exposure recorded so rates are comparable across passages (Section~\ref{sec:confusion}). (3) A pause classifier that separates phrasing from difficulty using position, the way the voice ended, and the child's own rhythm (Section~\ref{sec:pause}). (4) An on-device reader-change check that uses vocal-tract formants and spectral shape instead of pitch (Section~\ref{sec:voice}). (5) A teacher view that works across devices without per-student accounts, uses insert-only access for children, and keeps history when a student is removed (Section~\ref{sec:teacher}). We also report what we have and have not verified (Section~\ref{sec:eval}), because the system has been technically tested but not yet evaluated with children.
+
+%--------------------------------------------------------------------
+\section{Related Work}
+\paragraph{Technology for dyslexia.} Typographic aids are among the best studied: font choice can change reading speed on screen \cite{rello2016font}, and extra-large letter spacing improved reading in a controlled study \cite{zorzi2012spacing}. Spark offers both as settings (an OpenDyslexic option and wide spacing) but its contribution lies elsewhere, in measurement and help.
+
+\paragraph{Reading tutors that listen.} Project LISTEN pioneered tutors that follow a child reading aloud and respond to errors \cite{mostow2001listen}. Intelligent tutoring systems more broadly show positive effects in meta-analysis \cite{kulik2016its}. Spark differs by deliberately not intervening during reading, and by treating the help the child chooses as the primary outcome measure.
+
+\paragraph{Speech recognition and error detection.} Large-scale weakly supervised models such as Whisper \cite{radford2023whisper} give accurate word times but are trained to produce fluent text, which is a problem for error detection: a recogniser that outputs the intended word hides the slip. Browser speech recognition behaves similarly, emitting revisable interim results and a language-model-biased final transcript \cite{w3cspeech}.
+
+\paragraph{Pauses and prosody.} Pauses in speech have several causes; breaks at syntactic boundaries are ordinary phrasing, and phrase-final lowering of pitch and lengthening are standard cues to a boundary \cite{wightman1992,heldner2010}. We use these cues to avoid labelling every pause as difficulty.
+
+\paragraph{Speaker characteristics.} Fundamental frequency varies considerably within a speaker. Formant frequencies reflect vocal-tract length, which is shorter in children, and so separate children from adults across pitch \cite{peterson1952,vorperian2007}. Mel-frequency cepstral coefficients summarise spectral shape and underlie classical speaker verification \cite{davis1980}.
+
+\paragraph{Learning styles.} Despite its popularity, the idea that children learn better when taught in their preferred modality lacks supporting evidence \cite{pashler2008}. We therefore record preference and effectiveness of help as behavioural facts and make no learning-style claim.
+
+%--------------------------------------------------------------------
+\section{Design Principles}
+\begin{description}
+\item[P1. Help is asked for, not pushed.] Nothing pops up while the child reads. A pause is recorded, not answered.
+\item[P2. Record the help, not only the error.] A count of mistakes is weak evidence of need. The kind and amount of help, and whether it worked, is a richer signal.
+\item[P3. Normalise by exposure.] A hard passage contains more b/d words. Errors are reported per 100 words that contained the letters.
+\item[P4. Prefer explainable rules to opaque models for decisions about the child.] Language and vision models are used for meaning, pictures and judging answers. The classification of pauses, confusions and reader change is plain computation a teacher can follow.
+\item[P5. Privacy by construction.] Children's devices can insert rows but not read them; API keys never reach the browser; no audio is stored by the application.
+\item[P6. No diagnosis, no labels.] The dashboard reports observations and says ``tends to'', never ``is a visual learner'' or ``has dyslexia''.
+\end{description}
+
+%--------------------------------------------------------------------
+\section{System}
+Spark is a static web application (HTML, CSS and JavaScript) with a small serverless proxy that holds API keys and a hosted relational database. A student signs up on a page of their own with a name, age and an avatar they build (skin, hair, clothes, glasses, or an animal). Name and age are then locked, and recorded for the teacher. Reading content is organised as six story ``worlds'', each built around a pair of easily confused letters (b/d, p/q, m/w, n/u, c/s, g/j) with three chapters; each chapter is read aloud and then written, and a world's badge is earned after all three.
+
+\subsection{Reading and live following}
+The browser's speech recognition follows the child. It emits \emph{interim} results, which are revised repeatedly, and \emph{final} results, which are not. Letting interim results move the cursor made the highlight run ahead of the reader, because one spoken word advanced the cursor several times. Spark keeps two positions: a confirmed \emph{cursor} moved only by final results, from which all recording is derived, and a provisional \emph{lead} moved by interim results that can never run backwards or more than a few words ahead of the cursor, which drives the highlight. Matching only moves forward and looks a few words ahead, because recognisers drop short words.
+
+After the child finishes, the recording is sent to Whisper large-v3 \cite{radford2023whisper} for a second pass with a time for every word. The model is deliberately given no prompt: telling it the story would bias it towards the correct words, the opposite of what error detection needs.
+
+\subsection{Letter-confusion detection}
+\label{sec:confusion}
+For each misread word the heard and expected words are aligned letter by letter (an edit-distance walk). Whole-word reversals (\emph{was/saw}) and transpositions (\emph{form/from}) are named as such. Otherwise each substitution is looked up in a table of pairs commonly swapped by readers with dyslexia, and a match is recorded as a letter-confusion event for that pair; omissions, insertions and other substitutions are recorded with their kind.
+
+Because recognisers correct toward real words, a child who says ``bog'' for ``dog'' may be transcribed ``dog'' and the slip disappears. The aligner therefore has a stricter test for a swapped letter that is applied even where its tolerant matcher would accept the word. If the child then says the word correctly within two seconds, the event is marked self-corrected, separately from errors, since catching one's own slip suggests the skill is becoming automatic.
+
+\paragraph{Exposure.} At the end of each session Spark records how many words contained each letter pair (and, from the text, how many words overall), so that rates can be expressed per 100 words containing those letters, and compared across chapters and pairs.
+
+\subsection{``Stuck on a word?'': help the child asks for}
+\label{sec:help}
+Beside the story is a box where the child types a word they are stuck on, or taps it in the text. They then choose one of four tools (Table~\ref{tab:tools}). A bigger picture of any word also appears when the pointer is held over it. None of this happens unprompted.
+
+\begin{table}[h]
+\caption{The four help tools and how each is logged.}
+\label{tab:tools}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Tool & What it does & Logged as & Level \\
+\midrule
+Split it & shows the word in chunks & \texttt{split} & prompt (lightest) \\
+Picture & shows what the word is & \texttt{picture} & cue \\
+Say it & child says it; system listens & \texttt{speak} & cue \\
+Hear it & system says the word & \texttt{audio} & supply (word given) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each use creates one row (word, level, kind, outcome). It is credited as \emph{helped} if the next word is matched while that help is open, that is, the child carries on reading straight afterwards; it is \emph{not helped} if the child swaps to another tool or finishes without moving on. This is a behavioural criterion and we are explicit about its limits: it shows the child got moving again, not that they understood, and a child who would have moved on anyway is also counted. For each kind of help the child's own tally keeps \emph{shown} and \emph{worked} counts. Kinds are ranked by the smoothed rate $(\text{worked}+1)/(\text{shown}+2)$, and after at least four uses the best is highlighted and offered first. The dashboard draws a comparative statement only from five or more uses of a kind.
+
+\subsection{Pauses: phrasing or difficulty}
+\label{sec:pause}
+When the child has been silent for at least 1.4\,s, Spark decides what the stop means. If any sound, even interim ``l\ldots li\ldots ligh\ldots'', arrived recently, the child is sounding out and nothing is judged. Otherwise, with $r$ the pause length divided by the child's own median gap between words (over their last 40 gaps, 120\,ms to 6\,s, defaulting to 600\,ms):
+\begin{enumerate}
+\item After a full stop ($r<6$), a comma ($r<4$), or at the start of a sentence ($r<5$): \emph{natural}.
+\item $r<1.8$: a normal gap, natural.
+\item The voice's pitch \emph{fell} before the silence ($r<3.5$), or the next word begins a phrase (``and'', ``because'', ``in'' \ldots; $r<3.5$): \emph{phrasing}, natural.
+\item The voice trailed off level or rising ($r\ge 2.2$): hesitation, \emph{difficulty}.
+\item The child said the start of the word and stopped: \emph{decoding difficulty}, always.
+\item Stalled on this word before: \emph{word-specific}. A demanding word (syllables, irregular spelling, consonant cluster) with $r\ge2$: \emph{complex word}. Mid-phrase with $r\ge2.5$: \emph{difficulty}.
+\end{enumerate}
+Only difficulty pauses enter the child's profile and the teacher's table; natural pauses are counted separately. After reading, Whisper's exact word times pass through the same classifier. The prosodic cue comes from the microphone's pitch track in the moments before the silence. This is a transparent rule set, not a trained model; its logs (pause, type, and whether the child continued) are the labelled data a trained model would need.
+
+\subsection{Speed}
+Reading speed is words advanced by the confirmed cursor divided by the minutes the microphone was listening, replaced after the recording by words heard divided by the time from the first to the last heard word. It is words per minute \emph{including pauses}, a fluency measure rather than decoding speed, and is shown only as context, since a child who slows down to get a b/d right is doing the right thing.
+
+\subsection{Has the reader changed?}
+\label{sec:voice}
+If an older sibling reads in place of the child, every number is wrong. A single pitch threshold is a poor detector, because one speaker's pitch varies by about a third of an octave between a question and a statement, and a child can speak low. Spark instead measures, on device, for each voiced 90\,ms sample: (a) formants F1 to F3 by linear prediction (order 12 on audio decimated to about 11\,kHz), summarised as a vocal-tract scale that rises as the tract gets shorter; (b) twelve MFCCs, compared with the reader's own voiceprint in units of that reader's own spread; and (c) pitch. The first voiced seconds enrol the voiceprint. A rolling window of eight samples is then compared. The verdict is a vote: two of three signals agree, or the vocal-tract scale alone differs clearly. Pitch alone decides only if it moves by more than three quarters of an octave. The interface says ``that sounds like a different voice'' and offers one tap for ``it is still me''. No audio leaves the device for this check.
+
+\subsection{Meaning in context: pictures and pronunciation}
+A word alone is ambiguous (\emph{back}, \emph{read}, \emph{lead}). An early version looked up the bare word and, for \emph{back}, displayed a photograph of a human back. Spark now sends the \emph{sentence} to a language model \cite{llama3}, which returns the meaning in that sentence, a respelling that makes a speech engine pronounce it correctly there (past-tense \emph{read} becomes ``red''), a search term for that sense (``chair back''), and whether any picture would be suitable. Pictures come from bundled drawings, then ARASAAC pictograms, then Wikipedia photographs. Every photograph is first judged by a vision model for ``shows this meaning'' and ``suitable for a seven-year-old''; if that check cannot run, no photograph is shown. Anatomy words never receive photographs. Syllables are spoken by respelling (``ta'' + ``ble'' is said ``tay'' + ``bull''), then the whole word. All speech output uses the browser's own voices, so there is no cost and no voice data leaves the device.
+
+\subsection{Writing}
+\emph{Describe a picture:} the child places one word per sentence from a small bank of needed words into the right gap, listens, then looks, covers and writes the sentence from memory, with word-by-word feedback. \emph{Picture story:} three questions specific to each picture (for example what colour the cat is, what it is doing, where it is), written by the language model from facts known to be true of that picture, with a hand-written fallback set. The child answers all three, checks spelling (spelling only for short answers), and saves. Each answer is then judged: first locally (does it contain the expected answer or a known alternative once filler words are removed), then, for anything left, by the language model, which accepts any fair description of that picture in any wording (so \emph{rainy} or \emph{cloudy} for a stormy scene). Wrong answers are shown with the right one. With no model reachable an unmatched answer is reported as ``not sure'', never as wrong.
+
+\subsection{The teacher view}
+\label{sec:teacher}
+A teacher signs in once on a login page and sees every student from every device. For each student the dashboard shows engagement (streak, chapters, minutes), a recommended next step, plain-language findings each with its evidence, and a table with one row per letter pair: mix-ups, mix-ups per 100 words containing the letters, the share caught within two seconds, a trend (second half of the chapters at least 25\% below the first is \emph{improving}, at least 25\% above is \emph{rising}; at least three chapters needed), and a stacked bar of help by level. Charts cover rate over time, self-correction, hesitation on target against ordinary words, help by level and by kind, reading against writing, pause causes, speed and hardest words. Data can be downloaded as CSV, JSON, or one Excel workbook with a tab per table. ``Last active'' is the last time the student's device was used at all, not the last lesson. A teacher can remove a student; nothing is deleted. The history moves to a Removed page, and the student's own device signs itself out and must create a new account. The teacher can also tour the same website the student sees in a view in which nothing is recorded.
+
+\subsection{Learning to use it}
+A guided tour opens each page and shows the feature working (opens a story and lights up its first words, presses a help tool, points at a word, places a word in a describe-a-picture gap). Separately, a ``Try it out'' mode lets a student practise freely with a checklist. Both run on a throw-away copy of the profile with recording disabled, so practice never changes progress or the teacher's data.
+
+%--------------------------------------------------------------------
+\section{Implementation and Privacy}
+The front end is dependency-free JavaScript. A serverless proxy holds the keys for a hosted language model (Llama 3.3 70B), a vision model (Llama 4 Scout) and Whisper, all on a free tier, and answers only requests from the site's own origin. Children's devices use a public key that row-level security restricts to \emph{insert}; they cannot read any table. The teacher reads only through password-checked database functions. A device keeps its own rows locally and sends them in batches with retry; a removed device is told by a status call that reveals only yes or no for an identifier it already holds. Spark stores no audio; a recording is sent for transcription only for the second-pass check. A student's name and age are shared only with the study database and not with any model provider.
+
+%--------------------------------------------------------------------
+\section{Technical Verification}
+\label{sec:eval}
+\textbf{We have not run a study with children.} Everything below verifies that the system computes what it claims, not that it helps.
+
+\paragraph{Automated tests.} Roughly 190 assertions run in a headless browser against a stand-in for the database that executes the real schema: sign-up, reading with scripted speech results, each help tool and its logging and crediting, the writing tasks and answer judging, the tours, practice mode (including that the saved profile and recorded rows are byte-identical before and after), the teacher dashboard and exports, and student removal with history kept.
+
+\paragraph{Pause classifier.} Unit cases confirm the intended ordering: a falling voice then silence is phrasing; a level trail-off is hesitation; a breath before ``because'' is phrasing; sounding out beats a falling voice.
+
+\paragraph{Answer matching.} ``orange'', ``orange cat'', ``the cat has orange fur'' and ``the colour of the cat is orange'' all match; ``blue'' does not; ``rainy'', ``cloudy'' and ``stormy'' match the stormy-weather question; ``sunny'' does not.
+
+\paragraph{Reader-change check on synthetic voices.} We synthesised vowels with a source-filter model (glottal pulse train through three formant resonators for five vowels) and enrolled an adult-male voiceprint. Table~\ref{tab:voice} reports the vocal-tract difference (absolute log$_2$ formant-scale ratio) and the mean MFCC distance in the speaker's own spread, using a window of eight voiced samples.
+
+\begin{table}[h]
+\caption{Synthetic-voice check (not real speech). Vocal-tract difference stays small for the same speaker at any pitch and is large for shorter tracts even when pitch is matched.}
+\label{tab:voice}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Test voice & Timbre distance & Tract difference \\
+\midrule
+Same adult, usual pitch & 0.14 & 0.054 \\
+Same adult, high pitch (question) & 0.37 & 0.010 \\
+Same adult, low pitch & 0.15 & 0.069 \\
+Adult woman (formants $\times1.17$) & 0.81 & 0.309 \\
+Child (formants $\times1.30$, high pitch) & 0.96 & 0.424 \\
+Child at the adult's pitch & 0.77 & 0.401 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The thresholds in Section~\ref{sec:voice} lie between the same-speaker and different-speaker ranges. Synthetic vowels are cleaner than real speech, so the margins here are optimistic; the thresholds need re-tuning on recordings of real children and adults.
+
+%--------------------------------------------------------------------
+\section{Discussion}
+\paragraph{What the logs can support.} The logged help is a record of what a child reached for and what was followed by reading on. It supports statements such as ``picture help was followed by reading on 70\% of the time against 40\% for hearing the word''. It does not support ``visual learner''. Given the evidence on learning styles \cite{pashler2008}, the dashboard avoids such labels, and a teacher reading it should treat a preference as something to offer, not to impose.
+
+\paragraph{How personalised is it?} Partly. Help ordering follows the child's own success rates; ``long pause'' is relative to the child's own rhythm; error rates are normalised by the words the child met; the voice check is relative to the child's own voiceprint. There is no per-child curriculum and no model is trained per child. The recommendation line is a set of rules over the child's data.
+
+\paragraph{Live correction.} Spark performs live \emph{detection} but not live \emph{correction}: slips, repeats and pauses are logged as they happen, but the system does not interrupt. This is a design choice motivated by distraction, and is a hypothesis to test, not a result.
+
+\paragraph{Speech recognition for children with dyslexia.} Recognisers are typically developed on adult fluent speech. Their error rate on children's and dyslexic readers' speech, and the rate at which they hide or invent letter swaps, has not been measured here. This is the largest threat to the validity of the confusion counts, and it is why a second pass and a stricter test were added; whether they are sufficient is an empirical question.
+
+\paragraph{Models.} Language and vision models can be wrong. We limit their role (meaning, pictures, judging answers, writing questions from known facts), validate their outputs, fall back to hand-written content, and show ``not sure'' rather than wrong when they are unavailable. Free tiers can change or disappear, so the system works, at reduced richness, without any of them.
+
+\paragraph{Limitations.} Single-language (English) content with six letter-pair families; no evaluation with children; thresholds in the pause and voice components are set by reasoning and synthetic data, not validated; ``helped'' is a proxy; the dashboard has not been assessed for usability by teachers.
+
+%--------------------------------------------------------------------
+\section{Ethics and Privacy Statement}
+No child has used the system in a study. Any study will need ethics approval, informed parental consent and child assent, and a plan for data minimisation. The application records first names and ages; a pilot should use pseudonyms. The removal feature exists partly to honour a request to withdraw from the teacher's view, though full deletion from the study database remains a manual operation by the data controller.
+
+%--------------------------------------------------------------------
+\section{Planned Study}
+We plan a pilot with children aged 7 to 14 with a dyslexia diagnosis or teacher-identified reading difficulty, after ethics approval and consent. We will (i) collect read-aloud recordings with a teacher's transcription as ground truth, to measure the agreement of the confusion detector and the second-pass check with a human, and of the pause classifier with a teacher's labelling of phrasing against difficulty; (ii) record adults and children reading the same paragraph to re-tune and evaluate the reader-change check; (iii) compare the help-credit criterion with a teacher's judgement of whether a child understood the word; and (iv) ask teachers to use the dashboard for several weeks and report what they changed in their teaching, using interviews rather than only ratings.
+
+%--------------------------------------------------------------------
+\section{Conclusion}
+Spark treats a child's request for help as data, records how much and what kind of help each word needed, and reports letter-level confusion rates that account for how many such words a text contained. It does this without interrupting the reader, without storing audio, and with decisions about the child made by explainable rules. The system is built and technically verified; whether it improves reading, and how much the logged signals tell a teacher, remain open questions that the planned pilot is designed to answer.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}
