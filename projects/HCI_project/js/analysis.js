@@ -242,8 +242,11 @@
     }
 
     if (subs.length) {
+      /* one letter off in a same-length word = a different letter;
+         anything more (or a longer/shorter word) = a different word */
+      var oneLetter = subs.length === 1 && h.length === e.length;
       return {
-        kind: 'substitution', heard: h, expected: e, pairs: [],
+        kind: oneLetter ? 'substitution' : 'different-word', heard: h, expected: e, pairs: [],
         note: 'said "' + h + '" where the text says "' + e + '"'
       };
     }

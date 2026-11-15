@@ -40,7 +40,7 @@
   var RUNG_COLOUR = { prompt: '#5B9BEA', cue: '#3FBF9B', choice: '#F0B44C', supply: '#E2678C' };
   var KIND_LABEL = {
     'letter-confusion': 'Swapped letters', 'word-reversal': 'Word backwards', transposition: 'Letters in the wrong order',
-    substitution: 'Different letters or word', omission: 'Letters left out', insertion: 'Extra letters',
+    substitution: 'Different letter', 'different-word': 'Different word', omission: 'Letters left out', insertion: 'Extra letters',
     grammar: 'Grammar', other: 'Spelt differently'
   };
   var PAUSE_LABEL = {
@@ -839,14 +839,14 @@
       parts: [{ name: 'Reading', colour: '#8C7DF0', vals: wkeys.map(function (k) { return weeks[k].read; }) },
               { name: 'Writing', colour: '#E2678C', vals: wkeys.map(function (k) { return weeks[k].write; }) }] });
 
-    /* 12 · hardest words */
+    /* 12 · difficult words */
     var words = {};
     M.ce.forEach(function (e) { var w = words[e.word] = words[e.word] || { e: 0, p: 0, last: '' }; w.e++; w.last = e.actual_word || w.last; });
     M.pe.forEach(function (p) { if (!p.word) return; var w = words[p.word] = words[p.word] || { e: 0, p: 0, last: '' }; w.p++; });
     var wl = Object.keys(words).filter(Boolean).sort(function (a, b) { return (words[b].e * 2 + words[b].p) - (words[a].e * 2 + words[a].p); }).slice(0, 10);
     $('#cWords').innerHTML = wl.length ? '<table class="t-pairs"><thead><tr><th>Word</th><th>Mix-ups</th><th>Pauses</th><th>Last said or written</th></tr></thead><tbody>' +
       wl.map(function (w) { return '<tr><td><b>' + esc(w) + '</b></td><td>' + words[w].e + '</td><td>' + words[w].p + '</td><td>' + esc(words[w].last || '—') + '</td></tr>'; }).join('') + '</tbody></table>'
-      : none('No hard words yet.');
+      : none('No difficult words yet.');
 
     /* 13 · spelling in their writing */
     var sp = {};
