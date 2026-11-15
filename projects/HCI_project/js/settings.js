@@ -116,7 +116,6 @@
 
   S.openVoiceSettings = function () {
     var st = S.P.settings;
-    var line = S.CALIBRATION[Math.floor(Math.random() * S.CALIBRATION.length)];
 
     S.sheet(
       '<h2>Voices</h2>' +
@@ -147,29 +146,6 @@
         '</div>' +
         '<p class="srow-note">How fast Spark talks.</p></div>' +
 
-      /* ── the calibration, as an activity ─────────────── */
-      '<div class="calib" id="calib">' +
-        '<div class="calib-head">' +
-          '<h3>Let Spark learn your voice</h3>' +
-          '<p>Read the whole paragraph out loud. Spark listens to all of it.</p>' +
-        '</div>' +
-        '<p class="calib-para" id="calibPara">' +
-          line.split(/\s+/).map(function (w, i) {
-            return '<span class="cw" data-cw="' + i + '">' + S.esc(w) + '</span>';
-          }).join(' ') +
-        '</p>' +
-        '<div class="calib-level"><i id="calibBar"></i></div>' +
-        '<p class="calib-status" id="calibStatus">' +
-          (S.P.voicePrint ? 'Spark already knows your voice, from ' + S.esc(S.niceDate(S.P.voicePrint.date)) +
-                            '. Read again to update it.' : 'Press start, then read at your own speed.') +
-        '</p>' +
-        '<div class="toolbar" style="margin:0">' +
-          '<button class="btn btn-primary" id="calibGo">' + S.Pictures.icon('mic', 18) + ' Start reading</button>' +
-          '<button class="btn" id="calibHear">' + S.Pictures.icon('speaker', 18) + ' Hear it first</button>' +
-          '<button class="btn" id="calibDone" hidden>I\'ve finished ✓</button>' +
-        '</div>' +
-      '</div>' +
-
       '<div class="toolbar" style="margin:18px 0 0">' +
         '<button class="btn" id="vBack">&larr; Back</button>' +
         '<button class="btn btn-primary" data-close style="flex:1">Done</button>' +
@@ -194,146 +170,13 @@
           });
         });
 
-        wireCalibration(line);
-
-        S.$('#vBack').addEventListener('click', function () { stopCalibration(); S.openMenu(); });
-        S.$$('[data-close]').forEach(function (b) { b.addEventListener('click', function () { stopCalibration(); }); });
+        S.$('#vBack').addEventListener('click', function () { S.openMenu(); });
       }
     );
   };
 
   function voiceAvatar(key) {
     return { woman: 'owl', man: 'bear', girl: 'bunny', boy: 'fox', story: 'cat', chief: 'panda' }[key] || 'owl';
-  }
-
-  /* ── the calibration activity ───────────────────────────
-     The old version fixed the voice print after about a second of
-     speech and declared "that is your voice" while the child was
-     still on the first line. Now:
-
-       · the voice is sampled for the WHOLE paragraph
-       · speech recognition follows along, lighting each word as it
-         is read, so the child can see Spark is really listening
-       · it only finishes when (nearly) every word has been read,
-         or the child says they have finished and has read most of it
-       · it refuses to finish on too little voice, and says why  */
-  var calib = null;
-
-  function wireCalibration(line) {
-    var words = line.split(/\s+/).map(function (w) { return S.norm(w); });
-
-    if (!S.voiceCheck.supported()) {
-      S.$('#calibStatus').textContent = 'This needs a microphone. Chrome or Edge can do it.';
-      S.$('#calibGo').disabled = true;
-      return;
-    }
-
-    S.$('#calibHear').addEventListener('click', function () { S.say(line); });
-    S.$('#calibDone').addEventListener('click', function () { tryFinish(true); });
-
-    S.$('#calibGo').addEventListener('click', async function () {
-      if (calib) { stopCalibration(); return; }
-      S.stopSaying();
-      S.voiceCheck.stop();
-      var ok = await S.voiceCheck.start(function () {}, { calibrate: true });
-      if (!ok) { status('I could not open the microphone. Allow it in the address bar?'); return; }
-
-      calib = { words: words, upTo: 0, started: Date.now(), mic: null, timer: null };
-      S.$$('#calibPara .cw').forEach(function (e) { e.classList.remove('done'); });
-      S.$('#calibGo').innerHTML = S.Pictures.icon('stop', 18) + ' Stop';
-      S.$('#calibDone').hidden = false;
-      status('Go ahead — read the whole paragraph out loud.');
-
-      /* follow the words, where the browser can */
-      if (!S.micProblem()) {
-        calib.mic = S.listenContinuous(onHeard, function () { calib && (calib.mic = null); });
-      }
-      calib.timer = setInterval(tick, 300);
-    });
-  }
-
-  /* Line up everything heard so far against the paragraph. */
-  function onHeard(results) {
-    if (!calib) return;
-    var heard = [];
-    for (var i = 0; i < results.length; i++) {
-      heard = heard.concat(String(results[i][0].transcript).split(/\s+/).map(S.norm).filter(Boolean));
-    }
-    var at = 0;
-    heard.forEach(function (h) {
-      for (var k = at; k < Math.min(at + 4, calib.words.length); k++) {
-        if (S.soundsLike(h, calib.words[k]) || h === calib.words[k]) { at = k + 1; break; }
-      }
-    });
-    if (at > calib.upTo) calib.upTo = at;
-  }
-
-  function tick() {
-    if (!calib) return;
-    var n = calib.words.length;
-    var secs = (Date.now() - calib.started) / 1000;
-    /* no speech recognition here: go by time instead */
-    if (!calib.mic) calib.upTo = Math.max(calib.upTo, Math.min(n, Math.floor(secs / 0.42)));
-
-    S.$$('#calibPara .cw').forEach(function (e) {
-      e.classList.toggle('done', +e.dataset.cw < calib.upTo);
-    });
-    var bar = S.$('#calibBar');
-    if (bar) { bar.style.width = Math.round(calib.upTo / n * 100) + '%'; bar.dataset.state = 'learning'; }
-
-    if (calib.upTo >= n - 1 && !calib.ending) {
-      calib.ending = true;
-      status('Nearly there…');
-      setTimeout(function () { tryFinish(false); }, 1200);   /* let the last word land */
-    } else if (!calib.ending && calib.upTo > 0) {
-      status('I can hear you — keep going. ' + Math.round(calib.upTo / n * 100) + '% read.');
-    }
-    if (secs > 180) tryFinish(true);
-  }
-
-  function tryFinish(asked) {
-    if (!calib) return;
-    var n = calib.words.length;
-    if (asked && calib.upTo < n * 0.6 && calib.mic) {
-      status('Keep going — you\'re ' + Math.round(calib.upTo / n * 100) + '% through. Read to the end.');
-      return;
-    }
-    var print = S.voiceCheck.finishCalibration();
-    var readTo = calib.upTo;
-    stopCalibration(true);
-
-    if (!print) {
-      status('I didn\'t hear enough of your voice. Try again, a little closer to the microphone.');
-      return;
-    }
-    S.P.voicePrint = { date: S.today(), hz: print.hz, words: readTo };
-    S.save();
-
-    var hz = print.hz;
-    var band = hz > 250 ? 'a bright, high voice' : hz > 190 ? 'a fairly high voice'
-             : hz > 150 ? 'a middle voice' : 'a low voice';
-    var bar = S.$('#calibBar');
-    if (bar) { bar.style.width = '100%'; bar.dataset.state = 'done'; }
-    S.$$('#calibPara .cw').forEach(function (e) { e.classList.add('done'); });
-    status('✓ Got it — that is your voice. Spark heard ' + band +
-           ' across the whole paragraph. If someone else reads, Spark will notice.');
-    S.award(3, 'Taught Spark your voice');
-  }
-
-  function status(t) { var el = S.$('#calibStatus'); if (el) el.textContent = t; }
-
-  function stopCalibration(keepText) {
-    if (calib) {
-      clearInterval(calib.timer);
-      if (calib.mic) calib.mic.stop();
-      calib = null;
-    }
-    if (S.voiceCheck) { S.voiceCheck.unwatch(); S.voiceCheck.stop(); }
-    var go = S.$('#calibGo');
-    if (go) go.innerHTML = S.Pictures.icon('mic', 18) + ' ' + (keepText ? 'Read it again' : 'Start reading');
-    var done = S.$('#calibDone');
-    if (done) done.hidden = true;
-    if (!keepText) status('Press start, then read at your own speed.');
   }
 
   /* ── reset ──────────────────────────────────────────── */

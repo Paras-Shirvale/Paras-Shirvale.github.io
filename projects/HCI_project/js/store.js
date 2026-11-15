@@ -93,7 +93,7 @@ window.Spark = window.Spark || {};
 
       /* seconds Spark waits before offering help. Rises when the child
          recovers alone, falls when they needed the strongest help. */
-      patience: 4.5,
+      patience: 1.5,
 
       sessions: [],     /* { date, id, title, words, wpm, stalls, tricky[], ms } */
       writings: [],     /* { date, prompt, text, kind } */
@@ -109,7 +109,6 @@ window.Spark = window.Spark || {};
         theme: 'light',   /* light | dark | auto (follow the device) */
         font: 'dyslexic', /* dyslexic (OpenDyslexic) | plain */
         voice: 'woman',   /* woman | man */
-        voiceCheck: true, /* warn when a different voice is reading */
         /* 'illustration' = generated pictures (nicest, needs network)
            'pictogram'    = ARASAAC symbols only
            'off'          = only the drawn set that ships with the app */

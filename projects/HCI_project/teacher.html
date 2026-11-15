@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Spark — teacher and parent dashboard</title>
-<link rel="stylesheet" href="css/teacher.css?v=20261113f">
+<link rel="stylesheet" href="css/teacher.css?v=20261115a">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2323835C'/%3E%3Cpath d='M12 4l1.8 5.2L19 11l-4.4 1.8L12 18l-1.8-5.2L5.2 11l5-1.5z' fill='%23fff'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -66,7 +66,7 @@
       <div class="t-tablehead"><h2>Students</h2><input type="search" id="tSearch" placeholder="Search by name"></div>
       <div class="t-table-wrap">
         <table class="t-pairs t-students">
-          <thead><tr><th>Name</th><th>Age</th><th>Last active</th><th>Worlds explored</th><th>Most confused</th><th>Mix-ups</th><th>Sessions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Age</th><th>Last active</th><th>Worlds explored</th><th>Most confused</th><th>Mix-ups</th><th>Sessions</th><th></th></tr></thead>
           <tbody id="tStudents"></tbody>
         </table>
       </div>
@@ -84,7 +84,7 @@
     <section class="t-card">
       <div class="t-table-wrap">
         <table class="t-pairs t-students">
-          <thead><tr><th>Name</th><th>Age</th><th>Removed on</th><th>Last active</th><th>Mix-ups</th><th>Sessions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Age</th><th>Removed on</th><th>Last active</th><th>Mix-ups</th><th>Sessions</th><th></th></tr></thead>
           <tbody id="tRemovedRows"></tbody>
         </table>
       </div>
@@ -102,6 +102,7 @@
       </div>
       <div class="t-exports">
         <button class="t-btn t-danger" id="tRemove">Remove student</button>
+        <button class="t-btn t-danger" id="tPurge" hidden>Delete permanently</button>
         <button class="t-btn t-ghost" id="tExpJson">This student (JSON)</button>
         <label class="t-csv-label" for="tExpTable">Download</label>
         <select id="tExpTable" aria-label="What to download"><option value="all">Everything: one Excel file, a tab for each</option><option value="sessions">Sessions</option><option value="confusion_events">Letter mix-ups</option><option value="timing_events">Word timings</option><option value="pause_events">Pauses</option><option value="help_events">Help used</option><option value="submissions">Readings and sentences</option></select>
@@ -203,11 +204,11 @@
 /* Just enough of the app's shared object for the world list below. */
 window.Spark = { norm: function (w) { return String(w == null ? '' : w).toLowerCase().replace(/[^a-z']/g, ''); } };
 </script>
-<script src="js/config.js?v=20261113f"></script>
-<script src="js/xlsx.js?v=20261113f"></script>
-<script src="js/avatars.js?v=20261113f"></script>
-<script src="js/human.js?v=20261113f"></script>
-<script src="js/families.js?v=20261113f"></script>
-<script src="js/teacher.js?v=20261113f"></script>
+<script src="js/config.js?v=20261115a"></script>
+<script src="js/xlsx.js?v=20261115a"></script>
+<script src="js/avatars.js?v=20261115a"></script>
+<script src="js/human.js?v=20261115a"></script>
+<script src="js/families.js?v=20261115a"></script>
+<script src="js/teacher.js?v=20261115a"></script>
 </body>
 </html>

@@ -142,7 +142,8 @@
       children: function (pw) { return rpc('teacher_children', { p_password: pw }); },
       child: function (pw, id) { return rpc('teacher_child_data', { p_password: pw, p_child: id }); },
       all: function (pw) { return rpc('teacher_export', { p_password: pw }); },
-      remove: function (pw, id) { return rpc('teacher_remove_child', { p_password: pw, p_child: id }); }
+      remove: function (pw, id) { return rpc('teacher_remove_child', { p_password: pw, p_child: id }); },
+      purge: function (pw, id) { return rpc('teacher_purge_child', { p_password: pw, p_child: id }); }
     };
   }
 
@@ -161,7 +162,8 @@
         });
       },
       all: function (pw) { return gate(pw).then(tables); },
-      remove: function () { return Promise.reject(new Error('Removing a student needs the study database (see _server/README.md).')); }
+      remove: function () { return Promise.reject(new Error('Removing a student needs the study database (see _server/README.md).')); },
+      purge: function () { return Promise.reject(new Error('Deleting a student needs the study database (see _server/README.md).')); }
     };
   }
 
@@ -548,30 +550,34 @@
     $('#navRemoved').classList.toggle('on', which === 'removed');
   }
 
-  function showRemoved() {
+  function showRemoved(keepScroll) {
     cameFrom = 'removed';
     setNav('removed');
     $('#tStudent').hidden = true; $('#tOverview').hidden = true; $('#tRemoved').hidden = false;
-    window.scrollTo(0, 0);
+    if (!keepScroll) window.scrollTo(0, 0);
     /* the count is shown here, on the page itself, not on the tab */
     $('#tRemovedCount').textContent = removedKids.length + ' removed student' + (removedKids.length === 1 ? '' : 's');
     $('#tRemovedRows').innerHTML = removedKids.length ? removedKids.map(function (k) {
       return '<tr data-kid="' + esc(k.child_id) + '"><td>' + avatarChip(k) + esc(k.name) + '</td>' +
         '<td>' + (k.age || '—') + '</td><td>' + esc(ago(k.removed_at)) + '</td><td>' + esc(ago(k.last_active)) + '</td>' +
-        '<td>' + totalErrors(k) + '</td><td>' + (k.sessions || 0) + '</td></tr>';
-    }).join('') : '<tr><td colspan="6" class="t-none">Nobody has been removed.</td></tr>';
+        '<td>' + totalErrors(k) + '</td><td>' + (k.sessions || 0) + '</td>' +
+        '<td class="t-act"><button class="t-btn t-danger t-small" data-purge="' + esc(k.child_id) + '">Delete permanently</button></td></tr>';
+    }).join('') : '<tr><td colspan="7" class="t-none">Nobody has been removed.</td></tr>';
     Array.prototype.forEach.call(document.querySelectorAll('#tRemovedRows tr[data-kid]'), function (tr) {
       tr.onclick = function () { openStudent(tr.dataset.kid); };
     });
+    Array.prototype.forEach.call(document.querySelectorAll('#tRemovedRows [data-purge]'), function (b) {
+      b.onclick = function (e) { e.stopPropagation(); purgeStudent(b.dataset.purge, b); };
+    });
   }
 
-  function showOverview() {
+  function showOverview(keepScroll) {
     cameFrom = 'overview';
     setNav('overview');
     $('#tStudent').hidden = true;
     $('#tRemoved').hidden = true;
     $('#tOverview').hidden = false;
-    window.scrollTo(0, 0);
+    if (!keepScroll) window.scrollTo(0, 0);
 
     var b = $('#tBanner');
     b.hidden = Source.cloud;
@@ -621,10 +627,14 @@
         '<td>' + (k.age || '—') + '</td><td>' + esc(ago(k.last_active)) + '</td>' +
         '<td>' + (k.worlds || 0) + ' / 6</td>' +
         '<td>' + (t ? '<span class="pair-dot" style="background:' + t.pair.colour + '"></span>' + t.pair.label : '<span class="t-none">—</span>') + '</td>' +
-        '<td>' + totalErrors(k) + '</td><td>' + (k.sessions || 0) + '</td></tr>';
-    }).join('') : '<tr><td colspan="7" class="t-none">No students yet.</td></tr>';
+        '<td>' + totalErrors(k) + '</td><td>' + (k.sessions || 0) + '</td>' +
+        '<td class="t-act"><button class="t-btn t-danger t-small" data-remove="' + esc(k.child_id) + '">Remove</button></td></tr>';
+    }).join('') : '<tr><td colspan="8" class="t-none">No students yet.</td></tr>';
     Array.prototype.forEach.call(document.querySelectorAll('#tStudents tr[data-kid]'), function (tr) {
       tr.onclick = function () { openStudent(tr.dataset.kid); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('#tStudents [data-remove]'), function (b) {
+      b.onclick = function (e) { e.stopPropagation(); removeStudent(b.dataset.remove, b); };
     });
   }
   $('#tSearch').addEventListener('input', function () { paintStudents(this.value); });
@@ -651,24 +661,46 @@
   }
   $('#tBack').addEventListener('click', function () { current = null; if (cameFrom === 'removed') showRemoved(); else showOverview(); });
 
+  function friendly(err) {
+    return /404|PGRST|function/i.test(err.message)
+      ? 'The database needs updating first. Run the latest _server/supabase-schema.sql in Supabase (see _server/README.md).'
+      : err.message;
+  }
+
   /* Remove: nothing is deleted. The student moves to "Removed students"
      with their whole history, and their own device is signed out the
-     next time it checks in. */
-  $('#tRemove').addEventListener('click', function () {
-    if (!current) return;
-    var kid = current.kid;
+     next time it checks in. From the list, the list stays where it is, so
+     several students can be removed one after another. */
+  function removeStudent(id, btn, fromPage) {
+    var kid = kids.concat(removedKids).filter(function (k) { return k.child_id === id; })[0];
+    if (!kid) return;
     if (!window.confirm('Remove ' + kid.name + '?\n\nTheir device will be signed out and they will have to make a new account. ' +
         'Their history stays here, on the Removed students page.')) return;
-    var btn = $('#tRemove'); btn.disabled = true; btn.textContent = 'Removing...';
-    Source.remove(password, kid.child_id).then(function () {
+    var label = btn.textContent; btn.disabled = true; btn.textContent = 'Removing...';
+    Source.remove(password, id).then(function () {
       current = null;
       return load();
-    }).then(function () { showRemoved(); }, function (err) {
-      window.alert(/404|PGRST|function/i.test(err.message)
-        ? 'The database needs updating first. Run the latest _server/supabase-schema.sql in Supabase (see _server/README.md).'
-        : err.message);
-    }).then(function () { btn.disabled = false; btn.textContent = 'Remove student'; });
-  });
+    }).then(function () {
+      if (fromPage) showRemoved(); else showOverview(true);
+    }, function (err) { window.alert(friendly(err)); })
+    .then(function () { btn.disabled = false; btn.textContent = label; });
+  }
+
+  /* Delete forever: only for a student who has already been removed. */
+  function purgeStudent(id, btn, fromPage) {
+    var kid = removedKids.filter(function (k) { return k.child_id === id; })[0];
+    if (!kid) return;
+    if (!window.confirm('Delete ' + kid.name + ' permanently?\n\nAll of their history will be erased. This cannot be undone.')) return;
+    var label = btn.textContent; btn.disabled = true; btn.textContent = 'Deleting...';
+    Source.purge(password, id).then(function () {
+      current = null;
+      return load();
+    }).then(function () { showRemoved(!fromPage); }, function (err) { window.alert(friendly(err)); })
+    .then(function () { btn.disabled = false; btn.textContent = label; });
+  }
+
+  $('#tRemove').addEventListener('click', function () { if (current) removeStudent(current.kid.child_id, $('#tRemove'), true); });
+  $('#tPurge').addEventListener('click', function () { if (current) purgeStudent(current.kid.child_id, $('#tPurge'), true); });
 
   function renderStudent() {
     var kid = current.kid, M = current.M, P = M.pairs;
@@ -677,6 +709,7 @@
     $('#tAvatar').innerHTML = S.avatarSVG ? S.avatarSVG(kid.avatar || 'owl', 56) : '';
     $('#tAvatar').style.background = 'none';
     $('#tRemove').hidden = !!kid.removed_at;
+    $('#tPurge').hidden = !kid.removed_at;
     var note = $('#tRemovedNote');
     note.hidden = !kid.removed_at;
     note.textContent = kid.removed_at ? 'Removed on ' + ago(kid.removed_at) + '. This is their saved history; if they came back they have a new account.' : '';

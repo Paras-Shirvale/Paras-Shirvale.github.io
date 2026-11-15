@@ -299,6 +299,20 @@ begin
   update children set removed_at = coalesce(removed_at, now()) where child_id = p_child;
 end $$;
 
+-- Delete a REMOVED student's history for good. It only works on a student who
+-- has already been removed, so an active student can never be wiped by mistake.
+create or replace function teacher_purge_child(p_password text, p_child uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not teacher_ok(p_password) then
+    raise exception 'wrong password' using errcode = '28000';
+  end if;
+  if not exists (select 1 from children c where c.child_id = p_child and c.removed_at is not null) then
+    raise exception 'only a removed student can be deleted' using errcode = '22023';
+  end if;
+  perform reset_child(p_child);
+end $$;
+
 -- The student's device asks only this: "am I still a student here?"
 -- It reveals nothing but a yes/no for an id only that device knows.
 create or replace function child_status(p_child uuid) returns jsonb
@@ -321,10 +335,10 @@ language sql security definer set search_path = public as $$
 $$;
 
 revoke execute on function teacher_ok(text), teacher_children(text), teacher_child_data(text, uuid),
-                           teacher_export(text), reset_child(uuid), teacher_remove_child(text, uuid),
+                           teacher_export(text), reset_child(uuid), teacher_remove_child(text, uuid), teacher_purge_child(text, uuid),
                            child_status(uuid), touch_child(uuid), set_child_avatar(uuid, text) from public, anon, authenticated;
 grant execute on function teacher_children(text), teacher_child_data(text, uuid),
-                          teacher_export(text), reset_child(uuid), teacher_remove_child(text, uuid),
+                          teacher_export(text), reset_child(uuid), teacher_remove_child(text, uuid), teacher_purge_child(text, uuid),
                           child_status(uuid), touch_child(uuid), set_child_avatar(uuid, text) to anon, authenticated;
 
 -- ── the per-pair profile, rebuilt after each session ends ───

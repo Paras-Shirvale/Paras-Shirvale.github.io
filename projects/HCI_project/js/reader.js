@@ -200,7 +200,6 @@
     tick = setInterval(updateStats, 1000);
 
     /* listen to the sound of the voice as well as the words */
-    startVoiceCheck();
 
     /* and record it, for the second, more accurate listen */
     if (S.modelListening() && S.Recorder) {
@@ -212,7 +211,6 @@
   S.stopReading = function () {
     endStallCue(false);
     if (mic) { mic.stop(); mic = null; }
-    if (S.voiceCheck) S.voiceCheck.stop();
     clearTimeout(stallTimer);
     clearInterval(tick); tick = null;
 
@@ -239,6 +237,7 @@
      which is what stopped the highlight running ahead of the reader. */
   function onResults(resultList) {
     if (!R || !R.aligner) return;
+    if (R.muteUntil && Date.now() < R.muteUntil) return;     /* Spark is speaking */
 
     /* Any result at all — even an interim one that matches nothing —
        means the child is making sounds. That is what tells a pause
@@ -376,7 +375,7 @@
 
     /* reading smoothly with no help — earn more room before Spark steps in */
     if (gapMs / 1000 < S.P.patience * 0.6 && !R.helpOpen) {
-      S.P.patience = S.clamp(S.P.patience + 0.12, 2.5, 9);
+      S.P.patience = S.clamp(S.P.patience + 0.05, 1, 2);
     }
     /* help was open and now they're moving again: that cue worked */
     if (R.helpOpen) resolveHelp(true);
@@ -393,12 +392,13 @@
 
   /* How long the child must be SILENT before Spark even looks at a
      pause. Sounding a word out is not a pause — it is the work. */
-  var SILENCE_BEFORE_LOOKING = 1400;
+  var SILENCE_BEFORE_LOOKING = 900;
 
   function armStall() {
     clearTimeout(stallTimer);
     if (!R || !R.listening) return;
-    stallTimer = setTimeout(onStall, Math.max(2200, S.P.patience * 1000));
+    /* about 1.5 s after the last word (1 to 2 s, nudged by how this child reads) */
+    stallTimer = setTimeout(onStall, S.clamp((S.P.patience || 1.5) * 1000, 1000, 2000));
   }
 
   /**
@@ -447,11 +447,14 @@
                        R.tokens[R.idx - 1].si !== token.si),
       durationMs: Date.now() - lastAdvance,
       baselineMs: baselineGap(),
-      prosody: S.voiceCheck && S.voiceCheck.endingTrend ? S.voiceCheck.endingTrend() : null,
       partialHeard: R.aligner ? R.aligner.startedCurrentWord() : null,
       priorStalls: (S.P.words[token.clean] && S.P.words[token.clean].stalled) || 0
     });
 
+    /* Checked again every 1.5 s while the child stays on a word, but a long
+       normal pause is counted once, not each time. */
+    if (!verdict.struggle && R.checkedAt === R.idx) { armStall(); return; }
+    R.checkedAt = R.idx;
     R.pauses.push({ word: token.clean, type: verdict.type, struggle: verdict.struggle });
     /* every real difficulty pause is a row: which word, how long, and
        why Spark judged it a difficulty (sounding it out, a word that
@@ -483,7 +486,7 @@
     R.stalls.push({ word: token.clean, at: Date.now(), type: verdict.type });
 
     /* needed help here — step in a little sooner next time */
-    S.P.patience = S.clamp(S.P.patience - 0.25, 2.5, 9);
+    S.P.patience = S.clamp(S.P.patience - 0.1, 1, 2);
 
     /* A real struggle: a cue appears beside the word (its picture, how it
        breaks up, and a speaker). It goes by itself as soon as the child
@@ -510,7 +513,18 @@
     tip.insertAdjacentHTML('beforeend', '<button class="tip-close" data-closecue aria-label="Close">&times;</button>');
     mine.h = S.DB.help({ rung: 'cue', cue_type: 'popup', word: token.clean, prefer: R.src.world });
     R.cue = mine;
+    /* say the word right away (no waiting on the meaning lookup: it uses the
+       pronunciation only if that is already known) */
+    var sentence = S.sentenceOf(token.el);
+    var sense = S.senseCached ? S.senseCached(token.clean, sentence) : null;
+    muteMic(700 + 90 * token.clean.length);
+    S.say(sense ? sense.say : token.clean, { mode: 'word' });
   }
+
+  /* While Spark speaks, the microphone must not take its voice for the child's:
+     results are ignored for a moment (the reader would otherwise "hear" the word
+     and move on). */
+  function muteMic(ms) { if (R) R.muteUntil = Date.now() + ms; }
 
   /* read = true when the word was then read correctly (the cue worked) */
   function endStallCue(read) {
@@ -886,33 +900,6 @@
   };
   S._readerFeed = function (results) { if (R && !R.aligner) { R.aligner = S.makeAligner(R.tokens); } onResults(results); };
 
-  /* ── is this still the same reader? ─────────────────────
-     The whole profile is only meaningful if the voice it was built
-     from is the child's. If somebody else takes over mid-passage,
-     say so plainly and let them decide what it means. */
-  function startVoiceCheck() {
-    if (!S.voiceCheck || !S.P.settings.voiceCheck) return;
-    S.voiceCheck.start(function (change) {
-      var banner = S.$('#voiceWarn');
-      if (!banner) return;
-      banner.hidden = false;
-      /* The child is the audience here. A frequency in hertz tells
-         them nothing they can act on, and the number invites an
-         argument about the measurement rather than the question
-         being asked, which is simply: is this still you? */
-      banner.querySelector('[data-msg]').textContent =
-        change.direction === 'down'
-          ? 'That sounds like a deeper voice than the one I learned. Is this still you?'
-          : 'That sounds like a different voice than the one I learned. Is this still you?';
-    });
-  }
-
-  S.dismissVoiceWarning = function (accept) {
-    var banner = S.$('#voiceWarn');
-    if (banner) banner.hidden = true;
-    if (accept && S.voiceCheck) S.voiceCheck.acceptNewVoice();
-  };
-
   /* ── step 2: questions ──────────────────────────────── */
   async function showQuestions() {
     var host = S.$('#stepUnderstand');
@@ -1098,6 +1085,7 @@
       var sent = S.sentenceFor(word);
       out.innerHTML = title + '<button class="btn btn-sm" data-say="' + S.esc(word) + '" data-sent="' + S.esc(sent) + '">' +
         S.Pictures.icon('speaker', 16) + ' Hear it again</button>';
+      muteMic(700 + 90 * word.length);
       S.sayWord(word, sent);
 
     } else if (tool === 'split') {
@@ -1177,11 +1165,6 @@
     S.$('#helpClear').addEventListener('click', function () {
       S.setHelpWord('');
       S.$('#helpWord').focus();
-    });
-
-    S.$('#voiceWarn').addEventListener('click', function (e) {
-      if (e.target.closest('[data-voice-accept]'))  S.dismissVoiceWarning(true);
-      if (e.target.closest('[data-voice-dismiss]')) S.dismissVoiceWarning(false);
     });
   };
 

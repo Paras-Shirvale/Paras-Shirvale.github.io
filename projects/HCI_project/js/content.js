@@ -1,5 +1,5 @@
 /* ============================================================
-   content.js — the picture-story prompts, the voice calibration
+   content.js — the picture-story prompts
    paragraphs, and text helpers.
 
    The reading stories and writing sentences live in families.js,
@@ -8,27 +8,6 @@
 
 (function (S) {
   'use strict';
-
-  /* ── the voice calibration paragraph ────────────────────
-     Read once, in Settings, so Spark learns what this child sounds
-     like and can tell later if somebody else takes over the reading.
-
-     A whole paragraph, not one line: pitch is measured on vowels,
-     and a short sample gives a poor voice print. These deliberately
-     mix high vowels (ee, i) with low ones (o, u). */
-  S.CALIBRATION = [
-    'The moon came up over the quiet blue sea. Three seagulls flew low ' +
-    'across the sand, looking for something to eat. A little boat bobbed ' +
-    'by the pier, and the lights in the town began to glow.',
-
-    'My green bike has a squeaky wheel and a loud bell. Everyone in the ' +
-    'street knows exactly when I am coming home. On sunny days I ride it ' +
-    'to the park and race my friends around the pond.',
-
-    'On Tuesday we found a tiny brown mouse behind the shed. It was eating ' +
-    'seeds from an old flowerpot in the cool shade. We kept very still and ' +
-    'watched it until it ran back under the fence.'
-  ];
 
   /* ── picture-story prompts ──────────────────────────────
      Every question is about something that is IN the picture. The
